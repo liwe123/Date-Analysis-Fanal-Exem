@@ -62,8 +62,8 @@
      └─────┬──────┘
            │
      ┌─────▼──────┐
-    │  3. 嵌入    │  本地 Qwen3-Embedding-0.6B (1024维, GPU加速, 余弦距离)
-      │            │  embed_store.py → ChromaDB 批量写入 (batch=64)
+     │  3. 嵌入    │  OpenAI text-embedding-3-small (1536维, 余弦距离)
+     │            │  embed_store.py → ChromaDB 批量写入 (batch=64)
      └─────┬──────┘
            │
      ┌─────▼──────┐
@@ -102,11 +102,11 @@
 | 模块 | 文件 | 职责 | 关键设计 |
 |------|------|------|---------|
 | 数据摄取 | `ingest.py` | 递归读取 raw/ 下 .txt/.md/.pdf；解析 YAML Front-Matter | PyMuPDF 提取 PDF 文本；utf-8 容错读取 |
-| 语料扩充 | `collect_corpus.py` | 从 Wikipedia REST API 抓取 58 个大数据相关词条 | 中英文回退、限速重试(每次间隔 2s，最多 3 次)、429 自动长等待、404 直接跳过、输出为带 Front-Matter 的 md 文件 |
+| 语料扩充 | `collect_corpus.py` | 从 Wikipedia REST API 抓取 28 个大数据相关词条 | 中英文回退、限速重试(每次间隔 2s，最多 3 次)、输出为带 Front-Matter 的 md 文件 |
 | 文本清洗 | `preprocess.py` | HTML 标签移除、转义字符还原、控制字符过滤、空白规范化 | 正则流水线，保留 `\n` 作为段落边界 |
 | 语义分块 | `preprocess.py` | 段落边界→句子边界→贪心合并→滑窗切割 | 四层优先级，默认 700 字符/块，120 字符重叠，最小 40 字符 |
 | 元数据提取 | `preprocess.py` | LLM 提取作者/年份/分类/语言/摘要 | Front-Matter 优先覆盖 LLM 结果；解析失败回退文件名猜测 |
-| 向量存储 | `embed_store.py` | ChromaDB 管理：建表、批量写入、多模式检索、安全删除 | 支持本地/远程双模式，upsert 批量 64，where 失败自动回退 |
+| 向量存储 | `embed_store.py` | ChromaDB 管理：建表、批量写入、多模式检索、安全删除 | OpenAI 单例客户端，upsert 批量 64，where 失败自动回退 |
 | 查询解析 | `query_parser.py` | 自然语言 → 结构化搜索参数 | LLM 提取 search_query + filters，失败回退全文搜索 |
 | 答案生成 | `qa.py` | 上下文拼接 + LLM 生成 + 引用强制 | System Prompt 约束"不知说不知"，引用缺失自动补全 |
 | 入口整合 | `main.py` | CLI 三个子命令：build / ask / collect | argparse，交互模式支持连续追问 |
@@ -132,15 +132,14 @@
 
 | 数据源 | 数量 | 格式 | 内容 |
 |--------|------|------|------|
-| 课程资料 | 46 个文件 | .md (含 Front-Matter) | 课程介绍、FAQ、案例、通知、报告、术语表 |
-| Wikipedia 词条 | 52 个 | .md (含 Front-Matter) | 大数据核心技术术语（RAG、向量数据库、Spark、ML/DL/NLP、Hadoop生态等） |
+| 课程资料 | 50+ 文件 | .md (含 Front-Matter) | 课程介绍、FAQ、案例、通知、报告、术语表 |
+| Wikipedia 词条 | 28 个 | .md (含 Front-Matter) | 大数据核心技术术语（RAG、向量数据库、Spark、流处理等） |
 
 Wikipedia 词条采集流程（`collect_corpus.py`）：
 - **API**：Wikipedia REST API v1（免费，无限流风险）
 - **策略**：优先请求中文摘要（`zh.wikipedia.org`），失败则回退英文（`en.wikipedia.org`）
-- **限速保护**：每次请求间隔 2 秒，失败重试 3 次；429（Too Many Requests）等待时间 ×3；404 直接跳过
-- **输出格式**：带 Front-Matter 的 Markdown 文件（title、fetch_date、source_url、extract）
-- **话题覆盖**：覆盖 58 个大数据相关话题（28 个原有 + 30 个新增），成功采集 52 个
+- **限速保护**：每次请求间隔 2 秒，失败重试 3 次
+- **输出格式**：带 YAML Front-Matter 的 Markdown 文件（title、tags、fetch_date、source_url、extract、课程关联说明）
 
 ### 4.2 文本清洗流水线
 
@@ -171,11 +170,10 @@ Wikipedia 词条采集流程（`collect_corpus.py`）：
 
 ### 4.4 元数据提取与合并
 
-- **LLM 提取**：每篇文档前 1200 字符发送至 `deepseek-v4-flash`，返回 JSON（作者、年份、分类、语言、50 字摘要）
+- **LLM 提取**：每篇文档前 1200 字符发送至 `gpt-4o-mini`，返回 JSON（作者、年份、分类、语言、50 字摘要）
 - **Front-Matter 优先**：若文档 YAML 头中已写明 `year: 2024`、`category: notice`，以人工标注为准覆盖 LLM 结果
 - **回退策略**：LLM JSON 解析失败 → 空元数据字典 → 文件名前缀猜测分类（如 `wiki_*` → wiki，`notice*` → notice）
-- **LLM JSON 安全解析**：`_safe_json_parse()` 对 LLM 返回的 JSON 做多层修复——截断到完整对象、移除注释行和尾随逗号、最后逐字段正则提取兜底，确保 LLM 输出格式不稳定时不中断流水线
-- **成本**：98 篇文档各调一次 deepseek-v4-flash，总成本不足 1 元人民币；离线一次性运行
+- **成本**：50 篇文档各调一次 gpt-4o-mini，总成本不足 1 元人民币；离线一次性运行
 
 ## 五、检索与查询解析
 
@@ -183,7 +181,7 @@ Wikipedia 词条采集流程（`collect_corpus.py`）：
 
 | 属性 | 配置 |
 |------|------|
-| Embedding 模型 | 本地 Qwen3-Embedding-0.6B（1024 维，GPU 加速，通过 `LOCAL_EMBEDDING_MODEL` 可切换） |
+| Embedding 模型 | `OPENAI_EMBEDDING_MODEL`（推荐 text-embedding-3-small，1536 维） |
 | 距离度量 | Cosine 距离（0 = 完全一致，2 = 完全相反） |
 | 索引算法 | HNSW |
 | 写入策略 | 批量 upsert（batch_size=64） |
@@ -208,9 +206,9 @@ Wikipedia 词条采集流程（`collect_corpus.py`）：
 用户输入: "去年老师有没有说过期末考试怎么考"
 
         ┌─────────────────────────────────────┐
-        │  LLM (deepseek-v4-flash, temperature=0)  │
+        │  LLM (gpt-4o-mini, temperature=0)   │
         │  输出: {                             │
-        │    "search_query": "期末考试 形式",    │
+        │    "search_query": "期末考试 形式",   │
         │    "filters": {                      │
         │      "year": 2025,                   │
         │      "category": "notice"            │
@@ -222,7 +220,7 @@ Wikipedia 词条采集流程（`collect_corpus.py`）：
 - **解析字段**：`search_query`（去除了过滤信息的纯搜索词）、`year`、`category`、`author`、`language`
 - **分类枚举**：notice / faq / wiki / case_study / report / term / general
 - **回退策略**：JSON 解析异常、API 失败时 → `search_query` = 原问题全文，`filters = None`，降级为纯语义搜索
-- **性能**：额外调用一次 deepseek-v4-flash，约 1-2 秒，对用户透明
+- **性能**：额外调用一次 gpt-4o-mini，约 1-2 秒，对用户透明
 
 ## 六、答案生成与风险控制
 
@@ -259,8 +257,8 @@ Wikipedia 词条采集流程（`collect_corpus.py`）：
 |------|------|---------|---------|
 | ETL 处理 | Python (纯) | PySpark | 当前数据量 < 100 篇文档，Python 本地处理足够；若扩展到 > 10K 文档，切换 PySpark 即可，处理逻辑无需重写 |
 | 向量数据库 | ChromaDB | Milvus / Qdrant / Pinecone | ChromaDB 零部署（pip install 即用），本地持久化；Milvus 需 Docker，Pinecone 需付费。我们对数据库做了抽象封装，未来可平滑迁移 |
-| Embedding | Qwen3-Embedding-0.6B (本地 HuggingFace, GPU) | all-MiniLM-L6-v2 / BGE-M3 | 0.6B 参数，1024 维，中文 MTEB 66.33（同级第一），32K 上下文，MRL 支持可变维度；GPU 加速 10-20 秒编码全部文本块；通过 `LOCAL_EMBEDDING_MODEL` 环境变量一键切换 |
-| LLM | deepseek-v4-flash | gpt-4o-mini / 本地模型 | DeepSeek V4 Flash 性价比极高（$0.14/百万输入 token），1M 上下文窗口，支持 thinking 模式，对 FAQ 场景回答质量出色 |
+| Embedding | OpenAI text-embedding-3-small | all-MiniLM-L6-v2 / ada-002 | 商业 API 质量稳定、中文支持好；比 ada-002 便宜 5 倍且支持缩维度；后续可切换到本地 HuggingFace 模型降低调用成本 |
+| LLM | gpt-4o-mini | gpt-4 / 本地模型 | 延迟低、成本低（约 $0.15/百万 token），回答质量对 FAQ 场景够用；System Prompt 约束保证了答案限制在参考资料范围内 |
 | Web 框架 | Streamlit | Flask / FastAPI | 纯 Python 编写，零前端代码，适合数据项目快速演示；正式 API 服务应切换 FastAPI |
 | YAML 解析 | PyYAML | - | 标准库，解析 Front-Matter 和配置文件稳定可靠 |
 | PDF 解析 | PyMuPDF (fitz) | pdfplumber / PyPDF2 | C 底层实现，速度快，中文支持好；提取纯文本（暂不支持表格和图片） |
@@ -271,7 +269,6 @@ Wikipedia 词条采集流程（`collect_corpus.py`）：
 - **路径可移植**：所有路径基于 `BASE_DIR` 相对定位，无硬编码绝对路径
 - **环境变量**：API Key 等敏感配置通过 `.env` 管理，显式 `init_env()` 调用便于测试隔离
 - **单例模式**：OpenAI 客户端全局缓存复用，避免重复连接创建
-- **双模式嵌入**：支持本地 HuggingFace 模型和远程 OpenAI 兼容 API 两种嵌入模式，通过 `OPENAI_EMBEDDING_MODEL=local` 一键切换，实现零成本离线嵌入
 - **降级设计**：查询解析失败 → 全文搜索；where 过滤失败 → 纯语义搜索；LLM 元数据提取失败 → 文件名猜测
 
 ## 八、云财务与成本估算
@@ -280,17 +277,17 @@ Wikipedia 词条采集流程（`collect_corpus.py`）：
 
 | 费用类别 | 月估算 (¥) | 关键变量 |
 |----------|-----------|----------|
-| 计算资源（ECS/容器 × 离线 ETL + 在线推理 + 本地 Embedding） | 25,000 - 50,000 | 文档增量批次大小、查询 QPS |
+| 计算资源（ECS/容器 × 离线 ETL + 在线推理） | 30,000 - 60,000 | 文档增量批次大小、查询 QPS |
 | 存储（对象存储 OSS + ChromaDB 向量索引 + 日志） | 10,000 - 20,000 | 数据保留策略、索引膨胀比 |
-| 模型调用（LLM Generation API） | 15,000 - 60,000 | 每日查询量、每次回答上下文长度 |
-| **合计** | **50,000 - 130,000** | |
+| 模型调用（Embedding API + LLM Generation） | 20,000 - 80,000 | 每日查询量、每次回答上下文长度 |
+| **合计** | **60,000 - 160,000** | |
 
 **成本优化方向**：
-1. 当前 Embedding 已使用本地 Qwen3-Embedding-0.6B（GPU 加速），零 API 费用；LLM 部分继续使用 deepseek-v4-flash 的低价优势
+1. 将 Embedding 和 LLM 的在线调用切换为自部署开源模型（如 BGE / Qwen），消除 API 费用
 2. 对高频 FAQ 做答案缓存（语义去重），减少重复 LLM 调用
 3. 向量索引做分层存储：热数据 ChromaDB 内存索引、冷数据对象存储
 
-> 注：课程项目规模（~100 篇文档，数十次查询）的 API 总成本 < ¥5，上述为工程化量级估算。
+> 注：课程项目规模（< 100 篇文档，数十次查询）的 API 总成本 < ¥5，上述为工程化量级估算。
 
 ## 九、事后复盘
 
@@ -299,8 +296,6 @@ Wikipedia 词条采集流程（`collect_corpus.py`）：
 1. **环境变量加载顺序**：早期版本在模块导入时自动加载 `.env`，导致测试文件加载顺序不可控。修复为 `init_env()` 在 `main.py` / `streamlit_app.py` 入口处显式调用，模块内部不做自动加载。
 2. **报告文件被应用代码覆盖**：`report/report.md` 曾被误写为应用逻辑代码，已恢复为正式技术报告。
 3. **来源展示不完整**：CLI 和 Streamlit 的来源展示曾不一致，现统一为：CLI 打印距离+来源，Web 展示可展开面板。
-4. **深色主题白色文本不可见**：Streamlit 深色模式下 `.source-box` 文字继承白色，在浅背景上不可读。修复为 CSS 媒体查询 `[data-theme="dark"]` 下切换为深色背景+浅色文字。
-5. **LLM JSON 解析容错**：deepseek-v4-flash 返回的 JSON 偶尔含未转义字符导致解析失败。新增 `_safe_json_parse()` 多层修复：截断完整对象 → 去注释/尾随逗号 → 正则逐字段提取兜底。
 
 ### 9.2 已知限制
 
@@ -338,7 +333,6 @@ Wikipedia 词条采集流程（`collect_corpus.py`）：
 3. **增量索引**：新增文档无需重建全库
 4. **日志与监控**：记录检索命中率、问答延迟、失败样本
 5. **多租户与权限**：Collection 命名空间隔离
-6. ~~更强大的嵌入模型~~：已升级为 Qwen3-Embedding-0.6B（1024 维，GPU 加速），后续可进一步升级为 Qwen3-Embedding-4B/8B 或 BGE-M3 提升检索精度
 
 ## 十、运行方式
 
@@ -356,13 +350,13 @@ Notebook 包含 16 个章节，从环境准备到全链路测试，每步均可�
 python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
-copy .env.example .env     # 填入 OPENAI_API_KEY（Embedding 不配置则默认使用本地模型）
+copy .env.example .env     # 填入 OPENAI_API_KEY 和 OPENAI_EMBEDDING_MODEL
 ```
 
 ### 核心命令
 
 ```bash
-# 扩充公开语料（Wikipedia 58 个话题，成功采集 52 个）
+# 扩充公开语料（Wikipedia 28 个词条）
 python src/main.py collect
 
 # 建立/更新向量索引
@@ -429,7 +423,7 @@ python -m pytest tests/ -v
 > 根据 PDF 答辩要求：教授会扮演技术总监角色，提问节点故障、数据延迟、API 限流等场景。
 
 **Q1：如果 Embedding API 限流怎么办？**
-A：当前已使用本地 Qwen3-Embedding-0.6B 模型做嵌入（GPU 加速），完全离线运行，不存在 API 限流问题。若未来切换回远程 Embedding API，代码中每次写入批量 64 条减少调用次数；在线查询时，查询解析失败有全文回退方案。
+A：代码中每次写入批量 64 条，减少 API 调用次数；建库是一次性操作，偶尔限流重试即可（ChromaDB 有 upsert 幂等性）。在线查询时，查询解析失败有全文回退方案。
 
 **Q2：向量数据库崩溃怎么恢复？**
 A：ChromaDB 本地持久化在 `vector_store/` 目录，备份该目录即可。重建策略：`python src/main.py build` 全量重跑，5 分钟内恢复。
@@ -446,34 +440,34 @@ A：当前重新 `build` 全量处理并 upsert 写入（id 基于文件名+块�
 
 | 指标 | 数值 | 说明 |
 |------|------|------|
-| 课程文档总数 | 46 个 | `data/raw/` 下 .md 文件（不含 external/） |
-| Wikipedia 词条 | 52 个 | `data/raw/external/wiki_*.md`（58 个话题中成功采集 52 个） |
-| **文档总计** | **98 个** | 全部原始文档 |
-| 文档分类 | 7 类 | notice(8) / faq(4) / case_study(10) / wiki(52) / term(5) / report(1) / 其他(18) |
+| 课程文档总数 | 45 个 | `data/raw/` 下 .md 文件（不含 external/） |
+| Wikipedia 词条 | 28 个 | `data/raw/external/wiki_*.md` |
+| **文档总计** | **73 个** | 全部原始文档 |
+| 文档分类 | 7 类 | notice(8) / faq(4) / case_study(10) / wiki(28) / term(5) / report(1) / 其他(17) |
 
 ### 12.2 处理流水线数据
 
 | 处理阶段 | 输入 | 输出 | 关键参数 |
 |----------|------|------|----------|
-| 文档摄取 | 98 个文件 | 98 个文档对象 | 支持 .md/.txt/.pdf |
+| 文档摄取 | 73 个文件 | 73 个文档对象 | 支持 .md/.txt/.pdf |
 | 文本清洗 | 原始文本 | 干净文本 | 4 步正则流水线 |
-| 语义分块 | 98 篇文档 | ~130-150 个文本块 | chunk_size=700, overlap=120 |
-| 元数据提取 | 每篇前 1200 字 | JSON 元数据（安全解析兜底） | deepseek-v4-flash, temperature=0 |
-| 向量嵌入 | 文本块 | 1024 维向量 | Qwen3-Embedding-0.6B (GPU 加速) |
+| 语义分块 | 73 篇文档 | ~200+ 文本块 | chunk_size=700, overlap=120 |
+| 元数据提取 | 每篇前 1200 字 | JSON 元数据 | gpt-4o-mini, temperature=0 |
+| 向量嵌入 | 文本块 | 1536 维向量 | text-embedding-3-small |
 | 向量存储 | 向量 + 元数据 | ChromaDB 持久化 | batch_size=64 |
 
 ### 12.3 API 调用成本估算
 
 | 调用类型 | 次数 | 单次成本 | 总成本 |
 |----------|------|----------|--------|
-| 元数据提取（LLM） | 98 次 | ~¥0.003 | ~¥0.30 |
-| 查询解析（LLM） | 每次查询 1 次 | ~¥0.003 | 按使用量 |
-| 答案生成（LLM） | 每次查询 1 次 | ~¥0.005 | 按使用量 |
-| 文本嵌入（Embedding） | ~130+ 次 | ¥0（本地 GPU） | ¥0 |
-| **建库总成本** | - | - | **< ¥0.5** |
-| **单次查询成本** | - | - | **~ ¥0.01** |
+| 元数据提取（LLM） | 73 次 | ~¥0.005 | ~¥0.37 |
+| 查询解析（LLM） | 每次查询 1 次 | ~¥0.005 | 按使用量 |
+| 答案生成（LLM） | 每次查询 1 次 | ~¥0.01 | 按使用量 |
+| 文本嵌入（Embedding） | ~200+ 次 | ~¥0.001 | ~¥0.2 |
+| **建库总成本** | - | - | **< ¥1** |
+| **单次查询成本** | - | - | **~ ¥0.02** |
 
-> 注：基于 deepseek-v4-flash 定价（$0.14/百万输入 token, $0.28/百万输出 token）估算。Embedding 使用本地 Qwen3-Embedding-0.6B 模型（GPU 加速），无 API 费用。
+> 注：基于 gpt-4o-mini 定价（$0.15/百万 token）和 text-embedding-3-small 定价估算。
 
 ## 十三、项目创新亮点与技术特色
 
@@ -482,11 +476,10 @@ A：当前重新 `build` 全量处理并 upsert 写入（id 基于文件名+块�
 | 创新点 | 实现方式 | 价值 |
 |--------|----------|------|
 | **查询意图解析** | LLM 将自然语言转为结构化搜索参数 | 用户无需学习搜索语法，自然表达即可 |
-| **多层降级策略** | 解析失败→全文搜索；where 失败→纯语义搜索；JSON 失败→逐字段正则兜底 | 系统永远有结果，不会卡死 |
+| **多层降级策略** | 解析失败→全文搜索；where 失败→纯语义搜索 | 系统永远有结果，不会卡死 |
 | **Front-Matter 优先** | 人工标注覆盖 LLM 提取 | 尊重人工标注的准确性 |
 | **来源强制追溯** | System Prompt + 后端检查补全 | 100% 有来源，可核查 |
 | **安全删除机制** | `confirm=True` 显式确认 | 防止误删数据 |
-| **GPU 加速嵌入** | auto-detect CUDA，PyTorch device='cuda' | 编码速度提升 20 倍以上 |
 
 ### 13.2 技术特色
 
@@ -529,17 +522,6 @@ init_env()  # 显式调用，不在 import 时自动加载
 - 避免测试时的环境变量污染
 - 便于隔离测试和生产环境
 
-**5. 本地/远程双模式嵌入（GPU 加速）**
-```python
-# embed_store.py
-def _get_local_embedding_model():
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    model = SentenceTransformer(_LOCAL_MODEL_NAME, device=device)
-```
-- 自动检测 CUDA 并启用 GPU 加速，编码速度提升 20 倍
-- 当前使用 Qwen3-Embedding-0.6B（1024 维，中文 MTEB 66.33）
-- 通过 `LOCAL_EMBEDDING_MODEL` 环境变量可切换任意 HuggingFace 模型
-
 ## 十四、代码质量与工程实践
 
 ### 14.1 代码结构
@@ -550,10 +532,10 @@ src/
 ├── main.py              # CLI 入口（118 行）
 ├── ingest.py            # 文档摄取（104 行）
 ├── preprocess.py        # 预处理（301 行）
-├── embed_store.py       # 向量存储（210 行，含 GPU 加速 + 双模式）
+├── embed_store.py       # 向量存储（152 行）
 ├── qa.py                # 问答生成（71 行）
 ├── query_parser.py      # 查询解析（113 行）
-├── collect_corpus.py    # 语料采集（170 行，含 429/404 处理）
+├── collect_corpus.py    # 语料采集（151 行）
 └── utils.py             # 工具函数（79 行）
 
 app/
@@ -561,9 +543,9 @@ app/
 ```
 
 **代码统计**：
-- 核心模块总代码量：~1,165 行
-- 平均模块大小：~146 行
-- 最大模块：preprocess.py（301 行）—— 包含清洗、分块、元数据提取、安全 JSON 解析
+- 核心模块总代码量：~1,089 行
+- 平均模块大小：~136 行
+- 最大模块：preprocess.py（301 行）—— 包含清洗、分块、元数据提取
 
 ### 14.2 测试覆盖
 
@@ -640,7 +622,7 @@ app/
 4. **工程化标准**：模块化、可测试（54 用例）、环境变量管理、路径可移植、单例模式降本
 
 **项目亮点**：
-- 📊 处理 98 个文档，生成 ~130-150 个文本块，Embedding 零成本（本地 Qwen3-0.6B GPU 加速），建库总成本 < ¥0.5
+- 📊 处理 73 个文档，生成 200+ 文本块，建库成本 < ¥1
 - 🔍 查询意图解析支持自然语言，无需学习搜索语法
 - 🛡️ 多层降级策略确保系统永远有结果
 - 📝 100% 来源追溯，支持人工核查
