@@ -1,151 +1,158 @@
-# Final Exam - Plan 2 RAG Project
+# 📚 课程知识库 RAG 助手
 
-本项目是"大数据学期项目计划二"实现版，目标是构建一个可复现的 RAG 问答流水线：文档摄取 -> 清洗分块 -> 向量索引 -> 检索生成 -> 引用追溯。
+> 基于检索增强生成（RAG）的智能问答系统 | 大数据学期项目 — 方向 B
 
-## 1. 环境准备
+[![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/)
+[![Tests](https://img.shields.io/badge/tests-54%20passed-green.svg)](https://github.com/liwe123/Date-Analysis-Fanal-Exem)
+[![License](https://img.shields.io/badge/license-MIT-orange.svg)](LICENSE)
+[![GPU](https://img.shields.io/badge/GPU-CUDA%2012.4-brightgreen.svg)](https://pytorch.org/)
+
+---
+
+## ✨ 特性
+
+- **RAG 全流水线**：文档摄取 → 清洗分块 → 向量索引 → 混合检索 → LLM 答案生成 + 引用追溯
+- **本地嵌入**：`Qwen3-Embedding-0.6B`（1024 维），GPU CUDA 加速，零 API 费用
+- **混合检索**：向量语义搜索 + 元数据过滤器（年份/分类/作者/语言）
+- **AI 查询解析**：自然语言自动提取搜索词与过滤条件
+- **双端入口**：CLI 命令行 + Streamlit Web 界面
+- **自动采集**：Wikipedia API 自动获取 58 个大数据专业词条作为背景知识库
+- **54 个测试**：全覆盖单元测试 + 集成测试
+
+---
+
+## 🏗️ 架构
+
+```
+data/raw/*.md → ingest.py → preprocess.py → embed_store.py ─┐
+                  读取       清洗 / 分块       ChromaDB 索引   │
+                                                              ↓
+用户问题 → query_parser.py ───────────────────────────→ VectorStore.search()
+              LLM 意图解析                                 混合检索
+
+       ↓
+  qa.py → 生成回答 + 引用来源 → CLI / Streamlit 展示
+```
+
+---
+
+## 🚀 快速开始
+
+### 1. 环境准备
 
 ```bash
+git clone https://github.com/liwe123/Date-Analysis-Fanal-Exem.git
+cd "final exam2"
 python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-## 2. 配置环境变量
+> **GPU 加速**：如需 CUDA 加速，额外安装 PyTorch CUDA 版
+> ```bash
+> pip install torch --index-url https://download.pytorch.org/whl/cu124
+> ```
 
-复制 `.env.example` 为 `.env`，并填写你自己的配置值。
-
-必填项：
-- `OPENAI_API_KEY`
-- `OPENAI_EMBEDDING_MODEL`
-
-可选项：
-- `OPENAI_MODEL`（不填则使用 `gpt-4o-mini`）
-- `OPENAI_BASE_URL`（兼容 OpenAI 接口时使用）
-
-环境变量通过显式调用 `init_env()` 加载（位于 `main.py` 和 `streamlit_app.py` 入口处），不在模块导入时自动载入，便于测试隔离。
-
-## 3. 数据目录
-
-默认读取目录：`data/raw/`
-
-支持文本类型：
-- `.md`（含 YAML Front-Matter，支持嵌套结构）
-- `.txt`
-- `.pdf`（需安装 PyMuPDF）
-
-## 4. 建立索引
+### 2. 配置
 
 ```bash
+cp .env.example .env   # 编辑填入 OPENAI_API_KEY
+```
+
+| 变量 | 必填 | 说明 |
+|------|------|------|
+| `OPENAI_API_KEY` | ✅ | LLM API 密钥 |
+| `OPENAI_BASE_URL` | ❌ | 自定义 API 地址（兼容 DeepSeek 等） |
+| `OPENAI_MODEL` | ❌ | 默认 `deepseek-v4-flash` |
+| `OPENAI_EMBEDDING_MODEL` | ❌ | 设为 `local` 使用本地模型 |
+| `LOCAL_EMBEDDING_MODEL` | ❌ | 默认 `Qwen/Qwen3-Embedding-0.6B` |
+| `HF_ENDPOINT` | ❌ | 国内网络设 `https://hf-mirror.com` |
+
+### 3. 建立索引
+
+```bash
+# 先采集 Wikipedia 背景知识（推荐）
+python src/main.py collect
+
+# 构建向量索引
 python src/main.py build
 ```
 
-先扩充公开资料库（推荐）：
+### 4. 问答
 
 ```bash
-python src/main.py collect
-```
+# 单次提问
+python src/main.py ask --question "课程项目提交要求是什么？"
 
-可选参数：
-
-```bash
-python src/main.py build --data-dir "data/raw" --chunk-size 700 --overlap 120
-```
-
-> 分块默认参数：`chunk_size=700`, `overlap=120`
-
-## 5. 问答
-
-单次提问：
-
-```bash
-python src/main.py ask --question "课程项目最后提交要求是什么？" --top-k 3
-```
-
-交互提问：
-
-```bash
+# 交互模式
 python src/main.py ask
 ```
 
-## 6. Web 演示
+### 5. Web 界面
 
 ```bash
 streamlit run app/streamlit_app.py
 ```
 
-功能特性：
-- 对话历史（支持追问）
-- 侧边栏显示向量库状态与文档来源列表
-- 查询意图解析与元数据过滤展示（year/category/author/language）
-- 可调节检索条数（Top K）
-- 调试模式：显示解析后的搜索词与过滤条件
+---
 
-## 7. 运行测试
+## 🧪 测试
 
 ```bash
 python -m pytest tests/ -v
 ```
 
-共 54 个测试用例，覆盖模块：
-- `preprocess` — 清洗、分块、分类、元数据合并
-- `ingest` — 前端解析（嵌套 YAML）、文件加载
-- `query_parser` — 查询解析（正常/空过滤/API 失败/格式错误回退）
-- `embed_store` — 初始化、搜索、`max_distance` 过滤、where 回退、计数/来源、安全删除
-- `qa` — 空文档兜底、上下文生成、引用缺失补全、年份显示
-- `integration` — 摄取→处理流水线、搜索→问答端到端
+| 模块 | 测试数 | 覆盖 |
+|------|--------|------|
+| `preprocess` | 14 | 清洗、分块、分类、元数据合并 |
+| `embed_store` | 9 | 初始化、搜索、距离过滤、安全删除 |
+| `ingest` | 8 | YAML 解析、文件加载（含递归） |
+| `qa` | 5 | 上下文生成、引用补全、回退 |
+| `query_parser` | 4 | 正常/异常/格式错误/API 失败 |
+| `integration` | 4 | 摄取→处理、搜索→问答端到端 |
 
-## 8. 关键设计
+---
 
-### OpenAI 客户端全局单例
-`get_openai_client()` 内部缓存，所有模块共享同一连接，避免重复创建。
+## 🛠️ 技术栈
 
-### 向量搜索距离过滤
-`VectorStore.search()` 支持 `max_distance` 参数（余弦距离，0=最相似，2=完全相反），只返回距离不超过上限的结果。
+| 组件 | 技术 |
+|------|------|
+| LLM | DeepSeek V4 Flash (OpenAI-compatible API) |
+| Embedding | Qwen3-Embedding-0.6B（本地，1024 维，GPU CUDA） |
+| 向量数据库 | ChromaDB |
+| 文档解析 | PyMuPDF (PDF) + PyYAML (Front-Matter) |
+| 前端 | Streamlit |
+| 测试 | Pytest (54 用例) |
+| 语料 | 78 篇课程文档 + 58 篇 Wikipedia 词条 |
 
-### 安全删除
-`VectorStore.delete_collection(confirm=True)` 需要显式确认，防止误删。
+---
 
-### YAML Front-Matter
-使用 `pyyaml` 解析，支持嵌套结构（如 tags 列表）。
-
-## 9. 项目结构
+## 📁 项目结构
 
 ```
-├── app/
-│   └── streamlit_app.py      # Streamlit Web 界面
+├── app/streamlit_app.py     # Streamlit Web 界面
 ├── src/
-│   ├── __init__.py            # 包标记
-│   ├── main.py                # CLI 入口
-│   ├── collect_corpus.py      # Wikipedia 语料自动采集
-│   ├── ingest.py              # 文档摄取（md/txt/pdf）
-│   ├── preprocess.py          # 清洗、分块、元数据提取
-│   ├── embed_store.py         # ChromaDB 向量存储与检索
-│   ├── qa.py                  # LLM 问答生成
-│   ├── query_parser.py        # 查询意图解析
-│   └── utils.py               # 公共工具（环境变量、日志、客户端）
-├── tests/
-│   ├── conftest.py            # Pytest 共享配置
-│   ├── test_preprocess.py     # 预处理测试
-│   ├── test_ingest.py         # 摄取测试
-│   ├── test_query_parser.py   # 查询解析测试
-│   ├── test_embed_store.py    # 向量库测试
-│   ├── test_qa.py             # 问答测试
-│   └── test_integration.py    # 集成测试
-├── data/raw/                   # 原始文档目录
-├── vector_store/               # ChromaDB 持久化目录（自动生成）
-├── report/
-│   ├── report.md               # 完整报告
-│   ├── task_division.md        # 团队分工方案
-│   └── resume_project.md       # 简历项目描述（可直接复制到简历）
-├── pipeline_demo.ipynb         # Jupyter Notebook 演示（PDF 要求）
-├── AGENTS.md                   # 代码修改规范指南（供 LLM 和开发者阅读）
+│   ├── main.py              # CLI 入口 (build / ask / collect)
+│   ├── collect_corpus.py    # Wikipedia 语料采集
+│   ├── ingest.py            # 文档摄取 (md/txt/pdf)
+│   ├── preprocess.py        # 清洗、分块、元数据提取
+│   ├── embed_store.py       # ChromaDB 向量存储与检索
+│   ├── qa.py                # LLM 问答生成
+│   ├── query_parser.py      # 查询意图解析
+│   └── utils.py             # 公共工具（环境变量、日志、客户端）
+├── tests/                   # 54 个测试用例
+├── data/raw/                # 原始文档 + Wikipedia 词条
+├── vector_store/            # ChromaDB 持久化目录
+├── report/report.md         # 完整项目报告
+├── pipeline_demo.ipynb      # Jupyter Notebook 演示
+├── AGENTS.md                # 代码规范指南
 └── requirements.txt
 ```
 
-## 10. 报告
+---
 
-完整报告见：`report/report.md`
+## 📖 文档
 
-## 11. 代码规范
-
-所有代码修改请遵循 `AGENTS.md`，该文件包含完整的编码风格、架构约束、错误处理规范和修改 Checklist。
+- 完整报告：[report/report.md](report/report.md)
+- Jupyter 演示：[pipeline_demo.ipynb](pipeline_demo.ipynb)
+- 开发规范：[AGENTS.md](AGENTS.md)
