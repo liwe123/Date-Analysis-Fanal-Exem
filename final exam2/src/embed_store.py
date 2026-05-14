@@ -19,13 +19,14 @@ from typing import Any
 import chromadb
 
 from src.utils import get_logger, get_openai_client, clean_env
+from openai import OpenAI
 
 logger = get_logger("embed_store")
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 VECTOR_DIR = BASE_DIR / "vector_store"
 
-# ── 本地嵌入模型 ──────────────────────────────────────────────────────────────
+# ── 本地嵌入模型 ──────────────────────────────────────────────────
 
 _LOCAL_EMBEDDING_MODEL: Any = None
 _LOCAL_MODEL_NAME = None  # 从环境变量动态读取
@@ -39,7 +40,7 @@ def _resolve_local_model_name() -> str:
     return "all-MiniLM-L6-v2"
 
 
-def _get_local_embedding_model():
+def _get_local_embedding_model() -> SentenceTransformer:
     """懒加载本地 sentence-transformers 模型（全局单例，GPU 优先）。"""
     global _LOCAL_EMBEDDING_MODEL, _LOCAL_MODEL_NAME
     if _LOCAL_EMBEDDING_MODEL is None:
@@ -48,7 +49,7 @@ def _get_local_embedding_model():
             from sentence_transformers import SentenceTransformer
             import torch
             device = "cuda" if torch.cuda.is_available() else "cpu"
-            logger.info("正在加载本地嵌入模型 '%s'（设备: %s）…", _LOCAL_MODEL_NAME, device)
+            logger.info("正在加载本地嵌入模型 \"%s\"（设备: %s）…", _LOCAL_MODEL_NAME, device)
             _LOCAL_EMBEDDING_MODEL = SentenceTransformer(_LOCAL_MODEL_NAME, device=device)
             logger.info("本地嵌入模型加载完成（%d 维）。", _LOCAL_EMBEDDING_MODEL.get_sentence_embedding_dimension())
         except ImportError:
@@ -80,9 +81,9 @@ class VectorStore:
             self.embedding_model = clean_env("OPENAI_EMBEDDING_MODEL") or ""
             logger.info("使用远程嵌入模型: %s", self.embedding_model)
 
-    # ── 嵌入 ──────────────────────────────────────────────────────────────────
+    # ── 嵌入 ──────────────────────────────────────────────────────
 
-    def _get_client(self):
+    def _get_client(self) -> OpenAI:
         return get_openai_client()
 
     def get_embedding(self, text: str) -> list[float]:
@@ -113,7 +114,7 @@ class VectorStore:
         )
         return [item.embedding for item in resp.data]
 
-    # ── 写入 ──────────────────────────────────────────────────────────────────
+    # ── 写入 ──────────────────────────────────────────────────────
 
     def add_documents(self, docs: list[dict], batch_size: int = 64) -> None:
         if not docs:
@@ -139,7 +140,7 @@ class VectorStore:
             )
             logger.info("已写入 %d/%d 块。", end, total)
 
-    # ── 搜索 ──────────────────────────────────────────────────────────────────
+    # ── 搜索 ──────────────────────────────────────────────────────
 
     def search(
         self,
@@ -190,7 +191,7 @@ class VectorStore:
 
         return retrieved
 
-    # ── 管理工具 ──────────────────────────────────────────────────────────────
+    # ── 管理工具 ──────────────────────────────────────────────────
 
     def count(self) -> int:
         return self.collection.count()
@@ -210,4 +211,4 @@ class VectorStore:
                 "delete_collection 需要 confirm=True 确认。此操作不可逆，请谨慎。"
             )
         self.client.delete_collection(self.collection.name)
-        logger.info("集合 '%s' 已删除。", self.collection.name)
+        logger.info("集合 \"%s\" 已删除。", self.collection.name)

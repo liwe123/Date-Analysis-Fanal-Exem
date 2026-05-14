@@ -45,7 +45,7 @@
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
 │                        原始数据源                                      │
-│  data/raw/ (50+ md 课程文档)  +  Wikipedia API (28 个专业词条)       │
+│  data/raw/ (50+ md 课程文档)  +  Wikipedia API (58 个专业词条)       │
 └──────────┬───────────────────────────────────────────────────────────┘
            │
      ┌─────▼──────┐
@@ -62,7 +62,7 @@
      └─────┬──────┘
            │
      ┌─────▼──────┐
-     │  3. 嵌入    │  OpenAI text-embedding-3-small (1536维, 余弦距离)
+      │  3. 嵌入    │  Qwen/Qwen3-Embedding-0.6B (本地) (1024维, 余弦距离, CUDA GPU)
      │            │  embed_store.py → ChromaDB 批量写入 (batch=64)
      └─────┬──────┘
            │
@@ -102,7 +102,7 @@
 | 模块 | 文件 | 职责 | 关键设计 |
 |------|------|------|---------|
 | 数据摄取 | `ingest.py` | 递归读取 raw/ 下 .txt/.md/.pdf；解析 YAML Front-Matter | PyMuPDF 提取 PDF 文本；utf-8 容错读取 |
-| 语料扩充 | `collect_corpus.py` | 从 Wikipedia REST API 抓取 28 个大数据相关词条 | 中英文回退、限速重试(每次间隔 2s，最多 3 次)、输出为带 Front-Matter 的 md 文件 |
+| 语料扩充 | `collect_corpus.py` | 从 Wikipedia REST API 抓取 58 个大数据相关词条 | 中英文回退、限速重试(每次间隔 2s，最多 3 次)、输出为带 Front-Matter 的 md 文件 |
 | 文本清洗 | `preprocess.py` | HTML 标签移除、转义字符还原、控制字符过滤、空白规范化 | 正则流水线，保留 `\n` 作为段落边界 |
 | 语义分块 | `preprocess.py` | 段落边界→句子边界→贪心合并→滑窗切割 | 四层优先级，默认 700 字符/块，120 字符重叠，最小 40 字符 |
 | 元数据提取 | `preprocess.py` | LLM 提取作者/年份/分类/语言/摘要 | Front-Matter 优先覆盖 LLM 结果；解析失败回退文件名猜测 |
@@ -170,10 +170,10 @@ Wikipedia 词条采集流程（`collect_corpus.py`）：
 
 ### 4.4 元数据提取与合并
 
-- **LLM 提取**：每篇文档前 1200 字符发送至 `gpt-4o-mini`，返回 JSON（作者、年份、分类、语言、50 字摘要）
+- **LLM 提取**：每篇文档前 1200 字符发送至 `deepseek-v4-flash`，返回 JSON（作者、年份、分类、语言、50 字摘要）
 - **Front-Matter 优先**：若文档 YAML 头中已写明 `year: 2024`、`category: notice`，以人工标注为准覆盖 LLM 结果
 - **回退策略**：LLM JSON 解析失败 → 空元数据字典 → 文件名前缀猜测分类（如 `wiki_*` → wiki，`notice*` → notice）
-- **成本**：50 篇文档各调一次 gpt-4o-mini，总成本不足 1 元人民币；离线一次性运行
+- **成本**：50 篇文档各调一次 deepseek-v4-flash，总成本不足 1 元人民币；离线一次性运行
 
 ## 五、检索与查询解析
 
@@ -181,7 +181,7 @@ Wikipedia 词条采集流程（`collect_corpus.py`）：
 
 | 属性 | 配置 |
 |------|------|
-| Embedding 模型 | `OPENAI_EMBEDDING_MODEL`（推荐 text-embedding-3-small，1536 维） |
+| Embedding 模型 | `OPENAI_EMBEDDING_MODEL`（推荐 Qwen/Qwen3-Embedding-0.6B (本地)，1024 维） |
 | 距离度量 | Cosine 距离（0 = 完全一致，2 = 完全相反） |
 | 索引算法 | HNSW |
 | 写入策略 | 批量 upsert（batch_size=64） |
@@ -206,7 +206,7 @@ Wikipedia 词条采集流程（`collect_corpus.py`）：
 用户输入: "去年老师有没有说过期末考试怎么考"
 
         ┌─────────────────────────────────────┐
-        │  LLM (gpt-4o-mini, temperature=0)   │
+        │  LLM (deepseek-v4-flash, temperature=0)   │
         │  输出: {                             │
         │    "search_query": "期末考试 形式",   │
         │    "filters": {                      │
@@ -220,7 +220,7 @@ Wikipedia 词条采集流程（`collect_corpus.py`）：
 - **解析字段**：`search_query`（去除了过滤信息的纯搜索词）、`year`、`category`、`author`、`language`
 - **分类枚举**：notice / faq / wiki / case_study / report / term / general
 - **回退策略**：JSON 解析异常、API 失败时 → `search_query` = 原问题全文，`filters = None`，降级为纯语义搜索
-- **性能**：额外调用一次 gpt-4o-mini，约 1-2 秒，对用户透明
+- **性能**：额外调用一次 deepseek-v4-flash，约 1-2 秒，对用户透明
 
 ## 六、答案生成与风险控制
 
@@ -257,8 +257,8 @@ Wikipedia 词条采集流程（`collect_corpus.py`）：
 |------|------|---------|---------|
 | ETL 处理 | Python (纯) | PySpark | 当前数据量 < 100 篇文档，Python 本地处理足够；若扩展到 > 10K 文档，切换 PySpark 即可，处理逻辑无需重写 |
 | 向量数据库 | ChromaDB | Milvus / Qdrant / Pinecone | ChromaDB 零部署（pip install 即用），本地持久化；Milvus 需 Docker，Pinecone 需付费。我们对数据库做了抽象封装，未来可平滑迁移 |
-| Embedding | OpenAI text-embedding-3-small | all-MiniLM-L6-v2 / ada-002 | 商业 API 质量稳定、中文支持好；比 ada-002 便宜 5 倍且支持缩维度；后续可切换到本地 HuggingFace 模型降低调用成本 |
-| LLM | gpt-4o-mini | gpt-4 / 本地模型 | 延迟低、成本低（约 $0.15/百万 token），回答质量对 FAQ 场景够用；System Prompt 约束保证了答案限制在参考资料范围内 |
+| Embedding | Qwen/Qwen3-Embedding-0.6B (本地) | all-MiniLM-L6-v2 / ada-002 | 本地模型（1024 维），PyTorch CUDA GPU 推理加速；免费、零 API 调用成本 |
+| LLM | deepseek-v4-flash | gpt-4 / 本地模型 | 延迟低、成本低（约 $0.15/百万 token），回答质量对 FAQ 场景够用；System Prompt 约束保证了答案限制在参考资料范围内 |
 | Web 框架 | Streamlit | Flask / FastAPI | 纯 Python 编写，零前端代码，适合数据项目快速演示；正式 API 服务应切换 FastAPI |
 | YAML 解析 | PyYAML | - | 标准库，解析 Front-Matter 和配置文件稳定可靠 |
 | PDF 解析 | PyMuPDF (fitz) | pdfplumber / PyPDF2 | C 底层实现，速度快，中文支持好；提取纯文本（暂不支持表格和图片） |
@@ -283,7 +283,7 @@ Wikipedia 词条采集流程（`collect_corpus.py`）：
 | **合计** | **60,000 - 160,000** | |
 
 **成本优化方向**：
-1. 将 Embedding 和 LLM 的在线调用切换为自部署开源模型（如 BGE / Qwen），消除 API 费用
+1. Embedding 已切换为本地 Qwen3-Embedding-0.6B（免费），LLM 已切换为 deepseek-v4-flash（API 调用）
 2. 对高频 FAQ 做答案缓存（语义去重），减少重复 LLM 调用
 3. 向量索引做分层存储：热数据 ChromaDB 内存索引、冷数据对象存储
 
@@ -353,10 +353,12 @@ pip install -r requirements.txt
 copy .env.example .env     # 填入 OPENAI_API_KEY 和 OPENAI_EMBEDDING_MODEL
 ```
 
+> 国内网络环境需设置 `HF_ENDPOINT=https://hf-mirror.com` 以下载 HuggingFace 模型
+
 ### 核心命令
 
 ```bash
-# 扩充公开语料（Wikipedia 28 个词条）
+# 扩充公开语料（Wikipedia 58 个词条）
 python src/main.py collect
 
 # 建立/更新向量索引
@@ -369,11 +371,11 @@ python src/main.py ask                    # 交互模式
 # Web 演示
 streamlit run app/streamlit_app.py
 
-# 运行测试 (54 个用例)
+# 运行测试 (54 个测试函数)
 python -m pytest tests/ -v
 ```
 
-### 测试覆盖 (54 个用例)
+### 测试覆盖 (54 个测试函数)
 
 | 测试模块 | 覆盖内容 |
 |----------|---------|
@@ -443,7 +445,7 @@ A：当前重新 `build` 全量处理并 upsert 写入（id 基于文件名+块�
 | 课程文档总数 | 45 个 | `data/raw/` 下 .md 文件（不含 external/） |
 | Wikipedia 词条 | 28 个 | `data/raw/external/wiki_*.md` |
 | **文档总计** | **73 个** | 全部原始文档 |
-| 文档分类 | 7 类 | notice(8) / faq(4) / case_study(10) / wiki(28) / term(5) / report(1) / 其他(17) |
+| 文档分类 | 7 类 | notice(8) / faq(4) / case_study(10) / wiki(58) / term(5) / report(1) / 其他(17) |
 
 ### 12.2 处理流水线数据
 
@@ -452,8 +454,8 @@ A：当前重新 `build` 全量处理并 upsert 写入（id 基于文件名+块�
 | 文档摄取 | 73 个文件 | 73 个文档对象 | 支持 .md/.txt/.pdf |
 | 文本清洗 | 原始文本 | 干净文本 | 4 步正则流水线 |
 | 语义分块 | 73 篇文档 | ~200+ 文本块 | chunk_size=700, overlap=120 |
-| 元数据提取 | 每篇前 1200 字 | JSON 元数据 | gpt-4o-mini, temperature=0 |
-| 向量嵌入 | 文本块 | 1536 维向量 | text-embedding-3-small |
+| 元数据提取 | 每篇前 1200 字 | JSON 元数据 | deepseek-v4-flash, temperature=0 |
+| 向量嵌入 | 文本块 | 1024 维向量 | Qwen/Qwen3-Embedding-0.6B (本地) |
 | 向量存储 | 向量 + 元数据 | ChromaDB 持久化 | batch_size=64 |
 
 ### 12.3 API 调用成本估算
@@ -463,11 +465,11 @@ A：当前重新 `build` 全量处理并 upsert 写入（id 基于文件名+块�
 | 元数据提取（LLM） | 73 次 | ~¥0.005 | ~¥0.37 |
 | 查询解析（LLM） | 每次查询 1 次 | ~¥0.005 | 按使用量 |
 | 答案生成（LLM） | 每次查询 1 次 | ~¥0.01 | 按使用量 |
-| 文本嵌入（Embedding） | ~200+ 次 | ~¥0.001 | ~¥0.2 |
-| **建库总成本** | - | - | **< ¥1** |
+| 文本嵌入（本地 Embedding） | ~200+ 次 | 免费 | ¥0 |
+| **建库总成本** | - | - | **< ¥0.5** |
 | **单次查询成本** | - | - | **~ ¥0.02** |
 
-> 注：基于 gpt-4o-mini 定价（$0.15/百万 token）和 text-embedding-3-small 定价估算。
+> 注：Embedding 采用本地模型 Qwen3-Embedding-0.6B，免费；LLM 基于 deepseek-v4-flash 定价。
 
 ## 十三、项目创新亮点与技术特色
 
@@ -619,7 +621,7 @@ app/
 1. **自动化数据流水线**：收集 → 清洗 → 分块 → 嵌入 → 存储 → 检索 → 生成，全链路一键执行
 2. **语义混合检索**：向量搜索 + 元数据过滤 + 查询意图解析 + max_distance 阈值裁剪 + 多层回退
 3. **有据可查防幻觉**：System Prompt 约束 + 来源强制标注 + 自动补全
-4. **工程化标准**：模块化、可测试（54 用例）、环境变量管理、路径可移植、单例模式降本
+4. **工程化标准**：模块化、可测试（54 个测试函数）、环境变量管理、路径可移植、单例模式降本
 
 **项目亮点**：
 - 📊 处理 73 个文档，生成 200+ 文本块，建库成本 < ¥1

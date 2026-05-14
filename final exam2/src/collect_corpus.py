@@ -1,3 +1,11 @@
+"""
+collect_corpus.py
+=================
+Wikipedia 语料自动采集模块。
+"""
+
+from __future__ import annotations
+
 import json
 import re
 import time
@@ -183,7 +191,7 @@ def collect() -> tuple[list[str], list[str]]:
     return success, failed
 
 
-def main():
+def main() -> None:
     success, failed = collect()
     logger.info("已写入资料: %d", len(success))
     for p in success:

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 qa.py
 =====
@@ -6,6 +5,8 @@ qa.py
 """
 
 from __future__ import annotations
+
+from openai import OpenAI
 
 from src.utils import get_logger, get_model_name, get_openai_client
 
@@ -22,7 +23,7 @@ def _format_sources_list(retrieved_docs: list[dict]) -> str:
     return "- N/A"
 
 
-def generate_answer(question: str, retrieved_docs: list[dict], client=None) -> str:
+def generate_answer(question: str, retrieved_docs: list[dict], client: OpenAI | None = None) -> str:
     if not retrieved_docs:
         return "No relevant documents found. Unable to answer."
 

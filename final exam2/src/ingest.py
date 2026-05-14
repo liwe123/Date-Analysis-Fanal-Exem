@@ -49,7 +49,7 @@ def _parse_front_matter(text: str) -> tuple[dict, str]:
     return meta, body
 
 
-def load_text_files(data_dir, recursive: bool = True) -> list[dict]:
+def load_text_files(data_dir: str | Path, recursive: bool = True) -> list[dict]:
     """
     遍历目录，读取 .md / .txt / .pdf 文件。
 

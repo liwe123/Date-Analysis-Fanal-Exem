@@ -17,6 +17,8 @@ import json
 import re
 from typing import Any
 
+from openai import OpenAI
+
 from src.utils import get_logger, get_model_name, get_openai_client
 
 logger = get_logger("query_parser")
@@ -46,7 +48,7 @@ _PARSER_SYSTEM = """\
 """
 
 
-def parse_query(question: str, client=None) -> dict:
+def parse_query(question: str, client: OpenAI | None = None) -> dict:
     """
     将自然语言问题解析为混合搜索参数。
 

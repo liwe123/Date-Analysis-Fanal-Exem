@@ -23,7 +23,7 @@ from src.utils import get_logger, get_model_name, get_openai_client
 logger = get_logger("preprocess")
 
 
-# ── 清洗 ──────────────────────────────────────────────────────────────────────
+# ── 清洗 ──────────────────────────────────────────────────────────
 
 _HTML_ENTITIES = {
     "&amp;": "&", "&lt;": "<", "&gt;": ">",
@@ -55,7 +55,7 @@ def clean_text(text: str) -> str:
     return text.strip()
 
 
-# ── 语义分块 ──────────────────────────────────────────────────────────────────
+# ── 语义分块 ──────────────────────────────────────────────────────
 
 def _split_into_sentences(text: str) -> list[str]:
     """将文本按句子边界切分（支持中英文标点）。"""
@@ -139,7 +139,7 @@ def chunk_text(
     return chunks
 
 
-# ── LLM 元数据提取 ────────────────────────────────────────────────────────────
+# ── LLM 元数据提取 ───────────────────────────────────────────────
 
 def _safe_json_parse(raw: str, default: Any = None) -> Any:
     """安全解析 JSON，对常见 LLM 输出格式错误做自动修复。"""
@@ -285,7 +285,7 @@ def _merge_fm_meta(fm_meta: dict, llm_meta: dict) -> dict:
     return merged
 
 
-# ── 主处理流程 ────────────────────────────────────────────────────────────────
+# ── 主处理流程 ───────────────────────────────────────────────────
 
 def process_documents(
     documents: list[dict],

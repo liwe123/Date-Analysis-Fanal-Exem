@@ -1,15 +1,21 @@
+import os
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+# 必须在导入 src 模块前初始化环境变量（尤其是 HF_ENDPOINT）
+from src.utils import init_env
+init_env()
+# 兜底：如果 utils 未设置 HF_ENDPOINT，则使用镜像
+if not os.environ.get("HF_ENDPOINT"):
+    os.environ["HF_ENDPOINT"] = "https://hf-mirror.com"
+
 import streamlit as st
 from src.embed_store import VectorStore
 from src.qa import generate_answer
 from src.query_parser import parse_query
-from src.utils import get_logger, get_openai_client, init_env
-
-init_env()
+from src.utils import get_logger, get_openai_client
 logger = get_logger("streamlit_app")
 
 st.set_page_config(

@@ -1,3 +1,11 @@
+"""
+main.py
+=======
+CLI 入口：索引构建、问答、语料采集。
+"""
+
+from __future__ import annotations
+
 import argparse
 import sys
 from pathlib import Path
@@ -19,7 +27,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 RAW_DIR = BASE_DIR / "data" / "raw"
 
 
-def build_index(data_dir: Path, chunk_size: int, overlap: int):
+def build_index(data_dir: Path, chunk_size: int, overlap: int) -> None:
     logger.info("文档目录: %s", data_dir)
     documents = load_text_files(data_dir)
     logger.info("读取到 %d 个原始文档。", len(documents))
@@ -40,12 +48,12 @@ def build_index(data_dir: Path, chunk_size: int, overlap: int):
     logger.info("已建立索引，向量库当前总块数：%d。", store.count())
 
 
-def collect_corpus():
+def collect_corpus() -> None:
     success, failed = collect_external_corpus()
     logger.info("自动采集完成：成功 %d，失败 %d", len(success), len(failed))
 
 
-def ask_once(question: str, top_k: int):
+def ask_once(question: str, top_k: int) -> None:
     store = VectorStore()
 
     logger.info("正在解析查询意图...")
@@ -55,7 +63,7 @@ def ask_once(question: str, top_k: int):
 
     if filters:
         logger.info("提取到元数据过滤条件: %s", filters)
-    logger.info("提取核心语义词: '%s'", search_query)
+    logger.info("提取核心语义词: \"%s\"", search_query)
 
     retrieved_docs = store.search(search_query, top_k=top_k, where=filters)
     if not retrieved_docs:
@@ -73,7 +81,7 @@ def ask_once(question: str, top_k: int):
         print(item["text"][:200], "...\n")
 
 
-def ask_loop(top_k: int):
+def ask_loop(top_k: int) -> None:
     while True:
         question = input("\n请输入问题（输入 exit 退出）：").strip()
         if question.lower() == "exit":
@@ -82,7 +90,7 @@ def ask_loop(top_k: int):
             ask_once(question, top_k=top_k)
 
 
-def create_parser():
+def create_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="计划二 RAG 系统入口")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
@@ -99,7 +107,7 @@ def create_parser():
     return parser
 
 
-def main():
+def main() -> None:
     parser = create_parser()
     args = parser.parse_args()
 
