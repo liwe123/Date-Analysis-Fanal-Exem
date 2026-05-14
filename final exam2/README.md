@@ -153,6 +153,6 @@ python -m pytest tests/ -v
 
 ## 📖 文档
 
-- 完整报告：[report/report.md](https://github.com/liwe123/Date-Analysis-Fanal-Exem/blob/main/final%20exam2/report/report.md)
-- Jupyter 演示：[pipeline_demo.ipynb](https://github.com/liwe123/Date-Analysis-Fanal-Exem/blob/main/final%20exam2/pipeline_demo.ipynb)
-- 开发规范：[AGENTS.md](https://github.com/liwe123/Date-Analysis-Fanal-Exem/blob/main/final%20exam2/AGENTS.md)
+- 完整报告：[report/report.md](./report/report.md)
+- Jupyter 演示：[pipeline_demo.ipynb](./pipeline_demo.ipynb)
+- 开发规范：[AGENTS.md](./AGENTS.md)
