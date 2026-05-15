@@ -97,7 +97,7 @@ with st.sidebar:
 
         if sources:
             with st.expander(f"📋 文档来源列表（{len(sources)}）"):
-                search_src = st.text_input("", key="src_filter", placeholder="输入关键词过滤...", label_visibility="collapsed")
+                search_src = st.text_input("来源过滤", key="src_filter", placeholder="输入关键词过滤...", label_visibility="collapsed")
                 filtered = [s for s in sources if search_src.lower() in s.lower()] if search_src else sources
                 for src in filtered:
                     st.markdown(f"▪ {src}")
