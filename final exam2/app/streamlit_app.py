@@ -1,3 +1,4 @@
+import html
 import os
 import sys
 from pathlib import Path
@@ -17,6 +18,13 @@ from src.qa import generate_answer
 from src.query_parser import parse_query
 from src.utils import get_logger, get_openai_client
 logger = get_logger("streamlit_app")
+
+
+def safe_md(text: str) -> str:
+    """将 Markdown 安全地转换为 HTML（先转义 HTML，防止注入）。"""
+    safe = html.escape(text, quote=False)
+    import markdown as _md
+    return _md.markdown(safe, extensions=["extra"])
 
 st.set_page_config(
     page_title="课程知识库 RAG 助手",
@@ -46,11 +54,9 @@ with col_title:
         unsafe_allow_html=True,
     )
 with col_btn:
-    st.markdown('<div class="clear-btn-wrapper">', unsafe_allow_html=True)
-    if st.button("🗑 清空对话", use_container_width=True):
+    if st.button("🗑 清空对话", use_container_width=True, type="secondary", key="clear_chat"):
         st.session_state.messages = []
         st.rerun()
-    st.markdown("</div>", unsafe_allow_html=True)
 
 # ── Session state ─────────────────────────────────────────────────────────────
 
@@ -141,12 +147,10 @@ if not st.session_state.messages:
 
 # ── Chat history ──────────────────────────────────────────────────────────────
 
-st.markdown('<div class="chat-container">', unsafe_allow_html=True)
-
 for msg in st.session_state.messages:
     if msg["role"] == "user":
         st.markdown(
-            f'<div class="message-user"><div class="bubble">{msg["content"]}</div></div>',
+            f'<div class="message-user"><div class="bubble">{html.escape(msg["content"])}</div></div>',
             unsafe_allow_html=True,
         )
     else:
@@ -154,12 +158,10 @@ for msg in st.session_state.messages:
             '<div class="message-assistant">'
             '<div class="avatar-wrapper"><div class="avatar">🤖</div></div>'
             '<div class="bubble-wrapper"><div class="bubble">'
-            f'{msg["content"]}'
+            f'{safe_md(msg["content"])}'
             "</div></div></div>",
             unsafe_allow_html=True,
         )
-
-st.markdown("</div>", unsafe_allow_html=True)
 
 # ── Chat input ────────────────────────────────────────────────────────────────
 
@@ -184,7 +186,7 @@ if question:
 
     st.session_state.messages.append({"role": "user", "content": question})
     st.markdown(
-        f'<div class="message-user"><div class="bubble">{question}</div></div>',
+        f'<div class="message-user"><div class="bubble">{html.escape(question)}</div></div>',
         unsafe_allow_html=True,
     )
 
@@ -242,7 +244,7 @@ if question:
                 '<div class="message-assistant">'
                 '<div class="avatar-wrapper"><div class="avatar">🤖</div></div>'
                 '<div class="bubble-wrapper"><div class="bubble">'
-                f"{warning_msg}"
+                f'{safe_md(warning_msg)}'
                 "</div></div></div>",
                 unsafe_allow_html=True,
             )
@@ -288,7 +290,7 @@ if question:
             )
 
         full_answer = (
-            answer
+            safe_md(answer)
             + '<div class="source-section"><details>'
             + f"<summary>📎 检索来源（{len(results)} 条）</summary>"
             + source_items
@@ -322,7 +324,7 @@ if question:
             '<div class="message-assistant">'
             '<div class="avatar-wrapper"><div class="avatar">🤖</div></div>'
             '<div class="bubble-wrapper"><div class="bubble">'
-            f"{error_msg}"
+            f'{safe_md(error_msg)}'
             "</div></div></div>",
             unsafe_allow_html=True,
         )

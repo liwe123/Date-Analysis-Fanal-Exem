@@ -258,42 +258,6 @@ footer { visibility: hidden; }
   letter-spacing: 0.01em;
 }
 
-/* Clear button */
-.clear-btn-wrapper { display: flex; align-items: center; justify-content: flex-end; }
-.clear-btn-wrapper .stButton button {
-  background: var(--bg-subtle);
-  color: var(--text-secondary);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-full);
-  padding: 0.35rem 1.1rem;
-  font-size: 0.78rem;
-  font-weight: 500;
-  transition: var(--transition);
-  backdrop-filter: blur(8px);
-  box-shadow: var(--shadow-xs);
-}
-.clear-btn-wrapper .stButton button:hover {
-  background: var(--border);
-  color: var(--text-primary);
-  border-color: var(--text-tertiary);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-sm);
-}
-.clear-btn-wrapper .stButton button:active {
-  transform: translateY(0);
-  box-shadow: var(--shadow-xs);
-}
-
-/* =============================================================
-   CHAT CONTAINER
-   ============================================================= */
-.chat-container {
-  display: flex;
-  flex-direction: column;
-  gap: 0.125rem;
-  padding-bottom: 1rem;
-}
-
 /* =============================================================
    WELCOME
    ============================================================= */
@@ -1015,13 +979,12 @@ div[data-testid="stNotification"] {
 /* Extra small screens */
 @media (max-width: 480px) {
   .header-inner { flex-wrap: wrap; }
-  .clear-btn-wrapper { width: 100%; justify-content: flex-start; padding-top: 0.5rem; }
-  .clear-btn-wrapper .stButton button { width: 100%; }
+  div[data-testid="column"]:nth-child(2) button { width: 100%; }
 }
 
 /* Print */
 @media print {
   .stSidebar,
   .stChatInputContainer,
-  .clear-btn-wrapper { display: none !important; }
+  div[data-testid="column"]:nth-child(2) { display: none !important; }
 }
