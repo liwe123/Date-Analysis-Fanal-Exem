@@ -183,7 +183,7 @@ def _safe_json_parse(raw: str, default: Any = None) -> Any:
         return fallback if fallback else (default if default is not None else {})
 
 
-_extract_metadata_SUPPORTED_KEYS = ("author", "year", "category", "language", "summary")
+_METADATA_SUPPORTED_KEYS = ("author", "year", "category", "language", "summary")
 
 _METADATA_SYSTEM = (
     "你是一个文档分析助手。请从给定的文档文本中提取结构化元数据，"
@@ -242,7 +242,7 @@ def extract_metadata(
 
         return meta
 
-    except (json.JSONDecodeError, ValueError, Exception) as exc:
+    except Exception as exc:
         # 不吞掉 KeyboardInterrupt / SystemExit 等系统信号
         if isinstance(exc, (KeyboardInterrupt, SystemExit)):
             raise
@@ -277,6 +277,7 @@ def _merge_fm_meta(fm_meta: dict, llm_meta: dict) -> dict:
         try:
             merged["year"] = int(fm_meta["year"])
         except (ValueError, TypeError):
+            logger.warning("Front-Matter year 字段转换失败: %s", fm_meta["year"])
             pass
     if fm_meta.get("category"):
         merged["category"] = fm_meta["category"]

@@ -108,7 +108,7 @@ def parse_query(question: str, client: OpenAI | None = None) -> dict:
             "raw_filters": raw_filters,
         }
 
-    except (json.JSONDecodeError, ValueError, Exception) as exc:
+    except Exception as exc:
         if isinstance(exc, (KeyboardInterrupt, SystemExit)):
             raise
         logger.warning("查询解析失败，降级为纯向量搜索: %s", exc)

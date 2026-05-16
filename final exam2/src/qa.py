@@ -25,7 +25,7 @@ def _format_sources_list(retrieved_docs: list[dict]) -> str:
 
 def generate_answer(question: str, retrieved_docs: list[dict], client: OpenAI | None = None) -> str:
     if not retrieved_docs:
-        return "No relevant documents found. Unable to answer."
+        return "未找到相关文档，无法回答。"
 
     context_blocks = []
     for doc in retrieved_docs:
@@ -33,18 +33,18 @@ def generate_answer(question: str, retrieved_docs: list[dict], client: OpenAI | 
         source = meta.get("source", doc.get("source", "unknown"))
         year = meta.get("year")
         year_str = f" ({year})" if year else ""
-        block = f"[Source: {source}{year_str}]\n{doc['text']}"
+        block = f"[来源: {source}{year_str}]\n{doc['text']}"
         context_blocks.append(block)
 
     context_text = "\n\n".join(context_blocks)
 
     system_prompt = (
-        "You are a professional Q&A assistant.\n"
-        "Answer based only on the provided reference materials.\n"
-        "Cite sources inline as [Source: name]."
+        "你是一个专业的问答助手。\n"
+        "仅基于提供的参考资料回答问题。\n"
+        "在回答中引用来源，格式为 [来源: 名称]。"
     )
 
-    user_prompt = f"References:\n{context_text}\n\nQuestion:\n{question}"
+    user_prompt = f"参考资料:\n{context_text}\n\n问题:\n{question}"
 
     if client is None:
         client = get_openai_client()
@@ -62,11 +62,13 @@ def generate_answer(question: str, retrieved_docs: list[dict], client: OpenAI | 
         )
         answer = response.choices[0].message.content or ""
 
-        if "[Source:" not in answer:
-            answer += f"\n\nSources:\n{_format_sources_list(retrieved_docs)}"
+        if "[来源:" not in answer:
+            answer += f"\n\n来源:\n{_format_sources_list(retrieved_docs)}"
 
         return answer
 
     except Exception as exc:
-        logger.error("LLM answer generation failed: %s", repr(exc))
-        raise RuntimeError(f"Answer generation failed: {exc}") from exc
+        if isinstance(exc, (KeyboardInterrupt, SystemExit)):
+            raise
+        logger.error("LLM 答案生成失败: %s", repr(exc))
+        raise RuntimeError(f"答案生成失败: {exc}") from exc

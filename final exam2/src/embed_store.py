@@ -17,9 +17,9 @@ from pathlib import Path
 from typing import Any
 
 import chromadb
+from openai import OpenAI
 
 from src.utils import get_logger, get_openai_client, clean_env
-from openai import OpenAI
 
 logger = get_logger("embed_store")
 

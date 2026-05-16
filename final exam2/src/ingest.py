@@ -83,6 +83,8 @@ def load_text_files(data_dir: str | Path, recursive: bool = True) -> list[dict]:
                     raw = "\n".join(page.get_text() for page in doc)
                 raw = raw.strip()
             except Exception as e:
+                if isinstance(e, (KeyboardInterrupt, SystemExit)):
+                    raise
                 logger.error("解析 PDF 失败 %s: %s", file_path.name, e)
                 continue
         else:

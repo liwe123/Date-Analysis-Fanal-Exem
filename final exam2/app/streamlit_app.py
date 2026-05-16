@@ -1,21 +1,28 @@
+"""
+streamlit_app.py
+================
+Streamlit Web 界面入口。
+"""
+
+from __future__ import annotations
+
 import os
 import sys
 from pathlib import Path
 
+import streamlit as st
+from openai import OpenAI
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-# 必须在导入 src 模块前初始化环境变量（尤其是 HF_ENDPOINT）
-from src.utils import init_env
-init_env()
-# 兜底：如果 utils 未设置 HF_ENDPOINT，则使用镜像
-if not os.environ.get("HF_ENDPOINT"):
-    os.environ["HF_ENDPOINT"] = "https://hf-mirror.com"
-
-import streamlit as st
+from src.utils import init_env, get_logger, get_openai_client
 from src.embed_store import VectorStore
 from src.qa import generate_answer
 from src.query_parser import parse_query
-from src.utils import get_logger, get_openai_client
+
+init_env()
+if not os.environ.get("HF_ENDPOINT"):
+    os.environ["HF_ENDPOINT"] = "https://hf-mirror.com"
 logger = get_logger("streamlit_app")
 
 st.set_page_config(
@@ -58,13 +65,13 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 
 
-def get_cached_client():
+def get_cached_client() -> OpenAI:
     if "openai_client" not in st.session_state:
         st.session_state.openai_client = get_openai_client()
     return st.session_state.openai_client
 
 
-def get_cached_store():
+def get_cached_store() -> VectorStore:
     if "vector_store" not in st.session_state:
         st.session_state.vector_store = VectorStore()
     return st.session_state.vector_store
@@ -103,8 +110,11 @@ with st.sidebar:
                     st.markdown(f"▪ {src}")
 
     except Exception as exc:
+        if isinstance(exc, (KeyboardInterrupt, SystemExit)):
+            raise
         st.error("⚠ 向量库初始化失败")
         st.caption(str(exc))
+        logger.warning("向量库初始化失败: %s", exc)
 
     st.markdown('<div class="sidebar-section-title">🔍 检索设置</div>', unsafe_allow_html=True)
 
@@ -307,6 +317,8 @@ if question:
         st.session_state.messages.append({"role": "assistant", "content": answer})
 
     except Exception as exc:
+        if isinstance(exc, (KeyboardInterrupt, SystemExit)):
+            raise
         err_str = str(exc)
 
         if "image" in err_str.lower() or "image_url" in err_str.lower():

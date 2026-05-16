@@ -49,11 +49,9 @@ class TestChunkText:
         assert len(chunks) == 1
 
     def test_invalid_overlap(self):
-        try:
+        import pytest
+        with pytest.raises(ValueError):
             chunk_text("test", chunk_size=10, overlap=20)
-            assert False, "Should have raised ValueError"
-        except ValueError:
-            pass
 
     def test_has_char_offsets(self):
         chunks = chunk_text("第一段。\n\n第二段。", chunk_size=100, overlap=20)

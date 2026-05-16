@@ -9,9 +9,9 @@ from __future__ import annotations
 import json
 import re
 import time
-from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import NamedTuple
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote
 from urllib.request import Request, urlopen
@@ -30,8 +30,7 @@ RETRY_DELAY = 2
 REQUEST_DELAY = 2  # 请求间隔（秒）
 
 
-@dataclass
-class Topic:
+class Topic(NamedTuple):
     zh_title: str
     en_title: str
     tag: str
@@ -142,6 +141,7 @@ def fetch_summary(lang: str, title: str) -> dict | None:
 
 
 def safe_name(text: str) -> str:
+    """将文本转为安全的文件名（小写、下划线、去除特殊字符）。"""
     text = text.lower().strip()
     text = re.sub(r"\s+", "_", text)
     text = re.sub(r"[^a-z0-9_\-\u4e00-\u9fff]", "", text)
@@ -149,6 +149,7 @@ def safe_name(text: str) -> str:
 
 
 def write_markdown(topic: Topic, summary: dict) -> Path:
+    """将采集到的摘要写入 Markdown 文件，返回输出路径。"""
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     file_name = f"wiki_{safe_name(topic.zh_title)}.md"
     out_path = OUTPUT_DIR / file_name
@@ -169,6 +170,7 @@ def write_markdown(topic: Topic, summary: dict) -> Path:
 
 
 def collect() -> tuple[list[str], list[str]]:
+    """遍历所有话题并采集摘要，返回 (成功路径列表, 失败话题列表)。"""
     success = []
     failed = []
 

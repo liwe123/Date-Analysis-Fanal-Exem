@@ -36,7 +36,7 @@ class TestFormatSourcesList:
 class TestGenerateAnswer:
     def test_no_docs(self):
         result = generate_answer("question?", [])
-        assert "No relevant documents found" in result
+        assert "未找到相关文档" in result
 
     def test_generates_with_context(self):
         mock_client = MagicMock()
