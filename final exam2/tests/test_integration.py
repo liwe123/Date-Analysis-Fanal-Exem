@@ -28,7 +28,7 @@ class TestIngestToPreprocessPipeline:
             docs = load_text_files(tmp_path, recursive=False)
             assert len(docs) == 1
 
-            processed = process_documents(docs, chunk_size=700, overlap=120, extract_meta=False)
+            processed = process_documents(docs, chunk_size=700, overlap=120, is_extract_meta=False)
             assert len(processed) >= 1
             for p in processed:
                 assert "id" in p
@@ -46,7 +46,7 @@ class TestIngestToPreprocessPipeline:
 
             docs = load_text_files(tmp_path)
             assert docs == []
-            processed = process_documents(docs, extract_meta=False)
+            processed = process_documents(docs, is_extract_meta=False)
             assert processed == []
 
 

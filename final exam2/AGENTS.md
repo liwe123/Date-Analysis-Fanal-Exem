@@ -63,7 +63,7 @@ from src.utils import get_logger, get_openai_client
 | 类 | `PascalCase` | `VectorStore`, `Topic` |
 | 常量 | `UPPER_CASE` 模块级 | `MAX_RETRIES`, `SUPPORTED_SUFFIXES` |
 | 变量 | `snake_case` | `data_dir`, `chunk_size`, `top_k` |
-| 布尔变量 | `is_` / `has_` 前缀 | `HAS_PYMUPDF`, `extract_meta` |
+| 布尔变量 | `is_` / `has_` 前缀 | `HAS_PYMUPDF`, `is_extract_meta` |
 
 ### 2.4 类型标注
 

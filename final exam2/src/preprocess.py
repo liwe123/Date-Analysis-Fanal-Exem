@@ -292,7 +292,7 @@ def process_documents(
     documents: list[dict],
     chunk_size: int = 700,
     overlap: int = 120,
-    extract_meta: bool = True,
+    is_extract_meta: bool = True,
 ) -> list[dict]:
     """
     完整的文档处理流程：
@@ -301,7 +301,7 @@ def process_documents(
     processed: list[dict] = []
 
     # 复用同一个 OpenAI 客户端
-    client = get_openai_client() if extract_meta else None
+    client = get_openai_client() if is_extract_meta else None
 
     for doc_idx, doc in enumerate(documents):
         filename = doc.get("source", "unknown")
@@ -309,7 +309,7 @@ def process_documents(
 
         cleaned = clean_text(doc["text"])
 
-        if extract_meta:
+        if is_extract_meta:
             llm_meta = extract_metadata(cleaned, filename=filename, client=client)
         else:
             llm_meta = {
