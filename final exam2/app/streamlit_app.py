@@ -117,35 +117,35 @@ with st.sidebar:
         logger.warning("向量库初始化失败: %s", exc)
 
     st.markdown('<div class="sidebar-section-title">➕ 数据管理</div>', unsafe_allow_html=True)
-    with st.expander("上传自定义数据"):
-        custom_data_title = st.text_input("数据标题", placeholder="例如：最新课程通知", key="custom_title")
-        custom_data_text = st.text_area("数据内容", height=150, placeholder="粘贴文本内容...", key="custom_text")
-        if st.button("添加到知识库", use_container_width=True):
-            if not custom_data_text.strip():
-                st.error("内容不能为空")
-            else:
-                with st.spinner("正在处理并加入向量库..."):
-                    from src.preprocess import process_documents
-                    import time
+    
+    custom_data_title = st.text_input("数据标题", placeholder="例如：最新课程通知", key="custom_title")
+    custom_data_text = st.text_area("数据内容", height=150, placeholder="粘贴文本内容...", key="custom_text")
+    if st.button("添加到知识库", use_container_width=True):
+        if not custom_data_text.strip():
+            st.error("内容不能为空")
+        else:
+            with st.spinner("正在处理并加入向量库..."):
+                from src.preprocess import process_documents
+                import time
+                
+                source_name = f"custom_{int(time.time())}.txt"
+                if custom_data_title.strip():
+                    # sanitize title somewhat
+                    safe_title = "".join(c for c in custom_data_title.strip() if c.isalnum() or c in (" ", "_", "-")).replace(" ", "_")
+                    source_name = f"{safe_title}_{int(time.time())}.txt"
                     
-                    source_name = f"custom_{int(time.time())}.txt"
-                    if custom_data_title.strip():
-                        # sanitize title somewhat
-                        safe_title = "".join(c for c in custom_data_title.strip() if c.isalnum() or c in (" ", "_", "-")).replace(" ", "_")
-                        source_name = f"{safe_title}_{int(time.time())}.txt"
-                        
-                    doc = {
-                        "source": source_name,
-                        "path": "custom_input",
-                        "text": custom_data_text,
-                        "fm_meta": {},
-                    }
-                    processed = process_documents([doc])
-                    store = get_cached_store()
-                    store.add_documents(processed)
-                    st.success("添加成功！")
-                    time.sleep(1)
-                    st.rerun()
+                doc = {
+                    "source": source_name,
+                    "path": "custom_input",
+                    "text": custom_data_text,
+                    "fm_meta": {},
+                }
+                processed = process_documents([doc])
+                store = get_cached_store()
+                store.add_documents(processed)
+                st.success("添加成功！")
+                time.sleep(1)
+                st.rerun()
 
     st.markdown('<div class="sidebar-section-title">🔍 检索设置</div>', unsafe_allow_html=True)
 
