@@ -102,7 +102,7 @@
 | 模块 | 文件 | 职责 | 关键设计 |
 |------|------|------|---------|
 | 数据摄取 | `ingest.py` | 递归读取 raw/ 下 .txt/.md/.pdf；解析 YAML Front-Matter | PyMuPDF 提取 PDF 文本；utf-8 容错读取 |
-| 语料扩充 | `collect_corpus.py` 及补充脚本 | 从 Wikipedia REST API 抓取 58 个大数据相关词条 | 中英文回退、限速重试(每次间隔 2s，最多 3 次)、输出为带 Front-Matter 的 md 文件 |
+| 语料扩充 | `collect_corpus.py`、`collect_stackoverflow.py`、`collect_csdn.py` | 从 Wikipedia REST API、Stack Overflow API、CSDN 博客三源采集 | 中英文回退、限速重试、429 指数退避；输出为带 Front-Matter 的 md 文件 |
 | 文本清洗 | `preprocess.py` | HTML 标签移除、转义字符还原、控制字符过滤、空白规范化 | 正则流水线，保留 `\n` 作为段落边界 |
 | 语义分块 | `preprocess.py` | 段落边界→句子边界→贪心合并→滑窗切割 | 四层优先级，默认 700 字符/块，120 字符重叠，最小 40 字符 |
 | 元数据提取 | `preprocess.py` | LLM 提取作者/年份/分类/语言/摘要 | 32 线程并发提取，429 限流指数退避重试；Front-Matter 优先覆盖 LLM 结果 |

@@ -17,7 +17,7 @@
 - **AI 查询解析**：自然语言自动提取搜索词与过滤条件
 - **并发元数据提取**：32 线程并发调用 LLM 提取元数据，429 限流自动指数退避重试
 - **双端入口**：CLI 命令行 + 现代化 Streamlit Web 界面（极简黑白高级质感，支持侧边栏直接上传自定义数据）
-- **自动采集**：Wikipedia API 自动获取 58 个大数据专业词条作为背景知识库（包含专属数据补充脚本 `collect_more_corpus.py`）
+- **自动采集**：Wikipedia + Stack Overflow + CSDN 三源自动采集，覆盖术语定义、实战问答、技术博客
 - **54 个测试**：全覆盖单元测试 + 集成测试
 
 ---
@@ -72,8 +72,11 @@ cp .env.example .env   # 编辑填入 OPENAI_API_KEY
 ### 3. 建立索引
 
 ```bash
-# 先采集 Wikipedia 背景知识（推荐）
-python src/main.py collect
+# 采集语料（三选一或全量）
+python src/main.py collect          # Wikipedia 术语
+python src/main.py collect-so       # Stack Overflow 问答
+python src/main.py collect-csdn     # CSDN 博客
+python src/main.py collect-all      # 全量采集
 
 # 构建向量索引
 python src/main.py build
@@ -127,7 +130,7 @@ python -m pytest tests/ -v
 | 文档解析 | PyMuPDF (PDF) + PyYAML (Front-Matter) |
 | 前端 | Streamlit |
 | 测试 | Pytest (54 用例) |
-| 语料 | 78 篇课程文档 + 58 篇 Wikipedia 词条 |
+| 语料 | Wikipedia + Stack Overflow + CSDN（三源自动采集） |
 
 ---
 
@@ -137,8 +140,9 @@ python -m pytest tests/ -v
 ├── app/streamlit_app.py     # Streamlit Web 界面
 ├── src/
 │   ├── main.py              # CLI 入口 (build / ask / collect)
-│   ├── collect_corpus.py    # Wikipedia 语料采集（基础版）
-│   ├── collect_more_corpus.py # Wikipedia 语料补充采集
+│   ├── collect_corpus.py    # Wikipedia 语料采集
+│   ├── collect_stackoverflow.py # Stack Overflow 问答采集
+│   ├── collect_csdn.py      # CSDN 博客采集
 │   ├── ingest.py            # 文档摄取 (md/txt/pdf)
 │   ├── preprocess.py        # 清洗、分块、元数据提取
 │   ├── embed_store.py       # ChromaDB 向量存储与检索

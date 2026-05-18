@@ -123,6 +123,9 @@ RAW_DIR = BASE_DIR / "data" / "raw"
 | `embed_store.py` | 向量嵌入、ChromaDB 读写 | 生成回答、解析查询 |
 | `qa.py` | 生成答案、格式化引用 | 操作数据库 |
 | `query_parser.py` | 解析查询意图 | 执行检索、生成答案 |
+| `collect_corpus.py` | Wikipedia 语料采集 | 操作 ChromaDB |
+| `collect_stackoverflow.py` | Stack Overflow 问答采集 | 操作 ChromaDB |
+| `collect_csdn.py` | CSDN 博客采集 | 操作 ChromaDB |
 | `main.py` | 编排流水线、CLI 入口 | 包含业务逻辑 |
 | `utils.py` | 环境变量、日志、客户端单例 | 包含业务逻辑 |
 
@@ -135,6 +138,9 @@ main.py / streamlit_app.py
     ├── embed_store.py ─ 依赖 utils.py
     ├── qa.py ────────── 依赖 utils.py
     ├── query_parser.py ─ 依赖 utils.py
+    ├── collect_corpus.py ─── 依赖 utils.py
+    ├── collect_stackoverflow.py ── 依赖 utils.py
+    ├── collect_csdn.py ───── 依赖 utils.py
     └── utils.py ─────── 无内部依赖
 ```
 

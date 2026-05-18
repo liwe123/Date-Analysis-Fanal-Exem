@@ -13,6 +13,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.collect_corpus import collect as collect_external_corpus
+from src.collect_csdn import collect as collect_csdn_corpus
+from src.collect_stackoverflow import collect as collect_so_corpus
 from src.embed_store import VectorStore
 from src.ingest import load_text_files
 from src.preprocess import process_documents
@@ -52,7 +54,25 @@ def build_index(data_dir: Path, chunk_size: int, overlap: int, max_workers: int)
 
 def collect_corpus() -> None:
     success, failed = collect_external_corpus()
-    logger.info("自动采集完成：成功 %d，失败 %d", len(success), len(failed))
+    logger.info("Wikipedia 采集完成：成功 %d，失败 %d", len(success), len(failed))
+
+
+def collect_stackoverflow() -> None:
+    success, failed = collect_so_corpus()
+    logger.info("Stack Overflow 采集完成：成功 %d，失败 %d", len(success), len(failed))
+
+
+def collect_csdn() -> None:
+    success, failed = collect_csdn_corpus()
+    logger.info("CSDN 采集完成：成功 %d，失败 %d", len(success), len(failed))
+
+
+def collect_all() -> None:
+    logger.info("=== 开始全量采集 ===")
+    collect_corpus()
+    collect_stackoverflow()
+    collect_csdn()
+    logger.info("=== 全量采集完成 ===")
 
 
 def ask_once(question: str, top_k: int) -> None:
@@ -106,7 +126,10 @@ def create_parser() -> argparse.ArgumentParser:
     ask_parser.add_argument("--question", type=str, default="", help="单次问题；不填则进入交互模式")
     ask_parser.add_argument("--top-k", type=int, default=3, help="检索返回条数")
 
-    subparsers.add_parser("collect", help="自动从公开资料源采集术语与背景知识")
+    subparsers.add_parser("collect", help="从 Wikipedia 采集术语与背景知识")
+    subparsers.add_parser("collect-so", help="从 Stack Overflow 采集高质量问答")
+    subparsers.add_parser("collect-csdn", help="从 CSDN 博客采集技术文章")
+    subparsers.add_parser("collect-all", help="全量采集（Wikipedia + Stack Overflow + CSDN）")
     return parser
 
 
@@ -123,6 +146,12 @@ def main() -> None:
             ask_loop(top_k=args.top_k)
     elif args.command == "collect":
         collect_corpus()
+    elif args.command == "collect-so":
+        collect_stackoverflow()
+    elif args.command == "collect-csdn":
+        collect_csdn()
+    elif args.command == "collect-all":
+        collect_all()
 
 
 if __name__ == "__main__":
