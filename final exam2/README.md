@@ -15,8 +15,8 @@
 - **本地嵌入**：`Qwen3-Embedding-0.6B`（1024 维），GPU CUDA 加速，零 API 费用
 - **混合检索**：向量语义搜索 + 元数据过滤器（年份/分类/作者/语言）
 - **AI 查询解析**：自然语言自动提取搜索词与过滤条件
-- **双端入口**：CLI 命令行 + 现代化 Streamlit Web 界面（极简黑白高级质感、SVG 矢量图标、毛玻璃视效）
-- **自动采集**：Wikipedia API 自动获取 58 个大数据专业词条作为背景知识库
+- **双端入口**：CLI 命令行 + 现代化 Streamlit Web 界面（极简黑白高级质感，支持侧边栏直接上传自定义数据）
+- **自动采集**：Wikipedia API 自动获取 58 个大数据专业词条作为背景知识库（包含专属数据补充脚本 `collect_more_corpus.py`）
 - **54 个测试**：全覆盖单元测试 + 集成测试
 
 ---
@@ -133,7 +133,8 @@ python -m pytest tests/ -v
 ├── app/streamlit_app.py     # Streamlit Web 界面
 ├── src/
 │   ├── main.py              # CLI 入口 (build / ask / collect)
-│   ├── collect_corpus.py    # Wikipedia 语料采集
+│   ├── collect_corpus.py    # Wikipedia 语料采集（基础版）
+│   ├── collect_more_corpus.py # Wikipedia 语料补充采集
 │   ├── ingest.py            # 文档摄取 (md/txt/pdf)
 │   ├── preprocess.py        # 清洗、分块、元数据提取
 │   ├── embed_store.py       # ChromaDB 向量存储与检索
