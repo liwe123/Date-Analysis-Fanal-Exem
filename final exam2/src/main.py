@@ -27,7 +27,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 RAW_DIR = BASE_DIR / "data" / "raw"
 
 
-def build_index(data_dir: Path, chunk_size: int, overlap: int) -> None:
+def build_index(data_dir: Path, chunk_size: int, overlap: int, max_workers: int) -> None:
     logger.info("文档目录: %s", data_dir)
     documents = load_text_files(data_dir)
     logger.info("读取到 %d 个原始文档。", len(documents))
@@ -36,7 +36,9 @@ def build_index(data_dir: Path, chunk_size: int, overlap: int) -> None:
         logger.warning("没有读取到任何 txt 或 md 文件。")
         return
 
-    processed_docs = process_documents(documents, chunk_size=chunk_size, overlap=overlap)
+    processed_docs = process_documents(
+        documents, chunk_size=chunk_size, overlap=overlap, max_workers=max_workers,
+    )
     logger.info("处理后得到 %d 个文本块。", len(processed_docs))
 
     if not processed_docs:
@@ -98,6 +100,7 @@ def create_parser() -> argparse.ArgumentParser:
     build_parser.add_argument("--data-dir", type=Path, default=RAW_DIR, help="原始数据目录")
     build_parser.add_argument("--chunk-size", type=int, default=700, help="分块大小（字符）")
     build_parser.add_argument("--overlap", type=int, default=120, help="分块重叠（字符）")
+    build_parser.add_argument("--max-workers", type=int, default=32, help="LLM 元数据提取并发数")
 
     ask_parser = subparsers.add_parser("ask", help="问答模式")
     ask_parser.add_argument("--question", type=str, default="", help="单次问题；不填则进入交互模式")
@@ -112,7 +115,7 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.command == "build":
-        build_index(args.data_dir, args.chunk_size, args.overlap)
+        build_index(args.data_dir, args.chunk_size, args.overlap, args.max_workers)
     elif args.command == "ask":
         if args.question:
             ask_once(args.question, top_k=args.top_k)

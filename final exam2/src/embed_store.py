@@ -51,7 +51,7 @@ def _get_local_embedding_model() -> SentenceTransformer:
             device = "cuda" if torch.cuda.is_available() else "cpu"
             logger.info("正在加载本地嵌入模型 \"%s\"（设备: %s）…", _LOCAL_MODEL_NAME, device)
             _LOCAL_EMBEDDING_MODEL = SentenceTransformer(_LOCAL_MODEL_NAME, device=device)
-            logger.info("本地嵌入模型加载完成（%d 维）。", _LOCAL_EMBEDDING_MODEL.get_sentence_embedding_dimension())
+            logger.info("本地嵌入模型加载完成（%d 维）。", _LOCAL_EMBEDDING_MODEL.get_embedding_dimension())
         except ImportError:
             raise RuntimeError(
                 "sentence-transformers 未安装，请运行: pip install sentence-transformers"

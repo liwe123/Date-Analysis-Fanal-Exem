@@ -152,6 +152,7 @@ main.py / streamlit_app.py
 | `OPENAI_EMBEDDING_MODEL` | ✅ | — | Embedding 模型名 |
 | `OPENAI_MODEL` | ❌ | `gpt-4o-mini` | 对话模型名 |
 | `OPENAI_BASE_URL` | ❌ | `None` | 自定义 API 地址 |
+| `LOCAL_EMBEDDING_MODEL` | ❌ | `Qwen/Qwen3-Embedding-0.6B` | 本地嵌入模型名 |
 
 ### 4.2 使用规则
 
@@ -366,6 +367,7 @@ streamlit>=1.28.0      # Web 界面
 PyMuPDF>=1.23.0        # PDF 解析
 pyyaml>=6.0            # Front-Matter 解析
 pytest>=8.0            # 测试框架
+sentence-transformers>=2.2.0  # 本地嵌入模型
 ```
 
 ---

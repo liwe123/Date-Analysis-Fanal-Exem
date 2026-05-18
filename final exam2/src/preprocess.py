@@ -14,13 +14,17 @@ from __future__ import annotations
 
 import json
 import re
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any
 
-from openai import OpenAI
+from openai import OpenAI, RateLimitError
 
 from src.utils import get_logger, get_model_name, get_openai_client
 
 logger = get_logger("preprocess")
+
+DEFAULT_MAX_WORKERS = 32
 
 
 # ── 清洗 ──────────────────────────────────────────────────────────
@@ -197,6 +201,10 @@ _METADATA_SYSTEM = (
 )
 
 
+_METADATA_MAX_RETRIES = 3
+_METADATA_RETRY_BASE_DELAY = 2
+
+
 def extract_metadata(
     text: str,
     filename: str = "",
@@ -204,56 +212,68 @@ def extract_metadata(
 ) -> dict:
     """
     使用 LLM 提取文档元数据。
-    失败时返回默认值（保证流水线不中断）。
+    遇到 429 限流时自动指数退避重试，其他失败返回默认值（保证流水线不中断）。
     """
     default_category = _guess_category(filename)
 
-    try:
-        if client is None:
-            client = get_openai_client()
-        model = get_model_name()
-        snippet = text[:1200]
-        user_msg = f"文件名：{filename}\n\n文档内容（节选）：\n{snippet}"
+    if client is None:
+        client = get_openai_client()
+    model = get_model_name()
+    snippet = text[:1200]
+    user_msg = f"文件名：{filename}\n\n文档内容（节选）：\n{snippet}"
 
-        resp = client.chat.completions.create(
-            model=model,
-            messages=[
-                {"role": "system", "content": _METADATA_SYSTEM},
-                {"role": "user", "content": user_msg},
-            ],
-            temperature=0,
-            max_tokens=256,
-        )
-        raw = resp.choices[0].message.content or "{}"
-        raw = re.sub(r"```[a-z]*", "", raw).strip().strip("`").strip()
-        meta = _safe_json_parse(raw, default={})
+    for attempt in range(1, _METADATA_MAX_RETRIES + 1):
+        try:
+            resp = client.chat.completions.create(
+                model=model,
+                messages=[
+                    {"role": "system", "content": _METADATA_SYSTEM},
+                    {"role": "user", "content": user_msg},
+                ],
+                temperature=0,
+                max_tokens=256,
+            )
+            raw = resp.choices[0].message.content or "{}"
+            raw = re.sub(r"```[a-z]*", "", raw).strip().strip("`").strip()
+            meta = _safe_json_parse(raw, default={})
 
-        meta.setdefault("author", None)
-        meta.setdefault("year", None)
-        meta.setdefault("category", default_category)
-        meta.setdefault("language", "zh")
-        meta.setdefault("summary", "")
+            meta.setdefault("author", None)
+            meta.setdefault("year", None)
+            meta.setdefault("category", default_category)
+            meta.setdefault("language", "zh")
+            meta.setdefault("summary", "")
 
-        if meta["year"] is not None:
-            try:
-                meta["year"] = int(meta["year"])
-            except (ValueError, TypeError):
-                meta["year"] = None
+            if meta["year"] is not None:
+                try:
+                    meta["year"] = int(meta["year"])
+                except (ValueError, TypeError):
+                    meta["year"] = None
 
-        return meta
+            return meta
 
-    except Exception as exc:
-        # 不吞掉 KeyboardInterrupt / SystemExit 等系统信号
-        if isinstance(exc, (KeyboardInterrupt, SystemExit)):
-            raise
-        logger.warning("元数据提取失败 [%s]: %s", filename, exc)
-        return {
-            "author": None,
-            "year": None,
-            "category": default_category,
-            "language": "zh",
-            "summary": "",
-        }
+        except RateLimitError:
+            if attempt < _METADATA_MAX_RETRIES:
+                delay = _METADATA_RETRY_BASE_DELAY * (2 ** (attempt - 1))
+                logger.warning(
+                    "429 限流 [%s] 第%d次，%ds 后重试…", filename, attempt, delay,
+                )
+                time.sleep(delay)
+            else:
+                logger.warning("429 限流 [%s] 重试耗尽，使用默认值。", filename)
+
+        except Exception as exc:
+            if isinstance(exc, (KeyboardInterrupt, SystemExit)):
+                raise
+            logger.warning("元数据提取失败 [%s]: %s", filename, exc)
+            break
+
+    return {
+        "author": None,
+        "year": None,
+        "category": default_category,
+        "language": "zh",
+        "summary": "",
+    }
 
 
 def _guess_category(filename: str) -> str:
@@ -266,6 +286,45 @@ def _guess_category(filename: str) -> str:
     if name.startswith("report"):      return "report"
     if name.startswith("term_"):       return "term"
     return "general"
+
+
+def _extract_metadata_batch(
+    tasks: list[tuple[str, str]],
+    client: OpenAI,
+    max_workers: int = DEFAULT_MAX_WORKERS,
+) -> list[dict]:
+    """
+    并发批量提取元数据。
+
+    参数：
+      tasks       : [(text, filename), ...] 待提取的文档列表
+      client      : 共享的 OpenAI 客户端（线程安全）
+      max_workers : 并发线程数
+
+    返回：
+      与 tasks 等长的元数据字典列表，顺序与输入对应。
+    """
+    results: dict[int, dict] = {}
+    total = len(tasks)
+
+    def _do_one(idx: int, text: str, filename: str) -> tuple[int, dict]:
+        meta = extract_metadata(text, filename=filename, client=client)
+        return idx, meta
+
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = {
+            executor.submit(_do_one, idx, text, fname): idx
+            for idx, (text, fname) in enumerate(tasks)
+        }
+        done_count = 0
+        for future in as_completed(futures):
+            idx, meta = future.result()
+            results[idx] = meta
+            done_count += 1
+            if done_count % 10 == 0 or done_count == total:
+                logger.info("元数据提取进度: %d/%d", done_count, total)
+
+    return [results[i] for i in range(total)]
 
 
 def _merge_fm_meta(fm_meta: dict, llm_meta: dict) -> dict:
@@ -293,30 +352,46 @@ def process_documents(
     chunk_size: int = 700,
     overlap: int = 120,
     is_extract_meta: bool = True,
+    max_workers: int = DEFAULT_MAX_WORKERS,
 ) -> list[dict]:
     """
     完整的文档处理流程：
-      清洗 → (可选) LLM元数据提取 → 语义分块 → 组装
+      清洗 → (可选) 并发LLM元数据提取 → 语义分块 → 组装
+
+    参数：
+      max_workers : LLM 元数据提取的并发线程数（仅在 is_extract_meta=True 时生效）
     """
     processed: list[dict] = []
 
-    # 复用同一个 OpenAI 客户端
-    client = get_openai_client() if is_extract_meta else None
-
-    for doc_idx, doc in enumerate(documents):
-        filename = doc.get("source", "unknown")
-        logger.info("[%d/%d] 处理: %s", doc_idx + 1, len(documents), filename)
-
+    # ── 阶段 1：清洗所有文档 ──
+    cleaned_docs: list[tuple[dict, str]] = []
+    for doc in documents:
         cleaned = clean_text(doc["text"])
+        cleaned_docs.append((doc, cleaned))
+    logger.info("文档清洗完成，共 %d 篇。", len(cleaned_docs))
 
-        if is_extract_meta:
-            llm_meta = extract_metadata(cleaned, filename=filename, client=client)
-        else:
-            llm_meta = {
+    # ── 阶段 2：并发提取元数据（或使用默认值） ──
+    if is_extract_meta:
+        client = get_openai_client()
+        tasks = [
+            (cleaned, doc.get("source", "unknown"))
+            for doc, cleaned in cleaned_docs
+        ]
+        logger.info("开始并发提取元数据（并发数: %d）…", max_workers)
+        llm_metas = _extract_metadata_batch(tasks, client, max_workers=max_workers)
+    else:
+        llm_metas = [
+            {
                 "author": None, "year": None,
-                "category": _guess_category(filename),
+                "category": _guess_category(doc.get("source", "unknown")),
                 "language": "zh", "summary": "",
             }
+            for doc, _ in cleaned_docs
+        ]
+
+    # ── 阶段 3：分块组装 ──
+    for doc_idx, ((doc, cleaned), llm_meta) in enumerate(zip(cleaned_docs, llm_metas)):
+        filename = doc.get("source", "unknown")
 
         # 合并 Front-Matter 元数据
         fm_meta = doc.get("fm_meta", {})

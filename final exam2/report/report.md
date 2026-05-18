@@ -105,7 +105,7 @@
 | 语料扩充 | `collect_corpus.py` 及补充脚本 | 从 Wikipedia REST API 抓取 58 个大数据相关词条 | 中英文回退、限速重试(每次间隔 2s，最多 3 次)、输出为带 Front-Matter 的 md 文件 |
 | 文本清洗 | `preprocess.py` | HTML 标签移除、转义字符还原、控制字符过滤、空白规范化 | 正则流水线，保留 `\n` 作为段落边界 |
 | 语义分块 | `preprocess.py` | 段落边界→句子边界→贪心合并→滑窗切割 | 四层优先级，默认 700 字符/块，120 字符重叠，最小 40 字符 |
-| 元数据提取 | `preprocess.py` | LLM 提取作者/年份/分类/语言/摘要 | Front-Matter 优先覆盖 LLM 结果；解析失败回退文件名猜测 |
+| 元数据提取 | `preprocess.py` | LLM 提取作者/年份/分类/语言/摘要 | 32 线程并发提取，429 限流指数退避重试；Front-Matter 优先覆盖 LLM 结果 |
 | 向量存储 | `embed_store.py` | ChromaDB 管理：建表、批量写入、多模式检索、安全删除 | OpenAI 单例客户端，upsert 批量 64，where 失败自动回退 |
 | 查询解析 | `query_parser.py` | 自然语言 → 结构化搜索参数 | LLM 提取 search_query + filters，失败回退全文搜索 |
 | 答案生成 | `qa.py` | 上下文拼接 + LLM 生成 + 引用强制 | System Prompt 约束"不知说不知"，引用缺失自动补全 |
@@ -171,9 +171,12 @@ Wikipedia 词条采集流程（`collect_corpus.py`）：
 ### 4.4 元数据提取与合并
 
 - **LLM 提取**：每篇文档前 1200 字符发送至 `deepseek-v4-flash`，返回 JSON（作者、年份、分类、语言、50 字摘要）
+- **并发提取**：使用 `ThreadPoolExecutor` 32 线程并发调用 LLM，127 篇文档从串行 ~4 分钟降至 ~20 秒
+- **429 限流重试**：遇到 DeepSeek API 限流（HTTP 429）时，自动指数退避重试（2s → 4s → 8s，最多 3 次），重试耗尽才降级为默认值
 - **Front-Matter 优先**：若文档 YAML 头中已写明 `year: 2024`、`category: notice`，以人工标注为准覆盖 LLM 结果
 - **回退策略**：LLM JSON 解析失败 → 空元数据字典 → 文件名前缀猜测分类（如 `wiki_*` → wiki，`notice*` → notice）
-- **成本**：50 篇文档各调一次 deepseek-v4-flash，总成本不足 1 元人民币；离线一次性运行
+- **成本**：127 篇文档各调一次 deepseek-v4-flash，总成本不足 1 元人民币；离线一次性运行
+- **CLI 参数**：`python src/main.py build --max-workers 16` 可自定义并发数
 
 ## 五、检索与查询解析
 
