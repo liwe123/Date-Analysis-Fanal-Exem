@@ -109,7 +109,7 @@
 | 向量存储 | `embed_store.py` | ChromaDB 管理：建表、批量写入、多模式检索、安全删除 | OpenAI 单例客户端，upsert 批量 64，where 失败自动回退 |
 | 查询解析 | `query_parser.py` | 自然语言 → 结构化搜索参数 | LLM 提取 search_query + filters，失败回退全文搜索 |
 | 答案生成 | `qa.py` | 上下文拼接 + LLM 生成 + 引用强制 | System Prompt 约束"不知说不知"，引用缺失自动补全 |
-| 入口整合 | `main.py` | CLI 三个子命令：build / ask / collect | argparse，交互模式支持连续追问 |
+| 入口整合 | `main.py` | CLI 子命令：build / ask / collect / collect-so / collect-csdn / collect-all | argparse，交互模式支持连续追问 |
 | Web 界面 | `streamlit_app.py` | 对话历史、侧边栏状态、Top-K 调节、调试模式 | 缓存客户端/向量库，图片输入拦截，错误分类提示 |
 
 ### 3.3 数据流示意
@@ -133,13 +133,30 @@
 | 数据源 | 数量 | 格式 | 内容 |
 |--------|------|------|------|
 | 课程资料 | 50+ 文件 | .md (含 Front-Matter) | 课程介绍、FAQ、案例、通知、报告、术语表 |
-| Wikipedia 词条 | 28 个 | .md (含 Front-Matter) | 大数据核心技术术语（RAG、向量数据库、Spark、流处理等） |
+| Wikipedia 词条 | 83 个 | .md (含 Front-Matter) | 大数据核心技术术语（RAG、向量数据库、Spark、流处理等） |
+| Stack Overflow 问答 | 30 篇 | .md (含 Front-Matter) | 高票技术问答（Spark/Kafka/ML 等），DeepSeek 翻译为全中文 |
+| CSDN 博客 | 18 篇 | .md (含 Front-Matter) | 中文技术博客（Spark/Hadoop/Flink/ETL 等实战教程） |
 
-Wikipedia 词条采集流程（`collect_corpus.py`）：
+三源采集流程：
+
+**Wikipedia**（`collect_corpus.py`）：
 - **API**：Wikipedia REST API v1（免费，无限流风险）
 - **策略**：优先请求中文摘要（`zh.wikipedia.org`），失败则回退英文（`en.wikipedia.org`）
 - **限速保护**：每次请求间隔 2 秒，失败重试 3 次
 - **输出格式**：带 YAML Front-Matter 的 Markdown 文件（title、tags、fetch_date、source_url、extract、课程关联说明）
+
+**Stack Overflow**（`collect_stackoverflow.py`）：
+- **API**：Stack Exchange API v2.3（官方 REST API，无需爬虫）
+- **内容**：按标签搜索高票问答（`score ≥ 3`），获取问题正文 + 最高票回答
+- **翻译**：调用 DeepSeek 将英文标题/问题/回答翻译为中文，保留代码块和技术术语
+- **标签**：apache-spark、hadoop、apache-kafka、apache-flink、machine-learning 等 15 个
+- **限速**：每次请求间隔 1 秒，429 指数退避重试
+
+**CSDN 博客**（`collect_csdn.py`）：
+- **来源**：CSDN 搜索 API（`so.csdn.net`）
+- **内容**：按关键词搜索技术文章，提取 `<article>` 标签正文
+- **关键词**：Spark 大数据教程、Hadoop 入门实战、Flink 流处理、数据仓库 Hive 等 10 个
+- **限速**：每次请求间隔 3 秒，最多重试 3 次
 
 ### 4.2 文本清洗流水线
 

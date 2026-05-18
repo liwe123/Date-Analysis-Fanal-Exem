@@ -4,7 +4,7 @@
 
 | 成员 | 负责什么 | 要讲多久 | 对应文件 |
 |------|---------|---------|---------|
-| A | 读文件 + 清洗 | 2 分钟 | `ingest.py`, `collect_corpus.py`, `preprocess.py`（clean_text） |
+| A | 读文件 + 清洗 | 2 分钟 | `ingest.py`, `collect_corpus.py`, `collect_stackoverflow.py`, `collect_csdn.py`, `preprocess.py`（clean_text） |
 | B | 切块 + 打标签 | 2 分钟 | `preprocess.py`（chunk_text / extract_metadata / process_documents）, `utils.py` |
 | C | 存向量 + 检索 | 2 分钟 | `embed_store.py`, `query_parser.py` |
 | D | 生成回答 + 演示 | 4 分钟 | `qa.py`, `main.py`, `streamlit_app.py` |
@@ -17,7 +17,10 @@
    ```
    pip install -r requirements.txt
    copy .env.example .env    # 填上 API Key
-   python src/main.py collect
+    python src/main.py collect          # Wikipedia
+    python src/main.py collect-so       # Stack Overflow
+    python src/main.py collect-csdn     # CSDN
+    python src/main.py collect-all      # 全量采集
    python src/main.py build
    python src/main.py ask --question "课程项目最后提交要求是什么？"
    streamlit run app/streamlit_app.py
@@ -39,7 +42,7 @@
 ### 汇报词（照着念）
 > 我负责第一步，就是把原始文件读进来、洗干净。
 >
-> 数据源有两类：一是课程资料，`data/raw/` 下面大概 50 个 md 文件，包括课程介绍、FAQ、案例、通知这些；二是我们自动从 Wikipedia 扒的 58 个大数据相关词条，放在 `data/raw/external/`。
+> 数据源有三类：一是课程资料，`data/raw/` 下面大概 50 个 md 文件，包括课程介绍、FAQ、案例、通知这些；二是我们自动从 Wikipedia 扒的 83 个大数据相关词条；三是从 Stack Overflow 和 CSDN 采集的 48 篇技术问答和博客，全部放在 `data/raw/external/`。
 >
 > 我们支持 md、txt、pdf 三种格式。md 文件头部如果有 `---` 包着的 YAML（我们叫 Front-Matter），会被单独解析出来存为元数据，后面 B 同学会用到。
 >
@@ -130,7 +133,7 @@ A：多调一次 deepseek-v4-flash，大概多花 1-2 秒。但这对用户透�
 
 ### 看哪些代码
 - `src/qa.py`：怎么把检索结果拼成上下文喂给 GPT，System Prompt 怎么写，答案里怎么追溯来源
-- `src/main.py`：CLI 三个命令（build / ask / collect）怎么编排整个流水线
+- `src/main.py`：CLI 子命令（build / ask / collect / collect-so / collect-csdn / collect-all）怎么编排整个流水线
 - `app/streamlit_app.py`：Web 界面怎么做的（对话记录、侧边栏、调参、调试模式）
 
 ### 汇报词（照着念）
@@ -141,7 +144,7 @@ A：多调一次 deepseek-v4-flash，大概多花 1-2 秒。但这对用户透�
 >
 > **引用追溯**：每个答案都要带来源。我要求 GPT 在回答里标注 `【来源：xxx.md】`。如果它忘了写，后端会自动补一个参考资料列表。这样老师和同学可以回去查看原始文档。
 >
-> **系统集成**：我把整条流水线串成了三个命令——`build` 一键建库，`ask` 交互问答，`collect` 拉 Wikipedia。还做了一个 Web 界面，在浏览器里就能用，支持多轮对话、调检索参数、看调试信息。
+> **系统集成**：我把整条流水线串成了多个命令——`build` 一键建库，`ask` 交互问答，`collect`/`collect-so`/`collect-csdn`/`collect-all` 拉取三源知识库。还做了一个 Web 界面，在浏览器里就能用，支持多轮对话、调检索参数、看调试信息。
 
 ### 现场演示（4 分钟）
 

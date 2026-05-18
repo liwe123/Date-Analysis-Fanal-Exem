@@ -12,7 +12,7 @@
 
 ## 项目概述（1 句）
 
-从零构建端到端 RAG 检索增强生成系统，覆盖文档摄取 → 语义分块 → 向量索引 → 混合检索 → LLM 答案生成全链路，支持 CLI 与 Web 双入口交互，实现 98 篇非结构化文档的智能问答。
+从零构建端到端 RAG 检索增强生成系统，覆盖文档摄取 → 语义分块 → 向量索引 → 混合检索 → LLM 答案生成全链路，支持 CLI 与 Web 双入口交互，集成 Wikipedia + Stack Overflow + CSDN 三源知识库，实现 130+ 篇非结构化文档的智能问答。
 
 ---
 
@@ -20,7 +20,7 @@
 
 > **版本 A：突出系统设计**（适合大厂 / 工程岗）
 
-- 设计并实现模块化 RAG 数据流水线（Ingestion → Preprocessing → Embedding → Vector Store → Retrieval → Generation），将 98 篇非结构化文档自动转化为可搜索向量知识库，支持一键建库与增量更新
+- 设计并实现模块化 RAG 数据流水线（Ingestion → Preprocessing → Embedding → Vector Store → Retrieval → Generation），将 130+ 篇非结构化文档（Wikipedia + Stack Overflow + CSDN 三源采集）自动转化为可搜索向量知识库，支持一键建库与增量更新
 - 构建混合检索引擎，融合 ChromaDB 向量语义搜索（Cosine / HNSW）、元数据结构化过滤与距离阈值裁剪；开发 LLM 驱动的查询意图解析器，将自然语言自动分解为结构化搜索参数，解析失败自动降级为全文搜索
 - 通过 System Prompt 约束 + 检索上下文限定 + 来源强制标注 + 后端自动补全四层机制降低 LLM 幻觉，实现 100% 答案可追溯；知识库无匹配时主动拒答
 - 覆盖 54 个 pytest 测试用例（单元 / 集成 / 端到端），支持本地 GPU 嵌入与远程 API 双模式；提供 Streamlit Web 界面与 CLI 双入口
@@ -38,7 +38,7 @@
 
 > **版本 C：英文版**（适合外企 / 双语简历）
 
-- Designed and implemented an end-to-end RAG (Retrieval-Augmented Generation) pipeline that ingests, chunks, embeds, and indexes 98+ unstructured documents into a searchable vector knowledge base using ChromaDB (HNSW / Cosine similarity)
+- Designed and implemented an end-to-end RAG (Retrieval-Augmented Generation) pipeline that ingests, chunks, embeds, and indexes 130+ unstructured documents (collected from Wikipedia, Stack Overflow, and CSDN) into a searchable vector knowledge base using ChromaDB (HNSW / Cosine similarity)
 - Built a hybrid search engine combining semantic vector search with structured metadata filtering (year / category / author / language); developed an LLM-powered query intent parser that automatically decomposes natural language questions into structured search parameters with graceful fallback
 - Implemented a 4-layer hallucination prevention strategy (System Prompt constraint + context scoping + inline citation enforcement + auto-completion), achieving 100% source traceability; system actively refuses to answer when knowledge base lacks relevant content
 - Achieved 54 comprehensive pytest cases (unit / integration / E2E), supported dual-mode embeddings (local GPU via Sentence-Transformers + remote API); delivered both CLI and Streamlit Web interface with conversation history and debug mode
@@ -67,7 +67,7 @@
 - 编写了 54 个 pytest 测试用例，覆盖边界条件与降级路径
 
 **R (Result)**
-系统成功处理 98 个文档生成 130+ 个检索块，Embedding 使用本地 GPU 加速实现零 API 成本，建库总成本 < ¥0.5（仅元数据提取）；支持"2024 年的通知讲了啥"等复合查询，查询解析准确率 > 90%；系统在 Streamlit Web 界面和 CLI 均可流畅交互，测试全部通过。
+系统成功处理 130+ 个文档生成 477 个检索块，集成 Wikipedia + Stack Overflow + CSDN 三源知识库，Embedding 使用本地 GPU 加速实现零 API 成本，建库总成本 < ¥0.5（仅元数据提取）；支持"2024 年的通知讲了啥"等复合查询，查询解析准确率 > 90%；系统在 Streamlit Web 界面和 CLI 均可流畅交互，测试全部通过。
 
 ---
 
