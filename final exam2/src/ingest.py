@@ -43,7 +43,8 @@ def _parse_front_matter(text: str) -> tuple[dict, str]:
         meta = yaml.safe_load(fm_raw)
         if not isinstance(meta, dict):
             meta = {}
-    except yaml.YAMLError:
+    except yaml.YAMLError as e:
+        logger.warning("Front-Matter 解析 YAML 失败: %s", e)
         meta = {}
 
     return meta, body

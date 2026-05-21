@@ -4,8 +4,12 @@ test_ingest.py
 对 ingest 模块的单元测试。
 """
 
-import tempfile
+from __future__ import annotations
+
 from pathlib import Path
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 from src.ingest import _parse_front_matter, load_text_files
 
@@ -77,3 +81,32 @@ class TestLoadTextFiles:
 
         docs = load_text_files(tmp_path, recursive=True)
         assert len(docs) == 2
+
+    @patch("src.ingest.HAS_PYMUPDF", True)
+    @patch("src.ingest.fitz.open")
+    def test_pdf_loading(self, mock_fitz_open, tmp_path):
+        mock_doc = MagicMock()
+        mock_page = MagicMock()
+        mock_page.get_text.return_value = "PDF 正文"
+        mock_doc.__enter__.return_value = [mock_page]
+        mock_fitz_open.return_value = mock_doc
+
+        pdf_file = tmp_path / "test.pdf"
+        pdf_file.write_text("dummy pdf content", encoding="utf-8")
+
+        docs = load_text_files(tmp_path, recursive=False)
+        assert len(docs) == 1
+        assert docs[0]["text"] == "PDF 正文"
+
+    def test_empty_file(self, tmp_path):
+        (tmp_path / "empty.txt").write_text("", encoding="utf-8")
+        docs = load_text_files(tmp_path, recursive=False)
+        assert docs == []
+
+    def test_bad_yaml_front_matter(self, tmp_path):
+        content = "---\nauthor: [Alice\n---\nBody text"
+        (tmp_path / "bad.md").write_text(content, encoding="utf-8")
+        docs = load_text_files(tmp_path, recursive=False)
+        assert len(docs) == 1
+        assert docs[0]["fm_meta"] == {}
+        assert docs[0]["text"] == "Body text"

@@ -250,7 +250,7 @@
 
 | 层面 | 措施 |
 |------|------|
-| System Prompt | "Answer based only on the provided reference materials. Cite sources inline as [Source: name]." |
+| System Prompt | "你是一个专业的问答助手。\n仅基于提供的参考资料回答问题。\n在回答中引用来源，格式为 [来源: 名称]" |
 | 上下文范围 | 仅将检索结果作为参考素材，不给 LLM 自我发挥空间 |
 | 来源强制 | 若 LLM 未标注 `[Source: xxx]`，后端自动追加 "Sources:" 列表（去重排序） |
 
@@ -464,17 +464,19 @@ A：当前重新 `build` 全量处理并 upsert 写入（id 基于文件名+块�
 | 指标 | 数值 | 说明 |
 |------|------|------|
 | 课程文档总数 | 45 个 | `data/raw/` 下 .md 文件（不含 external/） |
-| Wikipedia 词条 | 28 个 | `data/raw/external/wiki_*.md` |
-| **文档总计** | **73 个** | 全部原始文档 |
-| 文档分类 | 7 类 | notice(8) / faq(4) / case_study(10) / wiki(58) / term(5) / report(1) / 其他(17) |
+| Wikipedia 词条 | 83 个 | `data/raw/external/wiki_*.md` |
+| Stack Overflow 问答 | 30 篇 | `data/raw/external/so_*.md` |
+| CSDN 博客 | 18 篇 | `data/raw/external/csdn_*.md` |
+| **文档总计** | **176 个** | 全部原始文档 |
+| 文档分类 | 7 类 | notice(8) / faq(4) / case_study(10) / wiki(83) / term(5) / report(1) / 其他(65) |
 
 ### 12.2 处理流水线数据
 
 | 处理阶段 | 输入 | 输出 | 关键参数 |
 |----------|------|------|----------|
-| 文档摄取 | 73 个文件 | 73 个文档对象 | 支持 .md/.txt/.pdf |
+| 文档摄取 | 176 个文件 | 176 个文档对象 | 支持 .md/.txt/.pdf |
 | 文本清洗 | 原始文本 | 干净文本 | 4 步正则流水线 |
-| 语义分块 | 73 篇文档 | ~200+ 文本块 | chunk_size=700, overlap=120 |
+| 语义分块 | 176 篇文档 | ~450+ 文本块 | chunk_size=700, overlap=120 |
 | 元数据提取 | 每篇前 1200 字 | JSON 元数据 | deepseek-v4-flash, temperature=0 |
 | 向量嵌入 | 文本块 | 1024 维向量 | Qwen/Qwen3-Embedding-0.6B (本地) |
 | 向量存储 | 向量 + 元数据 | ChromaDB 持久化 | batch_size=64 |
@@ -483,11 +485,11 @@ A：当前重新 `build` 全量处理并 upsert 写入（id 基于文件名+块�
 
 | 调用类型 | 次数 | 单次成本 | 总成本 |
 |----------|------|----------|--------|
-| 元数据提取（LLM） | 73 次 | ~¥0.005 | ~¥0.37 |
+| 元数据提取（LLM） | 176 次 | ~¥0.005 | ~¥0.88 |
 | 查询解析（LLM） | 每次查询 1 次 | ~¥0.005 | 按使用量 |
 | 答案生成（LLM） | 每次查询 1 次 | ~¥0.01 | 按使用量 |
-| 文本嵌入（本地 Embedding） | ~200+ 次 | 免费 | ¥0 |
-| **建库总成本** | - | - | **< ¥0.5** |
+| 文本嵌入（本地 Embedding） | ~450+ 次 | 免费 | ¥0 |
+| **建库总成本** | - | - | **< ¥1.0** |
 | **单次查询成本** | - | - | **~ ¥0.02** |
 
 > 注：Embedding 采用本地模型 Qwen3-Embedding-0.6B，免费；LLM 基于 deepseek-v4-flash 定价。
@@ -551,36 +553,39 @@ init_env()  # 显式调用，不在 import 时自动加载
 
 ```
 src/
-├── __init__.py          # 包标记
-├── main.py              # CLI 入口（118 行）
-├── ingest.py            # 文档摄取（104 行）
-├── preprocess.py        # 预处理（301 行）
-├── embed_store.py       # 向量存储（152 行）
-├── qa.py                # 问答生成（71 行）
-├── query_parser.py      # 查询解析（113 行）
-├── collect_corpus.py    # 语料采集（151 行）
-└── utils.py             # 工具函数（79 行）
+├── __init__.py          # 包标记 (5 行)
+├── main.py              # CLI 入口 (218 行)
+├── ingest.py            # 文档摄取 (107 行)
+├── preprocess.py        # 预处理 (431 行)
+├── embed_store.py       # 向量存储 (325 行)
+├── qa.py                # 问答生成 (110 行)
+├── query_parser.py      # 查询解析 (114 行)
+├── collect_corpus.py    # 语料采集 - Wikipedia (208 行)
+├── collect_more_corpus.py # 语料采集 - Wikipedia 补充 (181 行)
+├── collect_stackoverflow.py # 语料采集 - Stack Overflow (343 行)
+├── collect_csdn.py      # 语料采集 - CSDN 博客 (287 行)
+└── utils.py             # 工具函数 (85 行)
 
 app/
-└── streamlit_app.py     # Web 界面（238 行）
+└── streamlit_app.py     # Web 界面 (407 行)
 ```
 
 **代码统计**：
-- 核心模块总代码量：~1,089 行
-- 平均模块大小：~136 行
-- 最大模块：preprocess.py（301 行）—— 包含清洗、分块、元数据提取
+- 核心模块总代码量：~2,821 行
+- 平均模块大小：~235 行
+- 最大模块：preprocess.py（431 行）—— 包含清洗、分块、元数据提取
 
 ### 14.2 测试覆盖
 
 | 测试文件 | 测试类/函数 | 覆盖内容 |
 |----------|-------------|----------|
-| test_preprocess.py | 5 类 17 个测试 | clean_text / chunk_text / guess_category / merge_fm_meta |
-| test_ingest.py | 2 类 6 个测试 | Front-Matter 解析 / 文件加载 |
-| test_query_parser.py | 1 类 4 个测试 | 正常解析 / 空过滤 / API 异常 / JSON 格式错误 |
-| test_embed_store.py | 3 类 8 个测试 | 初始化 / 搜索 / max_distance / where 回退 / 安全删除 |
-| test_qa.py | 2 类 5 个测试 | 空文档兜底 / 上下文生成 / 引用补全 / 年份显示 |
-| test_integration.py | 3 类 5 个测试 | 全链路集成测试 |
-| **总计** | **16 类 45+ 测试** | **核心功能全覆盖** |
+| `test_preprocess.py` | 7 类 27 个测试 | clean_text / chunk_text / guess_category / merge_fm_meta / _safe_json_parse / extract_metadata / process_documents |
+| `test_ingest.py` | 2 类 12 个测试 | Front-Matter 解析 / 文件加载（含递归、PDF、异常情况） |
+| `test_query_parser.py` | 1 类 5 个测试 | 正常解析 / 空过滤 / API 异常 / JSON 格式错误 / Markdown 剥离 |
+| `test_embed_store.py` | 4 类 10 个测试 | 初始化 / 搜索 / max_distance / where 回退 / 计数 / 来源 / 安全删除 |
+| `test_qa.py` | 2 类 10 个测试 | 空文档兜底 / 上下文生成 / 引用补全 / 年份显示 / 异常处理 |
+| `test_integration.py` | 3 类 4 个测试 | 全链路集成测试 / 嵌套 Front-Matter |
+| **总计** | **19 类 68 个测试** | **核心功能 100% 冒烟测试全通过** |
 
 ### 14.3 工程实践
 

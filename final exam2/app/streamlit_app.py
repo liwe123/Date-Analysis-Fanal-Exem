@@ -6,23 +6,29 @@ Streamlit Web 界面入口。
 
 from __future__ import annotations
 
+import html
 import os
 import sys
+import time
 from pathlib import Path
 
 import streamlit as st
 from openai import OpenAI
 
+# 动态添加路径以防导入失败
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from src.utils import init_env, get_logger, get_openai_client
 from src.embed_store import VectorStore
+from src.preprocess import process_documents
 from src.qa import generate_answer
 from src.query_parser import parse_query
+from src.utils import get_logger, get_openai_client, init_env
 
-init_env()
-if not os.environ.get("HF_ENDPOINT"):
-    os.environ["HF_ENDPOINT"] = "https://hf-mirror.com"
+# 防止在每次 Streamlit 重载时重复加载环境变量
+if "env_initialized" not in st.session_state:
+    init_env()
+    st.session_state.env_initialized = True
+
 logger = get_logger("streamlit_app")
 
 st.set_page_config(
@@ -33,8 +39,15 @@ st.set_page_config(
 )
 
 # ── Load CSS ─────────────────────────────────────────────────────────────────
-with open(Path(__file__).parent / "style.css", encoding="utf-8") as f:
-    st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+
+@st.cache_data
+def load_css() -> str:
+    """读取并缓存 CSS 样式文件，避免重复磁盘 I/O。"""
+    with open(Path(__file__).parent / "style.css", encoding="utf-8") as f:
+        return f.read()
+
+
+st.markdown(f"<style>{load_css()}</style>", unsafe_allow_html=True)
 
 # ── Title ────────────────────────────────────────────────────────────────────
 
@@ -66,15 +79,24 @@ if "messages" not in st.session_state:
 
 
 def get_cached_client() -> OpenAI:
+    """缓存 OpenAI 客户端单例。"""
     if "openai_client" not in st.session_state:
         st.session_state.openai_client = get_openai_client()
     return st.session_state.openai_client
 
 
 def get_cached_store() -> VectorStore:
+    """缓存向量数据库单例。"""
     if "vector_store" not in st.session_state:
         st.session_state.vector_store = VectorStore()
     return st.session_state.vector_store
+
+
+@st.cache_data(ttl=30)
+def get_store_stats() -> tuple[int, list[str]]:
+    """缓存知识库统计数据以提升响应性能，在更新数据时会主动清除。"""
+    store = get_cached_store()
+    return store.count(), store.list_sources()
 
 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
@@ -92,28 +114,35 @@ with st.sidebar:
     st.markdown('<div class="sidebar-section-title">📊 系统状态</div>', unsafe_allow_html=True)
 
     try:
-        store = get_cached_store()
-        count = store.count()
+        count, sources = get_store_stats()
 
         col1, col2 = st.columns(2)
         with col1:
             st.metric("文档块数", count)
         with col2:
-            sources = store.list_sources()
             st.metric("来源数", len(sources))
 
         if sources:
             with st.expander(f"📋 文档来源列表（{len(sources)}）"):
-                search_src = st.text_input("来源过滤", key="src_filter", placeholder="输入关键词过滤...", label_visibility="collapsed")
-                filtered = [s for s in sources if search_src.lower() in s.lower()] if search_src else sources
+                search_src = st.text_input(
+                    "来源过滤",
+                    key="src_filter",
+                    placeholder="输入关键词过滤...",
+                    label_visibility="collapsed",
+                )
+                filtered = (
+                    [s for s in sources if search_src.lower() in s.lower()]
+                    if search_src
+                    else sources
+                )
                 for src in filtered:
-                    st.markdown(f"▪ {src}")
+                    st.markdown(f"▪ {html.escape(src)}")
 
     except Exception as exc:
         if isinstance(exc, (KeyboardInterrupt, SystemExit)):
             raise
         st.error("⚠ 向量库初始化失败")
-        st.caption(str(exc))
+        st.caption(html.escape(str(exc)))
         logger.warning("向量库初始化失败: %s", exc)
 
     st.markdown('<div class="sidebar-section-title">➕ 数据管理</div>', unsafe_allow_html=True)
@@ -125,13 +154,13 @@ with st.sidebar:
             st.error("内容不能为空")
         else:
             with st.spinner("正在处理并加入向量库..."):
-                from src.preprocess import process_documents
-                import time
-                
                 source_name = f"custom_{int(time.time())}.txt"
                 if custom_data_title.strip():
-                    # sanitize title somewhat
-                    safe_title = "".join(c for c in custom_data_title.strip() if c.isalnum() or c in (" ", "_", "-")).replace(" ", "_")
+                    # 过滤非法文件名字符
+                    safe_title = "".join(
+                        c for c in custom_data_title.strip()
+                        if c.isalnum() or c in (" ", "_", "-")
+                    ).replace(" ", "_")
                     source_name = f"{safe_title}_{int(time.time())}.txt"
                     
                 doc = {
@@ -144,6 +173,7 @@ with st.sidebar:
                 store = get_cached_store()
                 store.add_documents(processed)
                 st.success("添加成功！")
+                get_store_stats.clear()  # 清除缓存以便侧边栏立即更新状态
                 time.sleep(1)
                 st.rerun()
 
@@ -187,7 +217,7 @@ st.markdown('<div class="chat-container">', unsafe_allow_html=True)
 for msg in st.session_state.messages:
     if msg["role"] == "user":
         st.markdown(
-            f'<div class="message-user"><div class="bubble">{msg["content"]}</div></div>',
+            f'<div class="message-user"><div class="bubble">{html.escape(msg["content"])}</div></div>',
             unsafe_allow_html=True,
         )
     else:
@@ -225,7 +255,7 @@ if question:
 
     st.session_state.messages.append({"role": "user", "content": question})
     st.markdown(
-        f'<div class="message-user"><div class="bubble">{question}</div></div>',
+        f'<div class="message-user"><div class="bubble">{html.escape(question)}</div></div>',
         unsafe_allow_html=True,
     )
 
@@ -254,9 +284,11 @@ if question:
         filters = parsed.get("filters")
 
         if show_debug:
-            debug_html = f"<div class=\"debug-box\"><strong>🔍 核心搜索词：</strong><code>{search_query}</code>"
+            escaped_query = html.escape(search_query)
+            escaped_filters = html.escape(str(filters))
+            debug_html = f"<div class=\"debug-box\"><strong>🔍 核心搜索词：</strong><code>{escaped_query}</code>"
             if filters:
-                debug_html += f"<br><strong>🏷 元数据过滤：</strong><code>{filters}</code>"
+                debug_html += f"<br><strong>🏷 元数据过滤：</strong><code>{escaped_filters}</code>"
             debug_html += "</div>"
             msg_placeholder.markdown(
                 '<div class="message-assistant">'
@@ -303,28 +335,30 @@ if question:
             else:
                 badge = "distance=N/A"
 
-            snippet = item["text"].replace("\n", " ")[:400]
+            escaped_snippet = html.escape(item["text"].replace("\n", " ")[:400])
             if len(item["text"]) > 400:
-                snippet += "..."
+                escaped_snippet += "..."
 
             path_html = ""
             if item.get("metadata", {}).get("path"):
+                escaped_path = html.escape(item["metadata"]["path"])
                 path_html = (
                     '<span class="path-text">📁 '
-                    + item["metadata"]["path"]
+                    + escaped_path
                     + "</span>"
                 )
 
+            escaped_source = html.escape(item["source"])
             source_items += (
                 '<div class="source-card">'
                 '<div class="source-card-header">'
                 f'<span class="source-card-num">{idx}</span>'
-                f'<span class="source-card-title">{item["source"]}</span>'
+                f'<span class="source-card-title">{escaped_source}</span>'
                 "</div>"
                 '<div class="source-card-meta">'
                 f'<span class="meta-badge">{badge}</span>'
                 f"{path_html}</div>"
-                f'<div class="source-card-snippet">{snippet}</div>'
+                f'<div class="source-card-snippet">{escaped_snippet}</div>'
                 "</div>"
             )
 
@@ -359,7 +393,7 @@ if question:
         elif "rate" in err_str.lower() or "limit" in err_str.lower():
             error_msg = "⏳ **请求频率过高**\n\nAPI 达到速率限制，请稍后再试。"
         else:
-            error_msg = f"⚠ **出错了**\n\n```\n{err_str[:500]}\n```"
+            error_msg = f"⚠ **出错了**\n\n```\n{html.escape(err_str[:500])}\n```"
 
         msg_placeholder.markdown(
             '<div class="message-assistant">'
@@ -370,3 +404,4 @@ if question:
             unsafe_allow_html=True,
         )
         st.session_state.messages.append({"role": "assistant", "content": error_msg})
+

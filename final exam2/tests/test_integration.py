@@ -5,9 +5,17 @@ test_integration.py
 （使用 mock 避免真实 API 和 ChromaDB 依赖）
 """
 
-import tempfile
+from __future__ import annotations
+
+# 1. 标准库
 from pathlib import Path
 from unittest.mock import MagicMock, patch
+
+# 2. 项目模块
+from src.ingest import _parse_front_matter, load_text_files
+from src.preprocess import process_documents
+from src.qa import generate_answer
+from src.query_parser import parse_query
 
 
 class TestIngestToPreprocessPipeline:
@@ -22,8 +30,6 @@ class TestIngestToPreprocessPipeline:
 
         with patch("src.preprocess.get_openai_client"), \
              patch("src.preprocess.get_model_name", return_value="test-model"):
-            from src.ingest import load_text_files
-            from src.preprocess import process_documents
 
             docs = load_text_files(tmp_path, recursive=False)
             assert len(docs) == 1
@@ -41,8 +47,6 @@ class TestIngestToPreprocessPipeline:
     def test_empty_directory_pipeline(self, tmp_path):
         with patch("src.preprocess.get_openai_client"), \
              patch("src.preprocess.get_model_name", return_value="test-model"):
-            from src.ingest import load_text_files
-            from src.preprocess import process_documents
 
             docs = load_text_files(tmp_path)
             assert docs == []
@@ -78,9 +82,6 @@ class TestSearchAndAnswerPipeline:
              patch("src.embed_store.use_local_embedding", return_value=False), \
              patch("src.embed_store.clean_env", return_value="test-emb"):
 
-            from src.query_parser import parse_query
-            from src.qa import generate_answer
-
             parsed = parse_query("What is RAG", client=mock_client)
             assert parsed["search_query"] == "What is RAG"
             assert parsed["filters"] == {"category": "wiki"}
@@ -101,8 +102,6 @@ class TestNestedYamlFrontMatter:
     """验证 pyyaml 能解析嵌套 YAML。"""
 
     def test_nested_yaml(self):
-        from src.ingest import _parse_front_matter
-
         text = (
             "---\n"
             "author: Alice\n"

@@ -30,7 +30,7 @@ def init_env(env_path: str | None = None) -> None:
 def get_logger(name: str) -> logging.Logger:
     """返回带统一格式的 logger。"""
     logger = logging.getLogger(name)
-    if not getattr(logger, "handlers", None):
+    if not logger.handlers:
         handler = logging.StreamHandler(sys.stdout)
         handler.setFormatter(
             logging.Formatter("[%(levelname)s] %(name)s: %(message)s")
@@ -77,5 +77,9 @@ def get_model_name() -> str:
 
 
 def get_embedding_model_name() -> str:
-    """返回配置的 Embedding 模型名（未配置时返回 'local' 表示使用本地模型）。"""
+    """
+    返回配置的 Embedding 模型名（未配置时默认返回 'local' 表示使用本地模型）。
+    注：若配置了 OPENAI_API_KEY 但未配置此项，将明确回退为使用本地模型。
+    """
     return clean_env("OPENAI_EMBEDDING_MODEL", "local") or "local"
+

@@ -119,13 +119,14 @@ RAW_DIR = BASE_DIR / "data" / "raw"
 | 模块 | 允许做的事 | 禁止做的事 |
 |------|-----------|-----------|
 | `ingest.py` | 读文件、解析 Front-Matter | 清洗文本、调用 LLM |
-| `preprocess.py` | 清洗、分块、提取元数据 | 读写 ChromaDB |
+| `preprocess.py` | 清洗、分块、调用 LLM 提取元数据 | 读写 ChromaDB |
 | `embed_store.py` | 向量嵌入、ChromaDB 读写 | 生成回答、解析查询 |
 | `qa.py` | 生成答案、格式化引用 | 操作数据库 |
 | `query_parser.py` | 解析查询意图 | 执行检索、生成答案 |
 | `collect_corpus.py` | Wikipedia 语料采集 | 操作 ChromaDB |
 | `collect_stackoverflow.py` | Stack Overflow 问答采集 | 操作 ChromaDB |
 | `collect_csdn.py` | CSDN 博客采集 | 操作 ChromaDB |
+| `collect_more_corpus.py` | 自适应高级语料采集 | 操作 ChromaDB |
 | `main.py` | 编排流水线、CLI 入口 | 包含业务逻辑 |
 | `utils.py` | 环境变量、日志、客户端单例 | 包含业务逻辑 |
 
@@ -133,18 +134,19 @@ RAW_DIR = BASE_DIR / "data" / "raw"
 
 ```
 main.py / streamlit_app.py
-    ├── ingest.py ────── 无内部依赖
-    ├── preprocess.py ── 无内部依赖
+    ├── ingest.py ────── 依赖 utils.py
+    ├── preprocess.py ── 依赖 utils.py
     ├── embed_store.py ─ 依赖 utils.py
     ├── qa.py ────────── 依赖 utils.py
     ├── query_parser.py ─ 依赖 utils.py
     ├── collect_corpus.py ─── 依赖 utils.py
     ├── collect_stackoverflow.py ── 依赖 utils.py
     ├── collect_csdn.py ───── 依赖 utils.py
+    ├── collect_more_corpus.py ── 依赖 utils.py
     └── utils.py ─────── 无内部依赖
 ```
 
-**规则**：`utils.py` 不依赖任何项目模块。其他模块只依赖 `utils.py`。模块之间不交叉依赖。
+**规则**：`utils.py` 不依赖任何项目模块。其他所有模块在需要读取配置/日志时仅依赖 `utils.py`。模块之间不交叉依赖（例如，采集脚本彼此独立）。
 
 ---
 
@@ -155,10 +157,12 @@ main.py / streamlit_app.py
 | 变量名 | 必填 | 默认值 | 用途 |
 |--------|------|--------|------|
 | `OPENAI_API_KEY` | ✅ | — | OpenAI API 密钥 |
-| `OPENAI_EMBEDDING_MODEL` | ✅ | — | Embedding 模型名 |
+| `OPENAI_EMBEDDING_MODEL` | ❌ | `local` | Embedding 模型名（若设为 local 或为空，则默认启用本地嵌入模式） |
 | `OPENAI_MODEL` | ❌ | `gpt-4o-mini` | 对话模型名 |
 | `OPENAI_BASE_URL` | ❌ | `None` | 自定义 API 地址 |
 | `LOCAL_EMBEDDING_MODEL` | ❌ | `Qwen/Qwen3-Embedding-0.6B` | 本地嵌入模型名 |
+| `HF_ENDPOINT` | ❌ | `https://hf-mirror.com` | Hugging Face 镜像端点（用于本地模型国内加速下载） |
+
 
 ### 4.2 使用规则
 
@@ -366,14 +370,21 @@ embed_store.py 的 search() 新增 max_distance 参数，仅返回余弦距离�
 ## 十一、依赖清单
 
 ```txt
-openai>=1.0.0          # OpenAI API 客户端
-chromadb>=0.4.0        # 向量数据库
-python-dotenv>=1.0.0   # .env 加载
-streamlit>=1.28.0      # Web 界面
-PyMuPDF>=1.23.0        # PDF 解析
-pyyaml>=6.0            # Front-Matter 解析
-pytest>=8.0            # 测试框架
+openai>=1.0.0                 # OpenAI API 客户端
+chromadb>=0.4.0               # 向量数据库
+python-dotenv>=1.0.0          # .env 加载
+streamlit>=1.28.0             # Web 界面
+PyMuPDF>=1.23.0               # PDF 解析
+pyyaml>=6.0                   # Front-Matter 解析
+pytest>=8.0                   # 测试框架
 sentence-transformers>=2.2.0  # 本地嵌入模型
+beautifulsoup4>=4.12.0        # HTML 解析（语料抓取用）
+requests>=2.31.0              # HTTP 请求客户端（语料抓取用）
+lxml>=4.9.0                   # 高效 XML/HTML 解析引擎
+html2text>=2020.1.16          # 将 HTML 网页转换为干净的 Markdown 文本
+pysocks>=1.7.1                # SOCKS5 代理支持
+python-pptx>=0.6.21           # PowerPoint (.pptx) 文档生成工具
+torch>=2.0.0                  # 本地深度学习框架（本地 Embedding 支持）
 ```
 
 ---

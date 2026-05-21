@@ -3,7 +3,7 @@
 > 基于检索增强生成（RAG）的智能问答系统 | 大数据学期项目 — 方向 B
 
 [![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/)
-[![Tests](https://img.shields.io/badge/tests-54%20passed-green.svg)](https://github.com/liwe123/Date-Analysis-Fanal-Exem)
+[![Tests](https://img.shields.io/badge/tests-68%20passed-green.svg)](https://github.com/liwe123/Date-Analysis-Fanal-Exem)
 [![License](https://img.shields.io/badge/license-MIT-orange.svg)](LICENSE)
 [![GPU](https://img.shields.io/badge/GPU-CUDA%2012.4-brightgreen.svg)](https://pytorch.org/)
 
@@ -18,7 +18,7 @@
 - **并发元数据提取**：32 线程并发调用 LLM 提取元数据，429 限流自动指数退避重试
 - **双端入口**：CLI 命令行 + 现代化 Streamlit Web 界面（极简黑白高级质感，支持侧边栏直接上传自定义数据）
 - **自动采集**：Wikipedia + Stack Overflow + CSDN 三源自动采集，覆盖术语定义、实战问答、技术博客
-- **54 个测试**：全覆盖单元测试 + 集成测试
+- **68 个测试**：全覆盖单元测试 + 集成测试
 
 ---
 
@@ -64,7 +64,7 @@ cp .env.example .env   # 编辑填入 OPENAI_API_KEY
 |------|------|------|
 | `OPENAI_API_KEY` | ✅ | LLM API 密钥 |
 | `OPENAI_BASE_URL` | ❌ | 自定义 API 地址（兼容 DeepSeek 等） |
-| `OPENAI_MODEL` | ❌ | 默认 `deepseek-v4-flash` |
+| `OPENAI_MODEL` | ❌ | 默认 `gpt-4o-mini` |
 | `OPENAI_EMBEDDING_MODEL` | ❌ | 设为 `local` 使用本地模型 |
 | `LOCAL_EMBEDDING_MODEL` | ❌ | 默认 `Qwen/Qwen3-Embedding-0.6B` |
 | `HF_ENDPOINT` | ❌ | 国内网络设 `https://hf-mirror.com` |
@@ -111,12 +111,12 @@ python -m pytest tests/ -v
 
 | 模块 | 测试数 | 覆盖 |
 |------|--------|------|
-| `preprocess` | 14 | 清洗、分块、分类、元数据合并 |
-| `embed_store` | 9 | 初始化、搜索、距离过滤、安全删除 |
-| `ingest` | 8 | YAML 解析、文件加载（含递归） |
-| `qa` | 5 | 上下文生成、引用补全、回退 |
-| `query_parser` | 4 | 正常/异常/格式错误/API 失败 |
-| `integration` | 4 | 摄取→处理、搜索→问答端到端 |
+| `preprocess` | 27 | 清洗、分块、分类、Front-Matter 合并、JSON 安全解析、元数据提取 |
+| `embed_store` | 10 | 初始化、语义搜索、距离过滤、where 过滤、安全删除、计数与来源 |
+| `ingest` | 12 | YAML 解析、嵌套 Front-Matter、文件递归加载、PDF 提取、格式错误与空文件过滤 |
+| `qa` | 10 | 上下文生成、引用补全、年份格式化、异常链与穿透 |
+| `query_parser` | 5 | 正常解析、空过滤、API 异常降级、格式错误、Markdown 剥离 |
+| `integration` | 4 | 摄取→处理、搜索→问答全链路端到端集成测试 |
 
 ---
 
@@ -124,13 +124,13 @@ python -m pytest tests/ -v
 
 | 组件 | 技术 |
 |------|------|
-| LLM | DeepSeek V4 Flash (OpenAI-compatible API) |
+| LLM | DeepSeek V4 Flash / GPT-4o-mini (OpenAI-compatible API) |
 | Embedding | Qwen3-Embedding-0.6B（本地，1024 维，GPU CUDA） |
 | 向量数据库 | ChromaDB |
 | 文档解析 | PyMuPDF (PDF) + PyYAML (Front-Matter) |
-| 前端 | Streamlit |
-| 测试 | Pytest (54 用例) |
-| 语料 | Wikipedia + Stack Overflow + CSDN（三源自动采集） |
+| 前端 | Streamlit (极简视觉，高级质感，带数据管理与参数调节) |
+| 测试 | Pytest (68 用例) |
+| 语料 | Wikipedia + Stack Overflow + CSDN（三源自动采集，176 篇文档） |
 
 ---
 
@@ -141,16 +141,17 @@ python -m pytest tests/ -v
 ├── src/
 │   ├── main.py              # CLI 入口 (build / ask / collect)
 │   ├── collect_corpus.py    # Wikipedia 语料采集
-│   ├── collect_stackoverflow.py # Stack Overflow 问答采集
+│   ├── collect_more_corpus.py # Wikipedia 补充语料采集 (解耦重构)
+│   ├── collect_stackoverflow.py # Stack Overflow 问答采集 (带翻译)
 │   ├── collect_csdn.py      # CSDN 博客采集
 │   ├── ingest.py            # 文档摄取 (md/txt/pdf)
-│   ├── preprocess.py        # 清洗、分块、元数据提取
-│   ├── embed_store.py       # ChromaDB 向量存储与检索
-│   ├── qa.py                # LLM 问答生成
-│   ├── query_parser.py      # 查询意图解析
-│   └── utils.py             # 公共工具（环境变量、日志、客户端）
-├── tests/                   # 54 个测试用例
-├── data/raw/                # 原始文档 + Wikipedia 词条
+│   ├── preprocess.py        # 清洗、分块、元数据提取 (带极短兜底)
+│   ├── embed_store.py       # ChromaDB 向量存储与混合检索 (带 where 回退)
+│   ├── qa.py                # LLM 问答生成 (带截断防幻觉)
+│   ├── query_parser.py      # 查询意图解析 (Markdown 剥离)
+│   └── utils.py             # 公共工具（环境变量、日志、客户端单例）
+├── tests/                   # 68 个测试用例
+├── data/raw/                # 原始文档 + Wikipedia/CSDN/SO 词条 (176 篇)
 ├── vector_store/            # ChromaDB 持久化目录
 ├── report/report.md         # 完整项目报告
 ├── pipeline_demo.ipynb      # Jupyter Notebook 演示

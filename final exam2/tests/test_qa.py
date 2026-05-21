@@ -4,9 +4,13 @@ test_qa.py
 对 qa 模块的单元测试。
 """
 
+from __future__ import annotations
+
 from unittest.mock import MagicMock, patch
 
-from src.qa import generate_answer, _format_sources_list
+import pytest
+
+from src.qa import _format_sources_list, generate_answer
 
 
 class TestFormatSourcesList:
@@ -85,3 +89,21 @@ class TestGenerateAnswer:
             }]
             result = generate_answer("question?", docs, client=mock_client)
             assert "2024" in result or "test.md" in result
+
+    def test_keyboard_interrupt_penetrates(self):
+        mock_client = MagicMock()
+        mock_client.chat.completions.create.side_effect = KeyboardInterrupt()
+        with patch("src.qa.get_model_name", return_value="test-model"):
+            docs = [{"text": "content", "source": "test.md"}]
+            with pytest.raises(KeyboardInterrupt):
+                generate_answer("question?", docs, client=mock_client)
+
+    def test_runtime_error_raised_on_api_error(self):
+        mock_client = MagicMock()
+        mock_client.chat.completions.create.side_effect = ValueError("Some API error")
+        with patch("src.qa.get_model_name", return_value="test-model"):
+            docs = [{"text": "content", "source": "test.md"}]
+            with pytest.raises(RuntimeError) as exc_info:
+                generate_answer("question?", docs, client=mock_client)
+            assert exc_info.value.__cause__ is not None
+            assert isinstance(exc_info.value.__cause__, ValueError)

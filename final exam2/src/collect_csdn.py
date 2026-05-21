@@ -260,7 +260,7 @@ def collect(max_per_keyword: int = MAX_PER_KEYWORD) -> tuple[list[str], list[str
 
             body = _extract_article(html_content)
             if len(body) < 50:
-                logger.debug("  正文过短，跳过: %s", article["title"][:30])
+                logger.info("  正文过短，跳过: %s", article["title"][:30])
                 continue
 
             out_path = write_markdown(keyword, article, body)

@@ -4,7 +4,21 @@ test_preprocess.py
 对 preprocess 模块的单元测试。
 """
 
-from src.preprocess import chunk_text, clean_text, _guess_category, _merge_fm_meta
+from __future__ import annotations
+
+from unittest.mock import MagicMock, patch
+
+import pytest
+
+from src.preprocess import (
+    _guess_category,
+    _merge_fm_meta,
+    _safe_json_parse,
+    chunk_text,
+    clean_text,
+    extract_metadata,
+    process_documents,
+)
 
 
 class TestCleanText:
@@ -49,7 +63,6 @@ class TestChunkText:
         assert len(chunks) == 1
 
     def test_invalid_overlap(self):
-        import pytest
         with pytest.raises(ValueError):
             chunk_text("test", chunk_size=10, overlap=20)
 
@@ -62,11 +75,11 @@ class TestChunkText:
 
     def test_sentence_boundary_splitting(self):
         """验证分块尊重句子边界。"""
-        text = "这是第一句话。这是第二句话。这是第三句话。这是第四句话。"
+        text = "这是第一句话。这是第二句话。这是环境配置 1.0.0 测试。这是第四句话。"
         chunks = chunk_text(text, chunk_size=30, overlap=5)
         for c in chunks:
             t = c["text"]
-            assert t.endswith("。") or t == text or len(t) <= 30
+            assert len(t) <= 30 or t.endswith("。") or "1.0.0" in t
 
 
 class TestGuessCategory:
@@ -99,3 +112,76 @@ class TestMergeFmMeta:
         llm = {"author": "A", "year": 2023, "category": "wiki"}
         result = _merge_fm_meta({}, llm)
         assert result == llm
+
+
+class TestSafeJsonParse:
+    def test_valid_json(self):
+        assert _safe_json_parse('{"author": "Bob"}') == {"author": "Bob"}
+
+    def test_empty_json(self):
+        assert _safe_json_parse("") == {}
+        assert _safe_json_parse("   ") == {}
+
+    def test_json_with_codeblock_and_comments(self):
+        raw = """
+        // 这是一个注释
+        {
+            "author": "Alice", // 另一个注释
+            "year": 2026
+        }
+        """
+        parsed = _safe_json_parse(raw)
+        assert parsed["author"] == "Alice"
+        assert parsed["year"] == 2026
+
+    def test_invalid_json_fallback(self):
+        raw = "这不是JSON"
+        assert _safe_json_parse(raw, default={"fallback": True}) == {"fallback": True}
+
+
+class TestExtractMetadata:
+    @patch("src.preprocess.get_model_name", return_value="gpt-4o-mini")
+    def test_extract_success(self, mock_model, mock_openai_client):
+        mock_choices = MagicMock()
+        mock_choices.message.content = '{"author": "Eve", "year": "2026", "category": "notice"}'
+        mock_openai_client.chat.completions.create.return_value.choices = [mock_choices]
+
+        meta = extract_metadata("一些测试文档正文内容", filename="notice_test.md", client=mock_openai_client)
+        assert meta["author"] == "Eve"
+        assert meta["year"] == 2026
+        assert meta["category"] == "notice"
+
+    @patch("src.preprocess.get_model_name", return_value="gpt-4o-mini")
+    def test_extract_exception_fallback(self, mock_model, mock_openai_client):
+        mock_openai_client.chat.completions.create.side_effect = Exception("API error")
+        meta = extract_metadata("正文", filename="wiki_test.md", client=mock_openai_client)
+        assert meta["author"] is None
+        assert meta["year"] is None
+        assert meta["category"] == "wiki"
+
+
+class TestProcessDocuments:
+    def test_is_extract_meta_false(self):
+        docs = [{"source": "wiki_01.md", "path": "p.md", "text": "Hadoop tutorial"}]
+        processed = process_documents(docs, is_extract_meta=False)
+        assert len(processed) >= 1
+        meta = processed[0]["metadata"]
+        assert meta["source"] == "wiki_01.md"
+        assert meta["category"] == "wiki"
+        assert meta["author"] is None
+        assert meta["year"] is None
+
+    @patch("src.preprocess.get_openai_client")
+    def test_is_extract_meta_true(self, mock_get_client):
+        mock_client = MagicMock()
+        mock_choice = MagicMock()
+        mock_choice.message.content = '{"author": "Carl", "year": 2024, "category": "wiki"}'
+        mock_client.chat.completions.create.return_value.choices = [mock_choice]
+        mock_get_client.return_value = mock_client
+
+        docs = [{"source": "wiki_01.md", "path": "p.md", "text": "Hadoop tutorial"}]
+        processed = process_documents(docs, is_extract_meta=True, max_workers=2)
+        assert len(processed) >= 1
+        meta = processed[0]["metadata"]
+        assert meta["author"] == "Carl"
+        assert meta["year"] == 2024
