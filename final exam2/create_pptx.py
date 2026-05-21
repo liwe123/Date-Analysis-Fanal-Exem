@@ -797,14 +797,14 @@ card(
     Inches(5.5),
     "模块化架构",
     [
-        "* main.py（118 行）- CLI 入口",
-        "* ingest.py（104 行）- 文档加载",
-        "* preprocess.py（301 行）- 清洗分块",
-        "* embed_store.py（210 行）- 向量存储",
-        "* qa.py（71 行）- 答案生成",
-        "* query_parser.py（113 行）- 查询解析",
-        "* collect_corpus.py（199 行）- 语料采集",
-        "* utils.py（79 行）- 工具函数",
+        "* main.py（218 行）- CLI 入口",
+        "* ingest.py（107 行）- 文档加载",
+        "* preprocess.py（431 行）- 清洗分块",
+        "* embed_store.py（325 行）- 向量存储",
+        "* qa.py（110 行）- 答案生成",
+        "* query_parser.py（114 行）- 查询解析",
+        "* collect_corpus.py（208 行）- 语料采集",
+        "* utils.py（85 行）- 工具函数",
     ],
     B,
 )
@@ -816,14 +816,14 @@ card(
     Inches(5.5),
     "测试覆盖（68 个测试用例）",
     [
-        "* test_preprocess - 清洗/分块/元数据/异常",
-        "* test_ingest - 嵌套 YAML 解析与异常退避",
-        "* test_query_parser - 格式错误与降级过滤",
-        "* test_embed_store - upsert/where_document 过滤",
-        "* test_qa - 超长熔断/多轮会话/防幻觉",
-        "* test_integration - 整体全链路冒烟测试",
+        "* test_preprocess - 7 类 27 测试（清洗/分块/元数据）",
+        "* test_ingest - 2 类 12 测试（YAML 解析/异常边界）",
+        "* test_query_parser - 1 类 5 测试（格式错误/降级）",
+        "* test_embed_store - 4 类 10 测试（upsert/过滤/回退）",
+        "* test_qa - 2 类 10 测试（空文档/引用补全/异常）",
+        "* test_integration - 3 类 4 测试（全链路冒烟）",
         "",
-        "* 68 个测试用例 100% 成功通过 (Passed)",
+        "* 19 类 68 个测试用例 100% 成功通过 (Passed)",
     ],
     T,
 )
@@ -853,12 +853,14 @@ for i, (la, va, cl) in enumerate(
     [
         ("课程文档", "45 篇", B),
         ("Wikipedia 词条", "83 篇", T),
+        ("Stack Overflow", "30 篇", O),
+        ("CSDN 博客", "18 篇", P),
         ("文档总数", "176 篇", D),
         ("文档分类", "7 大类", G),
         ("处理后文本块", "约 450+ 个", O),
     ]
 ):
-    y = Inches(2.2) + Inches(0.55) * i
+    y = Inches(2.2) + Inches(0.45) * i
     tx(sl, Inches(0.9), y, Inches(2.0), Inches(0.35), la, 13, GR)
     re(sl, Inches(3.0), y, Inches(0.04), Inches(0.35), cl)
     tx(sl, Inches(3.2), y, Inches(3.0), Inches(0.35), va, 14, cl, True)
@@ -866,12 +868,12 @@ re(sl, Inches(6.9), Inches(1.5), Inches(5.8), Inches(4.5), CA)
 tx(sl, Inches(7.1), Inches(1.7), Inches(5.4), Inches(0.4), "API 调用成本", 18, B, True)
 for i, (la, va, cl) in enumerate(
     [
-        ("元数据提取 176 次", "约 0.5 元", G),
-        ("查询解析每次", "约 0.003 元", G),
-        ("答案生成每次", "约 0.005 元", G),
+        ("元数据提取 176 次", "约 0.88 元", G),
+        ("查询解析每次", "约 0.005 元", G),
+        ("答案生成每次", "约 0.01 元", G),
         ("文本嵌入（本地 GPU）", "0 元", A),
-        ("建库总成本", "小于 0.8 元", D),
-        ("单次查询", "约 0.01 元", O),
+        ("建库总成本", "小于 1.0 元", D),
+        ("单次查询", "约 0.02 元", O),
     ]
 ):
     y = Inches(2.2) + Inches(0.55) * i
@@ -890,12 +892,12 @@ for i, (la, va, cl) in enumerate(
     )
 for i, (n, l, c) in enumerate(
     [
-        ("176", "文档", B),
+        ("176", "文档总数", B),
         ("450+", "文本块", T),
-        ("<0.8 元", "总成本", G),
-        ("1024", "维度", A),
-        ("7 类", "分类", O),
-        ("68", "测试", P),
+        ("30", "Stack Overflow", O),
+        ("18", "CSDN 博客", P),
+        ("<1.0 元", "总成本", G),
+        ("68", "测试覆盖", P),
     ]
 ):
     x = Inches(0.6) + Inches(2.1) * (i % 3)
@@ -1083,10 +1085,10 @@ card(
     Inches(2.55),
     "👑 队长（项目统筹 & RAG 架构师）",
     [
-        "* 顶层系统架构设计与核心流水线规制",
-        "* embed_store.py: upsert 幂等与 where_document 检索优化",
-        "* preprocess.py: 四级语义退避分块算法",
-        "* 核心技术攻坚与全链路安全降级回退机制",
+        "* 顶层架构：全链路 RAG 流水线规划与模块抽象",
+        "* embed_store: upsert 幂等 + where_document 过滤",
+        "* preprocess: 四层语义分块与极短文档拼合",
+        "* 攻克 Mock 路径穿透隐患与信号防吞机制",
     ],
     B,
 )
@@ -1099,10 +1101,10 @@ card(
     Inches(2.55),
     "🧑‍💻 成员 B（数据工程师）",
     [
-        "* 多源离线爬取与 HTML -> MD 规范转换",
-        "* 32 线程并发元数据提取（ThreadPoolExecutor）",
-        "* 429 限流退避算法：扰动指数自适应重试",
-        "* clean_text(): 标签、实体、控制符、空白四步清洗",
+        "* 三源采集：Wikipedia + Stack Overflow + CSDN",
+        "* BeautifulSoup + html2text 转为纯净 Markdown",
+        "* 32 线程并发元数据提取（429 指数退避重试）",
+        "* clean_text 四步流水线：标签→实体→控制符→空白",
     ],
     T,
 )
@@ -1115,10 +1117,10 @@ card(
     Inches(2.55),
     "🎨 成员 C（前端开发工程师）",
     [
-        "* app/style.css: 流畅毛玻璃与深色微动画重塑",
-        "* session_state 多轮对话历史状态管理",
-        "* 调试模式折叠面板与 Top-K/阈值滑块参数联动",
-        "* 拖拽动态文档上传入库与 XSS 安全逃逸防护",
+        "* Vanilla CSS 毛玻璃 + 深色卡片动画布局",
+        "* 多轮对话状态机与 Top-K/阈值实时调节",
+        "* 调试模式剖析面板（余弦得分/分类/年份）",
+        "* 拖拽上传入库 + XSS 安全 escape 防护",
     ],
     O,
 )
@@ -1131,10 +1133,10 @@ card(
     Inches(2.55),
     "🧪 成员 D（测试与文档工程师）",
     [
-        "* pytest 68 个单测与集成用例覆盖开发 (100% Passed)",
-        "* unittest.mock.patch 离线环境深度解耦",
-        "* 嵌套 YAML、网络中断、系统信号防吞极限边界测试",
-        "* report.md/README.md/演示 PPT 文稿高标准撰写",
+        "* 19 类 68 个 pytest 测试 (100% Passed)",
+        "* Mock 解耦：离线无 API 密钥运行全套测试",
+        "* YAML 容错 / API 降级 / 信号防吞边界用例",
+        "* report.md / README.md / 答辩 PPT 撰写",
     ],
     P,
 )
@@ -1232,7 +1234,7 @@ tx(
     Inches(5.3),
     Inches(12.3),
     Inches(0.5),
-    "代码文档齐全  |  68 个单元测试用例  |  全流程完美复现",
+    "报告齐全  |  19 类 68 个测试全覆盖  |  全流程完美复现",
     15,
     LG,
     False,
