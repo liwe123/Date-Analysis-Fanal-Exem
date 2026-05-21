@@ -4,6 +4,8 @@ test_embed_store.py
 对 embed_store 模块的单元测试。
 """
 
+from __future__ import annotations
+
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -16,7 +18,7 @@ class TestVectorStoreInit:
         with patch("src.embed_store.chromadb.PersistentClient"), \
              patch("src.embed_store.get_openai_client"), \
              patch("src.embed_store.use_local_embedding", return_value=False), \
-             patch("src.embed_store.clean_env", return_value="test-emb"):
+             patch("src.embed_store.get_embedding_model_name", return_value="test-emb"):
             store = VectorStore()
             assert store.embedding_model == "test-emb"
 

@@ -62,9 +62,9 @@ def clean_text(text: str) -> str:
 # ── 语义分块 ──────────────────────────────────────────────────────
 
 def _split_into_sentences(text: str) -> list[str]:
-    """将文本按句子边界切分（支持中英文标点）。"""
-    # 在中英文句末标点后切分，保留标点
-    parts = re.split(r"(?<=[。！？.!?\n])\s*", text)
+    """将文本按句子边界切分（支持中英文标点，避免切碎缩写与版本号）。"""
+    # 在中文字符、问号、感叹号、换行，或后跟空格+大写字母/数字的句点处切分
+    parts = re.split(r"(?<=[。！？\n])\s*|(?<=[!?])\s*|(?<=\.)\s+(?=[A-Z\d])", text)
     return [s.strip() for s in parts if s.strip()]
 
 
@@ -85,6 +85,10 @@ def chunk_text(
     if not text.strip():
         return []
 
+    if chunk_size <= 0:
+        raise ValueError("chunk_size 必须大于 0。")
+    if overlap < 0:
+        raise ValueError("overlap 必须大于等于 0。")
     if chunk_size <= overlap:
         raise ValueError("chunk_size 必须大于 overlap。")
 
@@ -140,6 +144,13 @@ def chunk_text(
                 start += chunk_size - overlap
             char_offset += len(block) + 1
 
+    if not chunks and text.strip():
+        chunks.append({
+            "text": text.strip(),
+            "char_start": 0,
+            "char_end": len(text.strip()),
+        })
+
     return chunks
 
 
@@ -183,7 +194,7 @@ def _safe_json_parse(raw: str, default: Any = None) -> Any:
                 elif val.startswith('"'):
                     fallback[key] = val[1:-1]
                 else:
-                    fallback[key] = int(val)
+                    fallback[key] = int(float(val))
         return fallback if fallback else (default if default is not None else {})
 
 
@@ -245,7 +256,7 @@ def extract_metadata(
 
             if meta["year"] is not None:
                 try:
-                    meta["year"] = int(meta["year"])
+                    meta["year"] = int(float(meta["year"]))
                 except (ValueError, TypeError):
                     meta["year"] = None
 
@@ -334,10 +345,9 @@ def _merge_fm_meta(fm_meta: dict, llm_meta: dict) -> dict:
         merged["author"] = fm_meta["author"]
     if fm_meta.get("year"):
         try:
-            merged["year"] = int(fm_meta["year"])
+            merged["year"] = int(float(fm_meta["year"]))
         except (ValueError, TypeError):
             logger.warning("Front-Matter year 字段转换失败: %s", fm_meta["year"])
-            pass
     if fm_meta.get("category"):
         merged["category"] = fm_meta["category"]
     if fm_meta.get("language"):
@@ -390,7 +400,7 @@ def process_documents(
         ]
 
     # ── 阶段 3：分块组装 ──
-    for doc_idx, ((doc, cleaned), llm_meta) in enumerate(zip(cleaned_docs, llm_metas)):
+    for _, ((doc, cleaned), llm_meta) in enumerate(zip(cleaned_docs, llm_metas)):
         filename = doc.get("source", "unknown")
 
         # 合并 Front-Matter 元数据
@@ -410,8 +420,8 @@ def process_documents(
                     "chunk_id":   idx,
                     "char_start": chunk["char_start"],
                     "char_end":   chunk["char_end"],
-                    "author":     llm_meta.get("author") or "",
-                    "year":       llm_meta.get("year") or 0,
+                    "author":     llm_meta.get("author") if llm_meta.get("author") != "" else None,
+                    "year":       llm_meta.get("year") if llm_meta.get("year") != 0 else None,
                     "category":   llm_meta.get("category", "general"),
                     "language":   llm_meta.get("language", "zh"),
                     "summary":    llm_meta.get("summary", ""),
