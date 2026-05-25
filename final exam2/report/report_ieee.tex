@@ -1,0 +1,340 @@
+\documentclass[10pt,twocolumn]{article}
+
+% ── 页面与排版 ──────────────────────────────────────────────
+\usepackage[margin=0.75in]{geometry}
+\usepackage{parskip}
+\setlength{\parskip}{0.4em}
+\setlength{\parindent}{0pt}
+
+% ── 字体 ────────────────────────────────────────────────────
+\usepackage{fontspec}
+\setmainfont{Times New Roman}
+\usepackage{xeCJK}
+\setCJKmainfont{SimSun}
+
+% ── 数学与符号 ──────────────────────────────────────────────
+\usepackage{amsmath,amssymb}
+
+% ── 图表 ────────────────────────────────────────────────────
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{float}
+
+% ── 代码 ────────────────────────────────────────────────────
+\usepackage{listings}
+\lstset{
+  basicstyle=\ttfamily\scriptsize,
+  breaklines=true,
+  frame=single,
+  columns=fullflexible
+}
+
+% ── 链接 ────────────────────────────────────────────────────
+\usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
+
+% ── 标题 ────────────────────────────────────────────────────
+\usepackage{titlesec}
+\titleformat{\section}{\large\bfseries}{\thesection}{1em}{}
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection}{1em}{}
+
+% ── 引用 ────────────────────────────────────────────────────
+\usepackage[numbers,sort&compress]{natbib}
+
+% ── 页眉页脚 ────────────────────────────────────────────────
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[C]{\small RAG 知识库检索增强生成系统 — 工程设计文档}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\begin{document}
+
+% ── 标题 ────────────────────────────────────────────────────
+\title{\Large\bfseries RAG 知识库检索增强生成系统：工程设计文档}
+\author{
+  方向 B：智能客户支持与检索增强生成助手
+}
+\date{}
+\maketitle
+\thispagestyle{fancy}
+
+% ─────────────────────────────────────────────────────────────
+\section{执行摘要}
+% ─────────────────────────────────────────────────────────────
+
+\textbf{业务问题}：企业员工每天在数百份非结构化文档中查找答案，传统关键词搜索无法理解``交作业''与``提交方式''的语义等价关系，导致重复提问率高、信息检索效率低下。
+
+\textbf{为什么传统方法做不到}：关键词搜索依赖字面匹配——用户搜``怎么交作业''，文档中写的是``提交方式''，返回零结果。当文档规模超过数百份且表述方式多样时，基于 TF-IDF 或 BM25 的检索召回率急剧下降。
+
+\textbf{核心交付}：我们构建了一个端到端 RAG 系统，从 176 篇杂乱文档自动构建可搜索向量索引，支持语义检索 + 元数据过滤 + LLM 答案生成 + 来源追溯。系统在 41 个域内查询上实现 87.8\% 的 Recall@3，端到端稳态延迟 6.2 秒，建库成本 $<$\textyen 1。
+
+% ─────────────────────────────────────────────────────────────
+\section{系统架构}
+% ─────────────────────────────────────────────────────────────
+
+\subsection{数据流}
+
+系统采用七层流水线架构，数据从原始文档流向可查询的向量索引：
+
+\begin{verbatim}
+原始文档 (176篇)
+  | ingest.py (摄取)
+  v
+clean_text() (清洗: HTML/实体/控制符/空白)
+  | chunk_text() (分块: 段落->句子->贪心->滑窗)
+  | extract_metadata() (LLM 提取元数据)
+  v
+Qwen3-Embedding-0.6B (本地GPU嵌入, 1024维)
+  | ChromaDB (HNSW索引, cosine距离)
+  v
+query_parser.py (LLM意图解析)
+  | embed_store.search() (混合检索)
+  | qa.py (答案生成 + 来源标注)
+  v
+CLI / Streamlit Web 界面
+\end{verbatim}
+
+\subsection{技术栈}
+
+\begin{table}[H]
+\centering
+\caption{核心技术栈}
+\label{tab:techstack}
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{层级} & \textbf{组件} & \textbf{技术} \\
+\midrule
+文档摄取 & PDF/MD/TXT & PyMuPDF + PyYAML \\
+文本清洗 & 正则流水线 & Python re \\
+语义分块 & 四层算法 & 自研 (700字符) \\
+元数据 & LLM 结构化 & DeepSeek V4 Flash \\
+嵌入 & 本地 GPU & Qwen3-Embedding \\
+向量库 & HNSW 索引 & ChromaDB \\
+查询解析 & LLM 意图 & DeepSeek V4 Flash \\
+答案生成 & LLM+来源 & DeepSeek V4 Flash \\
+前端 & Web 界面 & Streamlit \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{模块职责}
+
+\begin{table}[H]
+\centering
+\caption{模块职责划分}
+\label{tab:modules}
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{模块} & \textbf{职责} \\
+\midrule
+ingest.py & 递归读取，解析 Front-Matter \\
+collect\_*.py & Wikipedia/SO/CSDN 三源采集 \\
+preprocess.py & 清洗+分块+元数据提取 \\
+embed\_store.py & ChromaDB 封装：嵌入/检索 \\
+query\_parser.py & 自然语言$\to$结构化参数 \\
+qa.py & System Prompt + 来源强制 \\
+main.py & CLI 子命令编排 \\
+streamlit\_app.py & Web UI + 调试模式 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ─────────────────────────────────────────────────────────────
+\section{设计决策与取舍}
+% ─────────────────────────────────────────────────────────────
+
+\subsection{向量数据库：ChromaDB vs Milvus vs Qdrant}
+
+\begin{table}[H]
+\centering
+\caption{向量数据库选型对比}
+\label{tab:vectordb}
+\begin{tabular}{@{}p{1.8cm}p{2.2cm}p{2.2cm}@{}}
+\toprule
+\textbf{方案} & \textbf{优势} & \textbf{劣势} \\
+\midrule
+\textbf{ChromaDB} & pip install 即用，零部署 & 不支持分布式，复合语法不直观 \\
+Milvus & 生产级分布式 & 需 Docker+etcd+MinIO \\
+Qdrant & Rust 高性能 & 需独立服务进程 \\
+Pinecone & 全托管 & 付费 SaaS，数据外传 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{选择理由}：课程场景无并发/分布式需求，ChromaDB 零部署成本。已做抽象封装，未来可平滑迁移。已知代价：复合 where 条件需显式 \$and 操作符。
+
+\subsection{分块策略：四层语义分块}
+
+采用\textbf{四层优先级}算法：段落边界$\to$句子边界$\to$贪心合并$\to$滑窗切割。参数：chunk\_size=700，overlap=120。
+
+\begin{itemize}
+  \item \textbf{固定长度}：实现快但破坏语义——可能把一句话切在中间
+  \item \textbf{四层语义分块}：尊重边界，重叠确保连续性（\textbf{选择}）
+  \item \textbf{标题感知}：依赖文档格式，不适用于 FAQ
+\end{itemize}
+
+\textbf{700 字符选择依据}：$<$400 导致语义碎片化，$>$1000 稀释向量聚焦度。700 字符约 350 中文字，平衡精度与完整性。
+
+\subsection{嵌入模型：Qwen3-Embedding vs ada-002 vs MiniLM}
+
+\begin{table}[H]
+\centering
+\caption{嵌入模型对比}
+\label{tab:embedding}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+\textbf{方案} & \textbf{维度} & \textbf{成本} & \textbf{中文} \\
+\midrule
+\textbf{Qwen3-0.6B} & 1024 & 免费(GPU) & 优秀 \\
+ada-002 & 1536 & \$0.0001/1K & 良好 \\
+MiniLM-L6 & 384 & 免费 & 一般 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{选择理由}：零 API 成本、原生中文语义理解、1024 维区分度优于 384 维。已知代价：首次加载 $\sim$16s 冷启动。
+
+\subsection{LLM 选择：DeepSeek V4 Flash}
+
+DeepSeek 与 GPT-4o-mini 同价位（$\sim$\$0.15/百万 token），国内网络访问更稳定。本地 7B 模型在 CPU 上延迟 $>$10s，不适合交互场景。
+
+\subsection{查询解析：LLM 意图提取}
+
+用一次轻量 LLM 调用将自然语言转为结构化参数：
+\begin{verbatim}
+输入: "2024年的通知讲了啥"
+输出: {search_query: "通知",
+       filters: {year:2024, category:"notice"}}
+\end{verbatim}
+
+\textbf{回退策略}：JSON 解析异常时，search\_query 回退为原始问题，filters=None，降级为纯语义搜索。评估中 3/50 个查询触发回退。
+
+% ─────────────────────────────────────────────────────────────
+\section{评估与失效模式}
+% ─────────────────────────────────────────────────────────────
+
+\subsection{评估方法}
+
+构建 50 个测试查询，覆盖 5 类：课程信息(10)、技术概念(10)、跨文档(10)、元数据过滤(10)、边界/超纲(10)。
+
+\subsection{评估结果}
+
+\begin{table}[H]
+\centering
+\caption{评估关键指标}
+\label{tab:eval}
+\begin{tabular}{@{}lc@{}}
+\toprule
+\textbf{指标} & \textbf{数值} \\
+\midrule
+Recall@3 (域内) & 87.8\% (36/41) \\
+幻觉率 (超纲) & 1/9 (11.1\%) \\
+平均延迟 (稳态) & 6.2s \\
+查询解析成功率 & 94\% (47/50) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{分类别 Recall@3}
+\label{tab:recall}
+\begin{tabular}{@{}lc@{}}
+\toprule
+\textbf{类别} & \textbf{命中率} \\
+\midrule
+课程信息 & 90\% (9/10) \\
+技术概念 & 100\% (10/10) \\
+跨文档综合 & 100\% (10/10) \\
+元数据过滤 & 70\% (7/10) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{失效模式}
+
+\textbf{失效 1：复合 where 条件不兼容。} Q31 ``2025年的通知''触发 ChromaDB 报错，回退为纯语义搜索。根因：ChromaDB 不支持隐式 AND。已修复：自动转为 \$and 格式。
+
+\textbf{失效 2：超纲查询幻觉。} Q44 ``Python for循环''检索到 SO 代码片段，LLM 给出详细代码。根因：检索结果表面相关但主题不匹配。修复方向：System Prompt 增加主题相关性约束。
+
+\textbf{失效 3：查询解析 JSON 错误。} Q32/Q38/Q39 返回非标准 JSON。系统正确回退为纯语义搜索，但丢失过滤能力。
+
+\subsection{事后剖析}
+
+\textbf{失败 1：SentenceTransformer 方法名变更。} commit 92bc9b2 将 \texttt{get\_sentence\_embedding\_dimension()} 改为 \texttt{get\_embedding\_dimension()}，基于 PyTorch deprecation 警告。但当前版本仍用旧方法名，导致全链路崩溃。单元测试因 Mock 了整个模型未发现。\textbf{教训}：Mock 测试无法发现 API 兼容性问题；需集成冒烟测试。
+
+\textbf{失败 2：极短文档静默丢弃。} 早期 \texttt{clean\_text()} 对 $<$10 字符文档直接丢弃，导致 FAQ 短答案丢失。修复：\texttt{chunk\_text()} 末尾兜底保留非空极短文档。\textbf{教训}：清洗应区分``噪声''和``短但有效''内容。
+
+% ─────────────────────────────────────────────────────────────
+\section{延迟与成本估算}
+% ─────────────────────────────────────────────────────────────
+
+\subsection{延迟预算}
+
+\begin{table}[H]
+\centering
+\caption{端到端延迟分解 (稳态)}
+\label{tab:latency}
+\begin{tabular}{@{}lcc@{}}
+\toprule
+\textbf{组件} & \textbf{耗时} & \textbf{占比} \\
+\midrule
+查询解析 (LLM) & 2.7s & 43\% \\
+向量检索 & 0.25s & 4\% \\
+答案生成 (LLM) & 3.2s & 53\% \\
+\midrule
+\textbf{端到端} & \textbf{6.2s} & 100\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{瓶颈}：LLM 调用占 96\%。向量检索仅 250ms。
+
+\subsection{课程项目实际成本}
+
+\begin{table}[H]
+\centering
+\caption{API 调用成本}
+\label{tab:cost}
+\begin{tabular}{@{}lccl@{}}
+\toprule
+\textbf{调用类型} & \textbf{次数} & \textbf{单价} & \textbf{总成本} \\
+\midrule
+元数据(LLM) & 176 & \textyen 0.005 & \textyen 0.88 \\
+查询解析 & 每次 & \textyen 0.005 & 按量 \\
+答案生成 & 每次 & \textyen 0.01 & 按量 \\
+嵌入(本地) & 450+ & 免费 & \textyen 0 \\
+\midrule
+\textbf{建库} & — & — & $<$\textyen 1.0 \\
+\textbf{单次查询} & — & — & $\sim$\textyen 0.02 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{云成本估算 (10TB/天)}
+
+20$\times$ ecs.g6.4xlarge 实例 + OSS 存储 + LLM API，月估算 \textyen 60,000--160,000。Embedding 本地化可节省 30--50\% 模型调用费用。
+
+% ─────────────────────────────────────────────────────────────
+\section*{附录：演示方案 (15分钟)}
+% ─────────────────────────────────────────────────────────────
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{@{}cl@{}}
+\toprule
+\textbf{时长} & \textbf{内容} \\
+\midrule
+1min & 开场钩子：业务问题引入 \\
+3--4min & 现场演示：Streamlit 端到端 \\
+4min & 架构深潜：数据生命周期追踪 \\
+2min & ``我们搞砸了''：失败案例分享 \\
+5min & Q\&A 技术总监提问 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\end{document}

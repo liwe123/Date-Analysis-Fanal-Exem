@@ -54,7 +54,7 @@ def _get_local_embedding_model() -> Any:
             device = "cuda" if torch.cuda.is_available() else "cpu"
             logger.info("正在加载本地嵌入模型 \"%s\"（设备: %s）…", _LOCAL_MODEL_NAME, device)
             _LOCAL_EMBEDDING_MODEL = SentenceTransformer(_LOCAL_MODEL_NAME, device=device)
-            logger.info("本地嵌入模型加载完成（%d 维）。", _LOCAL_EMBEDDING_MODEL.get_embedding_dimension())
+            logger.info("本地嵌入模型加载完成（%d 维）。", _LOCAL_EMBEDDING_MODEL.get_sentence_embedding_dimension())
         except ImportError:
             raise RuntimeError(
                 "sentence-transformers 未安装，请运行: pip install sentence-transformers"
@@ -218,6 +218,9 @@ class VectorStore:
             "include": ["documents", "metadatas", "distances"],
         }
         if where:
+            # ChromaDB 不支持隐式 AND：多键 where 需转为显式 $and 操作符
+            if len(where) > 1 and "$and" not in where and "$or" not in where:
+                where = {"$and": [{k: v} for k, v in where.items()]}
             query_kwargs["where"] = where
         if keyword:
             query_kwargs["where_document"] = {"$contains": keyword}
