@@ -1,0 +1,46 @@
+{
+  "summary": {
+    "avg_parse_s": 2.313,
+    "avg_search_s": 3.43,
+    "avg_generate_s": 3.081,
+    "avg_total_s": 8.824,
+    "bottleneck": "search"
+  },
+  "results": [
+    {
+      "query": "课程项目提交要求是什么？",
+      "parse_s": 2.178,
+      "search_s": 16.161,
+      "generate_s": 3.507,
+      "total_s": 21.846
+    },
+    {
+      "query": "什么是 RAG？",
+      "parse_s": 3.702,
+      "search_s": 0.294,
+      "generate_s": 2.579,
+      "total_s": 6.575
+    },
+    {
+      "query": "Hadoop 和 Spark 有什么区别？",
+      "parse_s": 2.039,
+      "search_s": 0.233,
+      "generate_s": 4.5,
+      "total_s": 6.773
+    },
+    {
+      "query": "2025年的通知有哪些？",
+      "parse_s": 1.718,
+      "search_s": 0.225,
+      "generate_s": 2.28,
+      "total_s": 4.222
+    },
+    {
+      "query": "向量数据库的工作原理是什么？",
+      "parse_s": 1.929,
+      "search_s": 0.236,
+      "generate_s": 2.539,
+      "total_s": 4.704
+    }
+  ]
+}

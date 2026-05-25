@@ -1,0 +1,1283 @@
+{
+  "summary": {
+    "total_queries": 50,
+    "in_scope_queries": 41,
+    "out_of_scope_queries": 9,
+    "recall_at_3": 0.878,
+    "in_scope_hit_count": 36,
+    "hallucination_count": 4,
+    "out_scope_accuracy": 0.5556,
+    "avg_latency_s": 5.637,
+    "total_latency_s": 281.863
+  },
+  "results": [
+    {
+      "id": 1,
+      "category": "课程信息",
+      "question": "课程项目最后提交截止日期是什么？",
+      "search_query": "课程项目提交截止日期",
+      "filters": null,
+      "retrieved_sources": [
+        "project_requirements.md",
+        "faq_exam.md",
+        "grading_policy.md"
+      ],
+      "retrieved_scores": [
+        0.33832257986068726,
+        0.3522636890411377,
+        0.3729134798049927
+      ],
+      "answer_snippet": "根据提供的参考资料，没有明确提到课程项目的具体提交截止日期。建议您直接咨询任课教师以获取准确的截止时间信息。\n\n来源:\n- faq_exam.md\n- grading_policy.md\n- project_requirements.md",
+      "latency_s": 16.225,
+      "retrieval_hit": true,
+      "expected_source_hints": [
+        "project_requirements",
+        "submission_rules",
+        "notice"
+      ],
+      "is_out_of_scope": false,
+      "hallucinated": false
+    },
+    {
+      "id": 2,
+      "category": "课程信息",
+      "question": "期末考试的形式是什么？",
+      "search_query": "期末考试形式",
+      "filters": null,
+      "retrieved_sources": [
+        "grading_policy.md",
+        "faq_exam.md",
+        "demo_script.md"
+      ],
+      "retrieved_scores": [
+        0.4161774516105652,
+        0.4769022464752197,
+        0.523393988609314
+      ],
+      "answer_snippet": "根据参考资料，本课程没有传统的闭卷笔试，考核以项目和展示为主。具体安排请以任课教师通知为准 [来源: faq_exam.md]。",
+      "latency_s": 3.528,
+      "retrieval_hit": true,
+      "expected_source_hints": [
+        "notice",
+        "faq"
+      ],
+      "is_out_of_scope": false,
+      "hallucinated": false
+    },
+    {
+      "id": 3,
+      "category": "课程信息",
+      "question": "这门课的评分标准是什么？",
+      "search_query": "课程评分标准",
+      "filters": null,
+      "retrieved_sources": [
+        "grading_policy.md",
+        "dataset_guidelines.md",
+        "faq_registration.md"
+      ],
+      "retrieved_scores": [
+        0.3671591281890869,
+        0.42414671182632446,
+        0.43257588148117065
+      ],
+      "answer_snippet": "根据课程考核方式，总评成绩由以下几部分构成：\n\n- 平时作业占 20%\n- 实验成绩占 20%\n- 学期项目报告占 30%\n- 项目演示与答辩占 20%\n- 课堂参与占 10%\n\n此外，如果未按时提交项目报告，项目部分成绩将被明显扣减 [来源: grading_policy.md]。",
+      "latency_s": 3.945,
+      "retrieval_hit": true,
+      "expected_source_hints": [
+        "grading_policy",
+        "course_intro",
+        "faq"
+      ],
+      "is_out_of_scope": false,
+      "hallucinated": false
+    },
+    {
+      "id": 4,
+      "category": "课程信息",
+      "question": "实验报告需要包含哪些内容？",
+      "search_query": "实验报告 内容",
+      "filters": null,
+      "retrieved_sources": [
+        "lab_manual.md",
+        "notice_03.md",
+        "notice_01.md"
+      ],
+      "retrieved_scores": [
+        0.4317361116409302,
+        0.5006853342056274,
+        0.5028719902038574
+      ],
+      "answer_snippet": "根据参考资料，实验报告需要包含以下内容：\n\n- 实验目的\n- 实验环境\n- 关键代码\n- 运行结果\n- 问题分析\n- 技术权衡和局限分析 [来源: lab_manual.md] [来源: notice_03.md]",
+      "latency_s": 4.585,
+      "retrieval_hit": true,
+      "expected_source_hints": [
+        "lab_manual",
+        "faq"
+      ],
+      "is_out_of_scope": false,
+      "hallucinated": false
+    },
+    {
+      "id": 5,
+      "category": "课程信息",
+      "question": "课程项目有哪些可选方向？",
+      "search_query": "课程项目 可选方向",
+      "filters": null,
+      "retrieved_sources": [
+        "faq_exam.md",
+        "project_requirements.md",
+        "faq_project.md"
+      ],
+      "retrieved_scores": [
+        0.40131139755249023,
+        0.41644465923309326,
+        0.43330103158950806
+      ],
+      "answer_snippet": "课程项目有以下三个可选方向：\n- 实时风控与欺诈检测\n- 基于检索增强生成的智能问答系统\n- 城市交通数据分析与可视化平台\n\n[来源: project_requirements.md]",
+      "latency_s": 3.797,
+      "retrieval_hit": true,
+      "expected_source_hints": [
+        "project_requirements",
+        "course_intro"
+      ],
+      "is_out_of_scope": false,
+      "hallucinated": false
+    },
+    {
+      "id": 6,
+      "category": "课程信息",
+      "question": "团队项目最少需要几个人？",
+      "search_query": "团队项目最少人数",
+      "filters": null,
+      "retrieved_sources": [
+        "project_requirements.md",
+        "faq_exam.md",
+        "faq_project.md"
+      ],
+      "retrieved_scores": [
+        0.5036313533782959,
+        0.5377944707870483,
+        0.546920895576477
+      ],
+      "answer_snippet": "团队项目没有严格的最少人数限制，原则上鼓励组队完成，但个人能够独立完成全部模块时，也可以单独提交 [来源: faq_exam.md]。因此，最少可以是1人。",
+      "latency_s": 4.184,
+      "retrieval_hit": true,
+      "expected_source_hints": [
+        "project_requirements",
+        "faq",
+        "notice"
+      ],
+      "is_out_of_scope": false,
+      "hallucinated": false
+    },
+    {
+      "id": 7,
+      "category": "课程信息",
+      "question": "什么时候可以找老师答疑？",
+      "search_query": "老师答疑时间",
+      "filters": null,
+      "retrieved_sources": [
+        "case_study_01.md",
+        "case_study_02.md",
+        "case_study_07.md"
+      ],
+      "retrieved_scores": [
+        0.4500387907028198,
+        0.46001458168029785,
+        0.46058905124664307
+      ],
+      "answer_snippet": "根据提供的参考资料，没有找到关于“什么时候可以找老师答疑”的具体信息。建议您参考课程通知或直接联系教师获取答疑时间安排。[来源: case_study_01.md][来源: case_study_02.md][来源: case_study_07.md]",
+      "latency_s": 3.132,
+      "retrieval_hit": false,
+      "expected_source_hints": [
+        "notice",
+        "course_schedule"
+      ],
+      "is_out_of_scope": false,
+      "hallucinated": false
+    },
+    {
+      "id": 8,
+      "category": "课程信息",
+      "question": "课程涵盖哪些大数据技术？",
+      "search_query": "大数据技术 课程",
+      "filters": null,
+      "retrieved_sources": [
+        "course_schedule.md",
+        "course_intro.md",
+        "wiki_数据挖掘.md"
+      ],
+      "retrieved_scores": [
+        0.37093234062194824,
+        0.38312721252441406,
+        0.40716564655303955
+      ],
+      "answer_snippet": "本课程涵盖的主要大数据技术包括：分布式文件系统与存储架构、批处理计算模型、流式处理基础、数据清洗与预处理、数据仓库与湖仓一体、向量数据库与 RAG 入门、大模型与数据工程结合、系统性能优化等 [来源: course_schedule.md]。此外，课程简介中还提到分布式存储、并行计算、数据治理以及人工智能与大数据融合应用 [来源: course_intro.md]。",
+      "latency_s": 5.195,
+      "retrieval_hit": true,
+      "expected_source_hints": [
+        "course_intro",
+        "course_schedule"
+      ],
+      "is_out_of_scope": false,
+      "hallucinated": false
+    },
+    {
+      "id": 9,
+      "category": "课程信息",
+      "question": "如何提交作业？",
+      "search_query": "提交作业",
+      "filters": null,
+      "retrieved_sources": [
+        "submission_rules.md",
+        "project_requirements.md",
+        "notice_07.md"
+      ],
+      "retrieved_scores": [
+        0.383439302444458,
+        0.4821960926055908,
+        0.48779743909835815
+      ],
+      "answer_snippet": "根据课程规范，所有作业与项目材料均通过课程指定平台提交。提交内容通常包括源代码、运行说明、报告文档和必要的截图，并建议采用“学号_姓名_作业名称”的命名规范 [来源: submission_rules.md]。",
+      "latency_s": 3.758,
+      "retrieval_hit": true,
+      "expected_source_hints": [
+        "submission_rules",
+        "faq"
+      ],
+      "is_out_of_scope": false,
+      "hallucinated": false
+    },
+    {
+      "id": 10,
+      "category": "课程信息",
+      "question": "项目演示时间是多少分钟？",
+      "search_query": "项目演示时间",
+      "filters": null,
+      "retrieved_sources": [
+        "faq_demo.md",
+        "demo_script.md",
+        "project_requirements.md"
+      ],
+      "retrieved_scores": [
+        0.33441460132598877,
+        0.3785722851753235,
+        0.42112576961517334
+      ],
+      "answer_snippet": "根据参考资料，项目演示时间一般为10分钟 [来源: project_requirements.md]。",
+      "latency_s": 2.853,
+      "retrieval_hit": true,
+      "expected_source_hints": [
+        "project_requirements",
+        "notice"
+      ],
+      "is_out_of_scope": false,
+      "hallucinated": false
+    },
+    {
+      "id": 11,
+      "category": "技术概念",
+      "question": "什么是检索增强生成（RAG）？",
+      "search_query": "检索增强生成 RAG",
+      "filters": null,
+      "retrieved_sources": [
+        "wiki_检索增强生成.md",
+        "rag_system_notes.md",
+        "evaluation_notes.md"
+      ],
+      "retrieved_scores": [
+        0.1622931957244873,
+        0.2456316351890564,
+        0.2876737713813782
+      ],
+      "answer_snippet": "检索增强生成（RAG）是一种使大语言模型（LLM）能够从外部数据源中检索并整合新信息的技术。在RAG框架下，模型首先查阅指定的文档集合，再对用户查询作出回应，从而补充模型预训练数据中未包含的领域特定信息或最新信息 [来源: wiki_检索增强生成.md]。其核心步骤包括文档收集、文本清洗、分块、向量化、存储、相似度检索以及大模型生成回答，相比直接让模型自由回答，RAG能减少幻觉并提高回答的可追溯性 [来源: rag_system_notes.md]。",
+      "latency_s": 4.69,
+      "retrieval_hit": true,
+      "expected_source_hints": [
+        "wiki_检索增强生成",
+        "rag_system_notes"
+      ],
+      "is_out_of_scope": false,
+      "hallucinated": false
+    },
+    {
+      "id": 12,
+      "category": "技术概念",
+      "question": "向量数据库的工作原理是什么？",
+      "search_query": "向量数据库的工作原理",
+      "filters": null,
+      "retrieved_sources": [
+        "wiki_向量数据库.md",
+        "vector_db_notes.md",
+        "embedding_notes.md"
+      ],
+      "retrieved_scores": [
+        0.2300419807434082,
+        0.2582259774208069,
+        0.4184079170227051
+      ],
+      "answer_snippet": "向量数据库的工作原理是：它存储向量（固定长度的数值列表）及其他数据项，并通常实现一种或多种近似最近邻算法，当用户输入一个查询向量时，数据库会快速检索并返回最匹配的数据库记录 [来源: wiki_向量数据库.md]。在具体应用中，如中小规模课程项目，轻量方案（如 ChromaDB、FAISS）通过将文本向量化后高效存储和检索，从而实现语义相似性搜索 [来源: vector_db_notes.md]。",
+      "latency_s": 5.123,
+      "retrieval_hit": true,
+      "expected_source_hints": [
+        "wiki_向量数据库",
+        "vector_db_notes"
+      ],
+      "is_out_of_scope": false,
+      "hallucinated": false
+    },
+    {
+      "id": 13,
+      "category": "技术概念",
+      "question": "什么是 Apache Kafka？它有什么用途？",
+      "search_query": "Apache Kafka 概念 用途",
+      "filters": null,
+      "retrieved_sources": [
+        "wiki_apache_kafka.md",
+        "csdn_kafka__148811816.md",
+        "csdn_kafka__144950727.md"
+      ],
+      "retrieved_scores": [
+        0.20071864128112793,
+        0.20423251390457153,
+        0.21878135204315186
+      ],
+      "answer_snippet": "Apache Kafka 是由 Apache 软件基金会开发的一个开源流处理平台，由 Scala 和 Java 编写。它的核心目标是为处理实时数据提供一个统一、高吞吐、低延迟的平台。其持久化层本质上是一个“按照分布式事务日志架构的大规模发布/订阅消息队列”，能够作为企业级基础设施来处理流式数据。此外，Kafka 还可以通过 Kafka Connect 连接到外部系统进行数据输入/输出，并提供 Kafka Streams 流式处理库 [来源: wiki_apache_kafka.md]。\n\n在实际应用中，Kafka 用于高效、稳定地完成数据的生产和消费，充当不同系统之间传递消息的桥梁。它可以实时处理大量数据，满足如基于 Hadoop 的数据分析、低时延的实时系统、流式处理引擎等需求 [来源: csdn_kafka__148811816.md]。",
+      "latency_s": 6.166,
+      "retrieval_hit": true,
+      "expected_source_hints": [
+        "wiki",
+        "so_apache-kafka"
+      ],
+      "is_out_of_scope": false,
+      "hallucinated": false
+    },
+    {
+      "id": 14,
+      "category": "技术概念",
+      "question": "Hadoop 和 Spark 有什么区别？",
+      "search_query": "Hadoop 和 Spark 的区别",
+      "filters": null,
+      "retrieved_sources": [
+        "csdn_spark__138677753.md",
+        "wiki_apache_spark.md",
+        "wiki_hadoop.md"
+      ],
+      "retrieved_scores": [
+        0.23898369073867798,
+        0.26480233669281006,
+        0.29346442222595215
+      ],
+      "answer_snippet": "Hadoop 和 Spark 的主要区别在于数据处理方式：Hadoop 的 MapReduce 将中间数据存储到磁盘中，而 Spark 使用内存内运算技术，能在数据未写入硬盘时直接在内存中分析运算。这使得 Spark 在内存中的运算速度比 Hadoop MapReduce 快 100 倍，即使在硬盘上运行也快 10 倍 [来源: wiki_apache_spark.md]。此外，Hadoop 基于 MapReduce 模型，设计上假设硬件故障常见并由框架自动处理 [来源: wiki_hadoop.md]。",
+      "latency_s": 5.584,
+      "retrieval_hit": true,
+      "expected_source_hints": [
+        "wiki",
+        "so_apache-spark",
+        "csdn"
+      ],
+      "is_out_of_scope": false,
+      "hallucinated": false
+    },
+    {
+      "id": 15,
+      "category": "技术概念",
+      "question": "什么是流处理和批处理？",
+      "search_query": "流处理 批处理 概念",
+      "filters": null,
+      "retrieved_sources": [
+        "term_batch_processing.md",
+        "term_stream_processing.md",
+        "wiki_批处理.md"
+      ],
+      "retrieved_scores": [
+        0.24785923957824707,
+        0.28473544120788574,
+        0.3575301170349121
+      ],
+      "answer_snippet": "根据参考资料，**批处理**适用于历史数据的周期性处理，强调吞吐量和稳定性 [来源: term_batch_processing.md]。**流式处理**则强调数据到达即处理，适合实时监控、日志分析和异常检测场景 [来源: term_stream_processing.md]。",
+      "latency_s": 3.519,
+      "retrieval_hit": true,
+      "expected_source_hints": [
+        "wiki",
+        "term_stream_processing",
+        "term_batch_processing"
+      ],
+      "is_out_of_scope": false,
+      "hallucinated": false
+    },
+    {
+      "id": 16,
+      "category": "技术概念",
+      "question": "什么是嵌入向量（Embedding）？",
+      "search_query": "嵌入向量 Embedding",
+      "filters": null,
+      "retrieved_sources": [
+        "wiki_词嵌入.md",
+        "embedding_notes.md",
+        "vector_db_notes.md"
+      ],
+      "retrieved_scores": [
+        0.18929874897003174,
+        0.20659345388412476,
+        0.39903032779693604
+      ],
+      "answer_snippet": "嵌入向量（Embedding）是自然语言处理中的一项技术，它将单词或词组从高维空间（维度等于词汇数量）映射到一个低维的连续向量空间中，每个词或词组都对应一个实数向量。这种向量表示能够捕捉语义信息，使语义相近的内容在向量空间中彼此接近 [来源: wiki_词嵌入.md]。Embedding 模型生成的稠密向量可用于文本表示和检索，在 RAG 等项目中，Embedding 的质量直接影响召回效果 [来源: embedding_notes.md]。",
+      "latency_s": 5.196,
+      "retrieval_hit": true,
+      "expected_source_hints": [
+        "wiki",
+        "embedding_notes"
+      ],
+      "is_out_of_scope": false,
+      "hallucinated": false
+    },
+    {
+      "id": 17,
+      "category": "技术概念",
+      "question": "HNSW 索引算法是怎么工作的？",
+      "search_query": "HNSW 索引算法工作原理",
+      "filters": null,
+      "retrieved_sources": [
+        "wiki_倒排索引.md",
+        "so_nlp_307291.md",
+        "csdn__hive_133786057.md"
+      ],
+      "retrieved_scores": [
+        0.4821423888206482,
+        0.48565030097961426,
+        0.5381054282188416
+      ],
+      "answer_snippet": "根据提供的参考资料，没有关于HNSW索引算法的内容。因此，我无法回答这个问题。请提供相关参考资料。\n\n来源:\n- csdn__hive_133786057.md\n- so_nlp_307291.md\n- wiki_倒排索引.md",
+      "latency_s": 4.324,
+      "retrieval_hit": true,
+      "expected_source_hints": [
+        "wiki",
+        "vector_db_notes"
+      ],
+      "is_out_of_scope": false,
+      "hallucinated": false
+    },
+    {
+      "id": 18,
+      "category": "技术概念",
+      "question": "什么是 Delta Lake 的青铜白银黄金分层？",
+      "search_query": "Delta Lake 青铜白银黄金分层",
+      "filters": null,
+      "retrieved_sources": [
+        "term_bronze_silver_gold.md",
+        "csdn_article_155883575.md",
+        "csdn_article_155883575.md"
+      ],
+      "retrieved_scores": [
+        0.49378013610839844,
+        0.516972541809082,
+        0.5522832870483398
+      ],
+      "answer_snippet": "Delta Lake 的青铜、白银、黄金分层是一种数据湖架构模式，各层定义如下：\n\n- **Bronze 层**：保存原始数据。\n- **Silver 层**：保存清洗后的结构化数据。\n- **Gold 层**：保存面向分析和服务的高价值数据。\n\n[来源: term_bronze_silver_gold.md]",
+      "latency_s": 4.271,
+      "retrieval_hit": true,
+      "expected_source_hints": [
+        "term_bronze_silver_gold",
+        "wiki"
+      ],
+      "is_out_of_scope": false,
+      "hallucinated": false
+    },
+    {
+      "id": 19,
+      "category": "技术概念",
+      "question": "什么是 AI 幻觉？如何防止？",
+      "search_query": "AI 幻觉 防止",
+      "filters": null,
+      "retrieved_sources": [
+        "term_hallucination.md",
+        "qa_guidelines.md",
+        "wiki_生成对抗网络.md"
+      ],
+      "retrieved_scores": [
+        0.3643847107887268,
+        0.46103739738464355,
+        0.5436644554138184
+      ],
+      "answer_snippet": "根据提供的参考资料，**AI 幻觉**是指在大模型问答中，模型输出看似合理但实际上缺乏事实依据的内容 [来源: term_hallucination.md]。\n\n**防止幻觉**的方法包括：\n- 系统应优先回答知识库中明确出现的信息。\n- 对于资料中没有直接支持的问题，系统应明确说明无法根据当前检索到的资料作答，而不是编造答案。\n- 在提示词设计上，应强调严格基于给定资料回答，尽量简洁，给出参考来源，并在资料不足时明确说明不确定 [来源: qa_guidelines.md]。",
+      "latency_s": 4.365,
+      "retrieval_hit": true,
+      "expected_source_hints": [
+        "term_hallucination",
+        "rag_system_notes"
+      ],
+      "is_out_of_scope": false,
+      "hallucinated": false
+    },
+    {
+      "id": 20,
+      "category": "技术概念",
+      "question": "什么是元数据？在 RAG 中有什么作用？",
+      "search_query": "元数据 RAG 作用",
+      "filters": null,
+      "retrieved_sources": [
+        "rag_system_notes.md",
+        "evaluation_notes.md",
+        "term_metadata.md"
+      ],
+      "retrieved_scores": [
+        0.3026549220085144,
+        0.30951523780822754,
+        0.334766149520874
+      ],
+      "answer_snippet": "根据提供的参考资料，元数据是“描述数据的数据，例如来源文件、创建时间、类别和 chunk 编号” [来源: term_metadata.md]。但参考资料中未明确说明元数据在 RAG 系统中的作用。",
+      "latency_s": 6.199,
+      "retrieval_hit": true,
+      "expected_source_hints": [
+        "term_metadata",
+        "rag_system_notes"
+      ],
+      "is_out_of_scope": false,
+      "hallucinated": false
+    },
+    {
+      "id": 21,
+      "category": "跨文档",
+      "question": "向量数据库和传统关系型数据库有什么区别？各自的适用场景是什么？",
+      "search_query": "向量数据库 关系型数据库 区别 适用场景",
+      "filters": null,
+      "retrieved_sources": [
+        "wiki_向量数据库.md",
+        "vector_db_notes.md",
+        "so_data-warehouse_3419353.md"
+      ],
+      "retrieved_scores": [
+        0.2861018180847168,
+        0.2872779965400696,
+        0.38738173246383667
+      ],
+      "answer_snippet": "向量数据库与传统关系型数据库的主要区别在于设计目标和数据处理方式。向量数据库专门用于存储和检索高维向量（如文本、图像的嵌入表示），并通过近似最近邻算法实现高效相似性搜索 [来源: wiki_向量数据库.md]。而传统关系型数据库（如文中描述的用于OLTP的数据库）以表格形式存储结构化数据，通过SQL进行精确查询，表结构通常经过规范化以减少冗余，并针对写操作进行优化，分析查询的性能较低 [来源: so_data-warehouse_3419353.md]。\n\n**适用场景：**\n- **向量数据库**：适用于需要语义相似性匹配的场景，例如信息检索、推荐系统、图像或文本相似度搜索。在中小规模项目中，可采用 ChromaDB、FAISS 或 Qdrant 等轻量方案，便于本地演示和课程提交 [来源: vector_db_notes.md]。\n- **传统关系型数据库**：适用于事务性系统，如订单管理、用户账户、库存记录等需要强一致性、复杂事务和精确关联查询的场景。其设计侧重于快速写入和保证数据完整性 [来源: so_data-warehouse_3419353.md]。",
+      "latency_s": 10.756,
+      "retrieval_hit": true,
+      "expected_source_hints": [
+        "wiki_向量数据库",
+        "vector_db_notes"
+      ],
+      "is_out_of_scope": false,
+      "hallucinated": false
+    },
+    {
+      "id": 22,
+      "category": "跨文档",
+      "question": "RAG 系统中分块策略对检索质量有什么影响？",
+      "search_query": "RAG 分块策略 对检索质量的影响",
+      "filters": null,
+      "retrieved_sources": [
+        "chunking_notes.md",
+        "evaluation_notes.md",
+        "rag_system_notes.md"
+      ],
+      "retrieved_scores": [
+        0.2954047918319702,
+        0.31652212142944336,
+        0.3230275511741638
+      ],
+      "answer_snippet": "在RAG系统中，文本分块策略直接影响检索质量。合理的分块需要在保持语义完整性的前提下控制片段长度，以提升向量检索的准确性和效率。例如，采用固定长度加重叠窗口的方式（如 chunk size 500，overlap 100）可以在初期平衡检索效果，若效果不理想，可尝试语义分块或标题感知分块等更精细的策略 [来源: chunking_notes.md]。这有助于确保检索到的片段与问题相关，从而减少后续生成回答时的幻觉风险，并提高回答的可追溯性 [来源: rag_system_notes.md]。",
+      "latency_s": 5.84,
+      "retrieval_hit": true,
+      "expected_source_hints": [
+        "chunking_notes",
+        "rag_system_notes"
+      ],
+      "is_out_of_scope": false,
+      "hallucinated": false
+    },
+    {
+      "id": 23,
+      "category": "跨文档",
+      "question": "如何评估一个 RAG 系统的好坏？有哪些指标？",
+      "search_query": "评估RAG系统的指标",
+      "filters": null,
+      "retrieved_sources": [
+        "evaluation_notes.md",
+        "rag_system_notes.md",
+        "architecture_notes.md"
+      ],
+      "retrieved_scores": [
+        0.1513274908065796,
+        0.2714310884475708,
+        0.29573488235473633
+      ],
+      "answer_snippet": "评估一个 RAG 系统的好坏可以从以下几个维度进行：\n\n- **检索是否命中正确文档**：衡量系统是否能准确找到与问题相关的文档或文本片段。\n- **回答是否忠于来源**：检查生成答案是否严格基于检索到的上下文，没有随意添加或篡改信息。\n- **是否存在明显幻觉**：判断回答中是否包含无中生有或与事实不符的内容。\n- **回答是否简洁可读**：评估答案的清晰度和易理解程度，避免冗长或冗余。\n- **来源展示是否清晰**：确认能否明确展示回答所依据的知识片段，以提升可追溯性。\n\n在课程项目阶段，可采用人工构造测试问题集进行定性评估 [来源: evaluation_notes.md]。",
+      "latency_s": 5.128,
+      "retrieval_hit": true,
+      "expected_source_hints": [
+        "evaluation_notes",
+        "rag_system_notes"
+      ],
+      "is_out_of_scope": false,
+      "hallucinated": false
+    },
+    {
+      "id": 24,
+      "category": "跨文档",
+      "question": "在大数据项目中，数据清洗通常包括哪些步骤？",
+      "search_query": "大数据项目数据清洗步骤",
+      "filters": null,
+      "retrieved_sources": [
+        "wiki_数据清洗.md",
+        "csdn_etl__147619055.md",
+        "csdn_etl__143628304.md"
+      ],
+      "retrieved_scores": [
+        0.25414609909057617,
+        0.3909025192260742,
+        0.40821099281311035
+      ],
+      "answer_snippet": "在大数据项目中，数据清洗通常作为ETL（Extract-Transform-Load）流程中Transform阶段的关键步骤，涵盖从数据质量评估到具体清洗策略的全流程。常见的步骤包括：\n\n- **缺失值修复**：处理数据中的空值或缺失字段 [来源: csdn_etl__147619055.md]。\n- **异常值检测与处理**：识别并纠正数据中的异常或错误值 [来源: csdn_etl__147619055.md]。\n- **格式标准化**：统一数据格式（如日期、数字、文本编码等）[来源: csdn_etl__147619055.md]。\n- **重复数据去重**：删除或合并重复记录 [来源: wiki_数据清洗.md]。\n- **数据一致性检查**：确保数据符合业务规则和约束（如参照完整性）[来源: wiki_数据清洗.md]。\n\n这些步骤共同将原始数据转化为高质量的分析素材，提升后续分析的可靠性 [来源: csdn_etl__147619055.md]。",
+      "latency_s": 8.012,
+      "retrieval_hit": true,
+      "expected_source_hints": [
+        "csdn_etl",
+        "wiki"
+      ],
+      "is_out_of_scope": false,
+      "hallucinated": false
+    },
+    {
+      "id": 25,
+      "category": "跨文档",
+      "question": "Kafka 和 Flink 在流处理场景中各自扮演什么角色？",
+      "search_query": "Kafka Flink 流处理 角色对比",
+      "filters": null,
+      "retrieved_sources": [
+        "csdn_flink__145497133.md",
+        "so_apache-flink_30699119.md",
+        "wiki_apache_flink.md"
+      ],
+      "retrieved_scores": [
+        0.22127890586853027,
+        0.23004204034805298,
+        0.23505491018295288
+      ],
+      "answer_snippet": "根据提供的参考资料，Flink 是一个开源的流处理框架，用于对无界和有界数据流进行有状态计算，具有分布式、高性能、低延迟和精确一次处理语义等特点 [来源: csdn_flink__145497133.md, so_apache-flink_30699119.md]。而 Kafka 的相关信息未在参考资料中提及，因此无法回答其在流处理场景中的角色。",
+      "latency_s": 5.579,
+      "retrieval_hit": true,
+      "expected_source_hints": [
+        "so_apache-kafka",
+        "so_apache-flink",
+        "wiki"
+      ],
+      "is_out_of_scope": false,
+      "hallucinated": false
+    },
+    {
+      "id": 26,
+      "category": "跨文档",
+      "question": "Spark 的内存计算模型相比 Hadoop MapReduce 有什么优势？",
+      "search_query": "Spark 内存计算模型 Hadoop MapReduce 优势比较",
+      "filters": null,
+      "retrieved_sources": [
+        "wiki_apache_spark.md",
+        "csdn_spark__138677753.md",
+        "wiki_mapreduce.md"
+      ],
+      "retrieved_scores": [
+        0.30891215801239014,
+        0.34460747241973877,
+        0.3620591163635254
+      ],
+      "answer_snippet": "Spark 的核心优势在于其内存计算模型，相比 Hadoop MapReduce 具有以下显著优势：\n\n1. **减少磁盘 I/O 开销**：Hadoop MapReduce 在执行过程中会将中间数据写入磁盘，而 Spark 使用内存存储中间结果，避免了频繁的磁盘读写，大幅降低了 I/O 延迟 [来源: wiki_apache_spark.md]。\n2. **显著提升计算速度**：得益于内存计算，Spark 在内存中的运算速度可比 Hadoop MapReduce 快 **100 倍**；即使数据需要落盘处理，Spark 也能快 **10 倍** [来源: wiki_apache_spark.md]。\n3. **更适合迭代与交互式查询**：Spark 允许用户将数据加载到集群内存中并多次查询，这对于需要反复迭代的机器学习算法等场景尤为高效 [来源: wiki_apache_spark.md]。\n\n总之，Spark 的内存计算模型通过减少磁盘交互，实现了更高的处理速度和更好的迭代计算支持。",
+      "latency_s": 7.379,
+      "retrieval_hit": true,
+      "expected_source_hints": [
+        "so_apache-spark",
+        "csdn_spark",
+        "wiki"
+      ],
+      "is_out_of_scope": false,
+      "hallucinated": false
+    },
+    {
+      "id": 27,
+      "category": "跨文档",
+      "question": "在 RAG 系统中，Embedding 模型的选择对最终效果有多大影响？",
+      "search_query": "Embedding模型选择 对RAG系统效果的影响",
+      "filters": null,
+      "retrieved_sources": [
+        "embedding_notes.md",
+        "architecture_notes.md",
+        "evaluation_notes.md"
+      ],
+      "retrieved_scores": [
+        0.1971147656440735,
+        0.2711774706840515,
+        0.29143714904785156
+      ],
+      "answer_snippet": "在 RAG 系统中，Embedding 模型的选择对最终效果有直接影响，尤其是影响检索阶段的召回质量，进而决定问答的上下文准确性和回答的可信度。具体来说，Embedding 模型负责将文本转化为稠密向量，使语义相近的内容在向量空间中接近，因此其质量直接决定了用户问题能否匹配到最相关的文档片段 [来源: embedding_notes.md]。在典型 RAG 架构中，系统依赖 Embedding 模型对文档块和用户问题进行向量化并执行相似度检索，若模型选择不当（如对中文语义支持不足），可能导致检索结果偏离用户意图，从而影响最终回答的准确性和可靠性 [来源: architecture_notes.md]。因此，选择语言支持好、成本与延迟合理的 Embedding 模型是保障系统效果的关键步骤 [来源: embedding_notes.md]。",
+      "latency_s": 6.712,
+      "retrieval_hit": true,
+      "expected_source_hints": [
+        "embedding_notes",
+        "rag_system_notes"
+      ],
+      "is_out_of_scope": false,
+      "hallucinated": false
+    },
+    {
+      "id": 28,
+      "category": "跨文档",
+      "question": "如何处理 RAG 系统中的长文档？分块太小或太大分别会有什么问题？",
+      "search_query": "RAG 长文档 分块 策略 问题",
+      "filters": null,
+      "retrieved_sources": [
+        "chunking_notes.md",
+        "rag_system_notes.md",
+        "architecture_notes.md"
+      ],
+      "retrieved_scores": [
+        0.25680631399154663,
+        0.3543672561645508,
+        0.37492823600769043
+      ],
+      "answer_snippet": "在RAG系统中，处理长文档通常采用文本分块策略。根据参考资料中的建议，可以按照固定长度并添加重叠窗口的方式（如chunk size 500，overlap 100）进行分块，后续也可尝试语义分块或标题感知分块[来源: chunking_notes.md]。分块过小或过大会带来以下问题：\n\n- **分块太小**：容易破坏语义完整性，导致单个文本片段缺乏足够上下文，不利于向量检索和后续大模型准确理解[来源: chunking_notes.md]。\n- **分块太大**：可能超出向量检索或模型上下文窗口的限制，降低检索精度，同时增加处理负担[来源: chunking_notes.md]。\n\n因此，分块需要在保持语义完整性的前提下控制片段长度，以实现检索效率和回答质量的平衡[来源: chunking_notes.md]。",
+      "latency_s": 8.808,
+      "retrieval_hit": true,
+      "expected_source_hints": [
+        "chunking_notes",
+        "rag_system_notes"
+      ],
+      "is_out_of_scope": false,
+      "hallucinated": false
+    },
+    {
+      "id": 29,
+      "category": "跨文档",
+      "question": "数据仓库中 ETL 和 ELT 有什么区别？",
+      "search_query": "ETL ELT 区别",
+      "filters": null,
+      "retrieved_sources": [
+        "wiki_etl.md",
+        "csdn_etl__143628304.md",
+        "csdn_etl__143628304.md"
+      ],
+      "retrieved_scores": [
+        0.26017820835113525,
+        0.40440642833709717,
+        0.4103788733482361
+      ],
+      "answer_snippet": "根据提供的参考资料，仅包含对 ETL（提取转换加载）过程的定义和说明，未涉及 ELT（提取加载转换）的相关内容，因此无法回答两者的区别。\n\n- ETL 是从数据源中提取数据、进行清洗和转换，最后加载到目标存储系统的过程 [来源: wiki_etl.md]。\n- ELT 在现有资料中无定义或描述。\n\n如需了解区别，建议查阅其他专门介绍 ELT 的资料。",
+      "latency_s": 4.853,
+      "retrieval_hit": true,
+      "expected_source_hints": [
+        "csdn_etl",
+        "wiki"
+      ],
+      "is_out_of_scope": false,
+      "hallucinated": false
+    },
+    {
+      "id": 30,
+      "category": "跨文档",
+      "question": "Hive 在大数据生态中是什么角色？和 Spark SQL 有什么区别？",
+      "search_query": "Hive 角色 Spark SQL 区别",
+      "filters": {
+        "language": "zh"
+      },
+      "retrieved_sources": [
+        "csdn__hive_133786057.md",
+        "csdn__hive_147877511.md",
+        "csdn__hive_147877511.md"
+      ],
+      "retrieved_scores": [
+        0.261604368686676,
+        0.2707728147506714,
+        0.27221304178237915
+      ],
+      "answer_snippet": "Hive 在大数据生态中主要扮演数据仓库的角色，它基于 Hadoop 平台，提供将 SQL 语句转换为 MapReduce 作业的能力，适合长时间的批处理查询和分析 [来源: csdn__hive_133786057.md]。\n\n关于 Hive 与 Spark SQL 的区别，提供的参考资料中并未涉及 Spark SQL 的相关内容，因此无法给出对比分析。",
+      "latency_s": 6.967,
+      "retrieval_hit": true,
+      "expected_source_hints": [
+        "csdn__hive",
+        "so_apache-hive",
+        "wiki"
+      ],
+      "is_out_of_scope": false,
+      "hallucinated": false
+    },
+    {
+      "id": 31,
+      "category": "元数据过滤",
+      "question": "2025年的通知有哪些？",
+      "search_query": "通知",
+      "filters": {
+        "year": 2025,
+        "category": "notice"
+      },
+      "retrieved_sources": [
+        "teacher_notice.md",
+        "notice_01.md",
+        "notice_07.md"
+      ],
+      "retrieved_scores": [
+        0.48119860887527466,
+        0.49237942695617676,
+        0.4987882375717163
+      ],
+      "answer_snippet": "根据提供的参考资料，没有明确标注“2025年”的通知。但参考资料中包含以下通知内容：\n\n- **教师通知摘录**：强调课程项目必须包含完整数据处理主链路，展示系统结构、关键实现、运行结果和来源说明，鼓励使用公开数据集并说明数据来源与预处理过程，代码应具可读性，报告需体现工程思维（系统设计、技术取舍、局限分析）。[来源: teacher_notice.md]\n\n- **第1次课程通知**：提醒关注课程安排、实验进度和项目推进节点，重点包括：保持代码结构清晰、及时备份项目、API Key使用环境变量保存、演示前完成全流程测试、报告中加入技术权衡和局限分析。[来源: notice_01.md]\n\n- **第7次课程通知**：内容与第1次通知相同，同样提醒关注课程安排、实验进度和项目推进节点，重点与第1次通知一致。[来源: notice_07.md]\n\n请注意，这些通知的年份均未在资料中明确标注。",
+      "latency_s": 7.24,
+      "retrieval_hit": true,
+      "expected_source_hints": [
+        "notice"
+      ],
+      "is_out_of_scope": false,
+      "hallucinated": false
+    },
+    {
+      "id": 32,
+      "category": "元数据过滤",
+      "question": "老师在2025年说过关于考试的事情吗？",
+      "search_query": "老师在2025年说过关于考试的事情吗？",
+      "filters": null,
+      "retrieved_sources": [
+        "notice_05.md",
+        "notice_02.md",
+        "faq_registration.md"
+      ],
+      "retrieved_scores": [
+        0.4739370346069336,
+        0.5259577035903931,
+        0.5345384478569031
+      ],
+      "answer_snippet": "根据提供的参考资料，没有找到关于老师在2025年提及考试的相关信息。\n\n来源:\n- faq_registration.md\n- notice_02.md\n- notice_05.md",
+      "latency_s": 5.56,
+      "retrieval_hit": true,
+      "expected_source_hints": [
+        "notice"
+      ],
+      "is_out_of_scope": false,
+      "hallucinated": false
+    },
+    {
+      "id": 33,
+      "category": "元数据过滤",
+      "question": "找一下 Wikipedia 上关于大数据术语的资料",
+      "search_query": "大数据术语",
+      "filters": null,
+      "retrieved_sources": [
+        "wiki_数据挖掘.md",
+        "wiki_元数据.md",
+        "term_metadata.md"
+      ],
+      "retrieved_scores": [
+        0.4742652177810669,
+        0.47455960512161255,
+        0.4971156716346741
+      ],
+      "answer_snippet": "根据提供的参考资料，没有找到关于“大数据”术语的 Wikipedia 资料。参考资料中仅包含“数据挖掘”和“元数据”两个条目 [来源: wiki_数据挖掘.md][来源: wiki_元数据.md]。",
+      "latency_s": 4.101,
+      "retrieval_hit": true,
+      "expected_source_hints": [
+        "wiki"
+      ],
+      "is_out_of_scope": false,
+      "hallucinated": false
+    },
+    {
+      "id": 34,
+      "category": "元数据过滤",
+      "question": "有没有 Stack Overflow 上关于 Spark 的问答？",
+      "search_query": "有没有 Stack Overflow 上关于 Spark 的问答？",
+      "filters": null,
+      "retrieved_sources": [
+        "wiki_apache_spark.md",
+        "csdn_spark__143671233.md",
+        "so_hadoop_24622108.md"
+      ],
+      "retrieved_scores": [
+        0.29228001832962036,
+        0.3225244879722595,
+        0.3261268138885498
+      ],
+      "answer_snippet": "根据提供的参考资料，没有任何内容提及 Stack Overflow 上的 Spark 相关问答。参考资料包括维基百科、CSDN博客以及Cloudera博客文章，均未涉及Stack Overflow平台的信息 [来源: wiki_apache_spark.md][来源: csdn_spark__143671233.md][来源: so_hadoop_24622108.md]。",
+      "latency_s": 8.109,
+      "retrieval_hit": false,
+      "expected_source_hints": [
+        "so_apache-spark"
+      ],
+      "is_out_of_scope": false,
+      "hallucinated": false
+    },
+    {
+      "id": 35,
+      "category": "元数据过滤",
+      "question": "CSDN 上有哪些关于 Hadoop 的教程？",
+      "search_query": "Hadoop 教程",
+      "filters": null,
+      "retrieved_sources": [
+        "csdn_hadoop__107111511.md",
+        "wiki_hadoop.md",
+        "csdn_hadoop__107111511.md"
+      ],
+      "retrieved_scores": [
+        0.2318025827407837,
+        0.26344501972198486,
+        0.26873964071273804
+      ],
+      "answer_snippet": "根据提供的参考资料，CSDN上有一篇名为《Hadoop入门教程 详细的入门实战教程》的文章（作者: 易有太极、是生两仪）。该教程以安装部署Apache Hadoop 2.x为主线，分为五个部分、十三节、四十九步，涵盖Linux环境安装、Hadoop本地模式安装和伪分布式模式安装等内容 [来源: csdn_hadoop__107111511.md]。",
+      "latency_s": 4.379,
+      "retrieval_hit": true,
+      "expected_source_hints": [
+        "csdn_hadoop"
+      ],
+      "is_out_of_scope": false,
+      "hallucinated": false
+    },
+    {
+      "id": 36,
+      "category": "元数据过滤",
+      "question": "有哪些案例分析？",
+      "search_query": "案例分析",
+      "filters": null,
+      "retrieved_sources": [
+        "faq_demo.md",
+        "case_study_01.md",
+        "demo_script.md"
+      ],
+      "retrieved_scores": [
+        0.48704999685287476,
+        0.487257182598114,
+        0.48805421590805054
+      ],
+      "answer_snippet": "根据提供的参考资料，目前有**一个案例分析**，即“案例研究 1”，它展示了如何将知识库问答系统应用于教学场景，整合课程文档、实验说明、FAQ 和教师通知等信息，并提供统一检索入口 [来源: case_study_01.md]。",
+      "latency_s": 4.444,
+      "retrieval_hit": true,
+      "expected_source_hints": [
+        "case_study"
+      ],
+      "is_out_of_scope": false,
+      "hallucinated": false
+    },
+    {
+      "id": 37,
+      "category": "元数据过滤",
+      "question": "查找关于 Flink 的中文资料",
+      "search_query": "Flink",
+      "filters": {
+        "language": "zh"
+      },
+      "retrieved_sources": [
+        "wiki_apache_flink.md",
+        "so_apache-flink_30699119.md",
+        "csdn_flink__145497133.md"
+      ],
+      "retrieved_scores": [
+        0.2265673279762268,
+        0.2625216841697693,
+        0.2677093744277954
+      ],
+      "answer_snippet": "根据提供的参考资料，以下是关于 Apache Flink 的中文资料汇总：\n\n- Apache Flink 是由 Apache 软件基金会开发的开源流处理框架，核心采用 Java 和 Scala 编写，是一个分布式流数据流引擎 [来源: wiki_apache_flink.md]。\n- Flink 以数据并行和管道方式执行任意流数据程序，其流水线运行时系统支持批处理和流处理，并且运行时本身也支持迭代算法的执行 [来源: wiki_apache_flink.md]。\n- Flink 被描述为“为分布式、高性能、随时可用以及准确的流处理应用程序打造的开源流处理框架”，用于对无界和有界数据流进行有状态计算 [来源: csdn_flink__145497133.md]。\n- Flink 的历史可追溯到 2010～2014 年由柏林及欧洲其他大学共同研究的 Stratosphere 项目，2014 年 4 月捐赠给 Apache 软件基金会，同年 12 月成为 Apache 顶级项目；2015 年阿里巴巴加入 Flink 开发并贡献了至少 150 万行代码 [来源: csdn_flink__14",
+      "latency_s": 7.947,
+      "retrieval_hit": true,
+      "expected_source_hints": [
+        "wiki",
+        "csdn_flink",
+        "so_apache-flink"
+      ],
+      "is_out_of_scope": false,
+      "hallucinated": false
+    },
+    {
+      "id": 38,
+      "category": "元数据过滤",
+      "question": "有没有关于 Kafka 的英文问答？",
+      "search_query": "有没有关于 Kafka 的英文问答？",
+      "filters": null,
+      "retrieved_sources": [
+        "wiki_apache_kafka.md",
+        "csdn_kafka__148811816.md",
+        "csdn_kafka__144950727.md"
+      ],
+      "retrieved_scores": [
+        0.33995670080184937,
+        0.3446936011314392,
+        0.3827064037322998
+      ],
+      "answer_snippet": "根据提供的参考资料，所有内容均为中文，没有包含关于 Kafka 的英文问答。[来源: wiki_apache_kafka.md, csdn_kafka__148811816.md, csdn_kafka__144950727.md]",
+      "latency_s": 5.604,
+      "retrieval_hit": false,
+      "expected_source_hints": [
+        "so_apache-kafka"
+      ],
+      "is_out_of_scope": false,
+      "hallucinated": false
+    },
+    {
+      "id": 39,
+      "category": "元数据过滤",
+      "question": "FAQ 类型的文档有哪些？",
+      "search_query": "FAQ 类型的文档有哪些？",
+      "filters": null,
+      "retrieved_sources": [
+        "dataset_guidelines.md",
+        "case_study_10.md",
+        "case_study_05.md"
+      ],
+      "retrieved_scores": [
+        0.39098650217056274,
+        0.48968636989593506,
+        0.4987483024597168
+      ],
+      "answer_snippet": "根据参考资料，FAQ（常见问题）类型的文档被列为建议收集的文档类型之一，但参考资料未具体列出有哪些具体的FAQ文档。因此，无法提供更详细的列举。[来源: dataset_guidelines.md]",
+      "latency_s": 6.833,
+      "retrieval_hit": false,
+      "expected_source_hints": [
+        "faq"
+      ],
+      "is_out_of_scope": false,
+      "hallucinated": false
+    },
+    {
+      "id": 40,
+      "category": "元数据过滤",
+      "question": "术语表里定义了哪些概念？",
+      "search_query": "术语表概念",
+      "filters": {
+        "category": "term"
+      },
+      "retrieved_sources": [],
+      "retrieved_scores": [],
+      "answer_snippet": "未找到相关文档，无法回答。",
+      "latency_s": 3.31,
+      "retrieval_hit": false,
+      "expected_source_hints": [
+        "term"
+      ],
+      "is_out_of_scope": false,
+      "hallucinated": false
+    },
+    {
+      "id": 41,
+      "category": "边界测试",
+      "question": "钢琴考级需要准备什么？",
+      "search_query": "钢琴考级 准备",
+      "filters": null,
+      "retrieved_sources": [
+        "dataset_guidelines.md",
+        "notice_01.md",
+        "faq_registration.md"
+      ],
+      "retrieved_scores": [
+        0.6132423877716064,
+        0.6151009798049927,
+        0.6200176477432251
+      ],
+      "answer_snippet": "抱歉，我无法基于提供的参考资料回答关于钢琴考级的问题。参考资料主要涉及课程知识库数据集准备、课程通知和选课FAQ，未包含钢琴考级相关信息。请提供相关参考资料或询问其他问题。\n\n来源:\n- dataset_guidelines.md\n- faq_registration.md\n- notice_01.md",
+      "latency_s": 4.612,
+      "retrieval_hit": true,
+      "expected_source_hints": [],
+      "is_out_of_scope": true,
+      "hallucinated": true
+    },
+    {
+      "id": 42,
+      "category": "边界测试",
+      "question": "今天天气怎么样？",
+      "search_query": "今天天气",
+      "filters": null,
+      "retrieved_sources": [
+        "notice_07.md",
+        "wiki_graphql.md",
+        "notice_08.md"
+      ],
+      "retrieved_scores": [
+        0.6556656956672668,
+        0.6643586754798889,
+        0.6693668365478516
+      ],
+      "answer_snippet": "抱歉，我无法从提供的参考资料中找到关于今天天气的任何信息。请提供相关的天气参考资料，或者我可以基于其他知识回答您的问题。\n\n来源:\n- notice_07.md\n- notice_08.md\n- wiki_graphql.md",
+      "latency_s": 3.824,
+      "retrieval_hit": true,
+      "expected_source_hints": [],
+      "is_out_of_scope": true,
+      "hallucinated": true
+    },
+    {
+      "id": 43,
+      "category": "边界测试",
+      "question": "如何做红烧肉？",
+      "search_query": "红烧肉的做法",
+      "filters": null,
+      "retrieved_sources": [
+        "architecture_notes.md",
+        "csdn_hadoop__107111511.md",
+        "demo_script.md"
+      ],
+      "retrieved_scores": [
+        0.7525553703308105,
+        0.7618277072906494,
+        0.7666516304016113
+      ],
+      "answer_snippet": "根据提供的参考资料，没有关于如何制作红烧肉的信息。资料主要涉及系统架构、Hadoop入门教程及演示脚本，不包含烹饪内容。因此，无法回答该问题。\n\n来源:\n- architecture_notes.md\n- csdn_hadoop__107111511.md\n- demo_script.md",
+      "latency_s": 4.537,
+      "retrieval_hit": true,
+      "expected_source_hints": [],
+      "is_out_of_scope": true,
+      "hallucinated": false
+    },
+    {
+      "id": 44,
+      "category": "边界测试",
+      "question": "Python 的 for 循环怎么写？",
+      "search_query": "Python for循环写法",
+      "filters": null,
+      "retrieved_sources": [
+        "so_etl_19189522.md",
+        "so_pandas_16476924.md",
+        "so_pandas_16476924.md"
+      ],
+      "retrieved_scores": [
+        0.4483182430267334,
+        0.48415815830230713,
+        0.531425416469574
+      ],
+      "answer_snippet": "Python 的 `for` 循环有多种写法，常用于遍历序列（如列表、字符串）或可迭代对象（如字典、DataFrame 行）。以下基于参考资料中的示例说明：\n\n1. **遍历字典项**  \n   使用 `for key, value in dict.iteritems():`（Python 2）或 `for key, value in dict.items():`（Python 3）来同时获取键和值。  \n   > 参考来源：`for key, value in counter.iteritems(): writer.writerow([key, value])` [来源: so_etl_19189522.md]\n\n2. **遍历 DataFrame 行**  \n   使用 `for index, row in df.iterrows():` 可以同时获取索引（index）和每行数据（作为 Series），然后通过 `row['列名']` 访问具体值。  \n   > 参考来源：  \n   > ```python\n   > for index, row in df.iterrows():",
+      "latency_s": 8.202,
+      "retrieval_hit": true,
+      "expected_source_hints": [],
+      "is_out_of_scope": true,
+      "hallucinated": true
+    },
+    {
+      "id": 45,
+      "category": "边界测试",
+      "question": "2024年美国总统大选结果是什么？",
+      "search_query": "美国总统大选结果",
+      "filters": {
+        "year": 2024
+      },
+      "retrieved_sources": [],
+      "retrieved_scores": [],
+      "answer_snippet": "未找到相关文档，无法回答。",
+      "latency_s": 2.964,
+      "retrieval_hit": true,
+      "expected_source_hints": [],
+      "is_out_of_scope": true,
+      "hallucinated": false
+    },
+    {
+      "id": 46,
+      "category": "边界测试",
+      "question": "这门课的老师叫什么名字？",
+      "search_query": "课程老师姓名",
+      "filters": null,
+      "retrieved_sources": [
+        "notice_01.md",
+        "notice_08.md",
+        "faq_registration.md"
+      ],
+      "retrieved_scores": [
+        0.49575990438461304,
+        0.505561351776123,
+        0.5125007629394531
+      ],
+      "answer_snippet": "根据提供的参考资料，没有提及这门课的老师名字。因此无法回答该问题。\n\n来源:\n- faq_registration.md\n- notice_01.md\n- notice_08.md",
+      "latency_s": 6.459,
+      "retrieval_hit": true,
+      "expected_source_hints": [],
+      "is_out_of_scope": true,
+      "hallucinated": false
+    },
+    {
+      "id": 47,
+      "category": "边界测试",
+      "question": "项目的 GitHub 仓库地址是什么？",
+      "search_query": "project GitHub repository address",
+      "filters": null,
+      "retrieved_sources": [
+        "wiki_graphql.md",
+        "demo_script.md",
+        "so_nlp_307291.md"
+      ],
+      "retrieved_scores": [
+        0.5554280281066895,
+        0.5587329864501953,
+        0.5628216862678528
+      ],
+      "answer_snippet": "抱歉，根据提供的参考资料，没有找到关于项目 GitHub 仓库地址的信息。无法确定该地址。\n\n来源:\n- demo_script.md\n- so_nlp_307291.md\n- wiki_graphql.md",
+      "latency_s": 3.512,
+      "retrieval_hit": true,
+      "expected_source_hints": [],
+      "is_out_of_scope": true,
+      "hallucinated": true
+    },
+    {
+      "id": 48,
+      "category": "边界测试",
+      "question": "隔壁班的项目做了什么方向？",
+      "search_query": "隔壁班项目方向",
+      "filters": null,
+      "retrieved_sources": [
+        "project_requirements.md",
+        "faq_project.md",
+        "notice_07.md"
+      ],
+      "retrieved_scores": [
+        0.4632635712623596,
+        0.5057079792022705,
+        0.5434354543685913
+      ],
+      "answer_snippet": "抱歉，提供的参考资料中没有提及隔壁班的具体项目方向。\n\n来源:\n- faq_project.md\n- notice_07.md\n- project_requirements.md",
+      "latency_s": 3.589,
+      "retrieval_hit": true,
+      "expected_source_hints": [],
+      "is_out_of_scope": true,
+      "hallucinated": false
+    },
+    {
+      "id": 49,
+      "category": "边界测试",
+      "question": "能不能帮我写一段 Java 代码？",
+      "search_query": "Java code example",
+      "filters": null,
+      "retrieved_sources": [
+        "so_pandas_17071871.md",
+        "faq_demo.md",
+        "csdn_spark__143671233.md"
+      ],
+      "retrieved_scores": [
+        0.5174254179000854,
+        0.5493696928024292,
+        0.5599217414855957
+      ],
+      "answer_snippet": "根据提供的参考资料，我无法回答关于编写 Java 代码的请求，因为参考资料中不包含任何 Java 编程相关内容。如果您有关于 pandas、Spark 或演示 FAQ 的具体问题，我可以尝试帮助。\n\n来源:\n- csdn_spark__143671233.md\n- faq_demo.md\n- so_pandas_17071871.md",
+      "latency_s": 6.404,
+      "retrieval_hit": true,
+      "expected_source_hints": [],
+      "is_out_of_scope": true,
+      "hallucinated": false
+    },
+    {
+      "id": 50,
+      "category": "边界测试",
+      "question": "RAG 和 ChatGPT 哪个更好用？",
+      "search_query": "RAG ChatGPT 对比",
+      "filters": null,
+      "retrieved_sources": [
+        "rag_system_notes.md",
+        "wiki_检索增强生成.md",
+        "evaluation_notes.md"
+      ],
+      "retrieved_scores": [
+        0.2984282970428467,
+        0.3304542899131775,
+        0.35121601819992065
+      ],
+      "answer_snippet": "RAG（检索增强生成）是一项技术框架，而ChatGPT是一个具体的大语言模型（LLM）。两者并非直接竞争，RAG可以用于增强ChatGPT等模型的表现 [来源: rag_system_notes.md]。RAG通过从指定知识库中检索相关信息再生成回答，能减少幻觉、提高可追溯性，更适合回答基于特定资料的问题 [来源: rag_system_notes.md]。ChatGPT本身不具备内置的检索能力，但如果结合RAG，则可以利用企业数据或权威来源生成更准确的回答 [来源: wiki_检索增强生成.md]。因此，“哪个更好用”取决于具体场景：如果需要基于封闭、专业或最新资料进行可靠回答，RAG（或结合RAG的ChatGPT）通常更优；如果是开放闲聊或无需外部知识的场景，直接使用ChatGPT可能更方便。参考资料中没有进一步对比优劣，建议根据实际需求选择。",
+      "latency_s": 9.557,
+      "retrieval_hit": true,
+      "expected_source_hints": [
+        "rag_system_notes",
+        "wiki_检索增强生成"
+      ],
+      "is_out_of_scope": false,
+      "hallucinated": false
+    }
+  ]
+}
