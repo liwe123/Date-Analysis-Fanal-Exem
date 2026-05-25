@@ -1,0 +1,57 @@
+Python编程语言入门指南
+
+作者：张三
+日期：2024-01-15
+类别：Python基础
+
+Python是一种高级编程语言，由Guido van Rossum于1991年创建。Python的设计哲学强调代码的可读性和简洁性。
+
+Python的主要特点包括：
+1. 简洁易读的语法
+2. 动态类型系统
+3. 自动内存管理
+4. 丰富的标准库
+5. 跨平台兼容性
+
+Python支持多种编程范式，包括面向对象编程、函数式编程和过程式编程。
+
+安装Python：
+可以从Python官方网站（python.org）下载最新版本的Python。安装完成后，可以在命令行中输入python --version来验证安装是否成功。
+
+第一个Python程序：
+print("Hello, World!")
+
+变量和数据类型：
+Python支持多种数据类型，包括整数（int）、浮点数（float）、字符串（str）、布尔值（bool）、列表（list）、元组（tuple）、字典（dict）和集合（set）。
+
+示例：
+name = "张三"  # 字符串
+age = 25  # 整数
+height = 1.75  # 浮点数
+is_student = True  # 布尔值
+
+控制流语句：
+Python支持if-elif-else条件语句和for/while循环语句。
+
+条件语句示例：
+score = 85
+if score >= 90:
+    print("优秀")
+elif score >= 80:
+    print("良好")
+elif score >= 60:
+    print("及格")
+else:
+    print("不及格")
+
+循环语句示例：
+for i in range(5):
+    print(i)
+
+函数定义：
+使用def关键字定义函数。
+
+def greet(name):
+    return f"你好，{name}！"
+
+print(greet("李四"))

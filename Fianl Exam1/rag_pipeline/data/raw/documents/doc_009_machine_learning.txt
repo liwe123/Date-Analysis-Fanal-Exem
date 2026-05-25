@@ -1,0 +1,149 @@
+机器学习概述
+
+作者：郑十一
+日期：2024-06-01
+类别：机器学习
+
+机器学习是人工智能的一个分支，它使计算机能够从数据中学习，而不需要明确编程。
+
+机器学习的类型：
+1. 监督学习：使用标记的训练数据
+2. 无监督学习：使用未标记的数据
+3. 强化学习：通过与环境交互学习
+
+监督学习：
+监督学习使用标记的训练数据来学习输入和输出之间的映射关系。
+
+分类问题：
+- 目标：预测离散的类别标签
+- 示例：垃圾邮件检测、图像分类、疾病诊断
+- 算法：逻辑回归、决策树、随机森林、SVM、KNN
+
+回归问题：
+- 目标：预测连续的数值
+- 示例：房价预测、股票价格预测、温度预测
+- 算法：线性回归、多项式回归、决策树回归、随机森林回归
+
+无监督学习：
+无监督学习使用未标记的数据来发现数据中的模式和结构。
+
+聚类：
+- 目标：将数据分成不同的组
+- 示例：客户细分、文档聚类、图像分割
+- 算法：K-Means、层次聚类、DBSCAN
+
+降维：
+- 目标：减少数据的维度
+- 示例：数据可视化、特征提取、噪声去除
+- 算法：PCA、t-SNE、UMAP
+
+Scikit-learn入门：
+Scikit-learn是Python中最流行的机器学习库。
+
+安装：
+pip install scikit-learn
+
+导入：
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
+
+机器学习工作流程：
+1. 数据收集和准备
+2. 特征工程
+3. 模型选择
+4. 模型训练
+5. 模型评估
+6. 模型调优
+7. 模型部署
+
+示例：线性回归
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
+
+# 生成示例数据
+X = np.random.rand(100, 1) * 10
+y = 2 * X + 1 + np.random.randn(100, 1)
+
+# 划分训练集和测试集
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# 创建模型
+model = LinearRegression()
+
+# 训练模型
+model.fit(X_train, y_train)
+
+# 预测
+y_pred = model.predict(X_test)
+
+# 评估
+mse = mean_squared_error(y_test, y_pred)
+r2 = r2_score(y_test, y_pred)
+
+print(f"均方误差：{mse}")
+print(f"R²分数：{r2}")
+print(f"系数：{model.coef_}")
+print(f"截距：{model.intercept_}")
+
+特征工程：
+特征工程是机器学习中最重要的步骤之一，它直接影响模型的性能。
+
+特征缩放：
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
+
+# 标准化
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+# 归一化
+scaler = MinMaxScaler()
+X_normalized = scaler.fit_transform(X)
+
+特征编码：
+from sklearn.preprocessing import LabelEncoder, OneHotEncoder
+
+# 标签编码
+le = LabelEncoder()
+y_encoded = le.fit_transform(y)
+
+# 独热编码
+ohe = OneHotEncoder()
+X_encoded = ohe.fit_transform(X)
+
+模型评估指标：
+分类问题：
+- 准确率（Accuracy）
+- 精确率（Precision）
+- 召回率（Recall）
+- F1分数
+- ROC曲线和AUC
+
+回归问题：
+- 均方误差（MSE）
+- 均方根误差（RMSE）
+- 平均绝对误差（MAE）
+- R²分数
+
+交叉验证：
+from sklearn.model_selection import cross_val_score
+
+scores = cross_val_score(model, X, y, cv=5, scoring='accuracy')
+print(f"交叉验证分数：{scores.mean():.3f} (+/- {scores.std() * 2:.3f})")
+
+超参数调优：
+from sklearn.model_selection import GridSearchCV
+
+param_grid = {
+    'n_estimators': [50, 100, 200],
+    'max_depth': [3, 5, 7]
+}
+
+grid_search = GridSearchCV(model, param_grid, cv=5)
+grid_search.fit(X_train, y_train)
+
+print(f"最佳参数：{grid_search.best_params_}")
+print(f"最佳分数：{grid_search.best_score_}")

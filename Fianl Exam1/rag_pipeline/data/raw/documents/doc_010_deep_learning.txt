@@ -1,0 +1,178 @@
+深度学习基础
+
+作者：冯十二
+日期：2024-06-15
+类别：深度学习
+
+深度学习是机器学习的一个子领域，它使用多层神经网络来学习数据的表示。
+
+神经网络基础：
+神经网络由多个层组成，每层包含多个神经元。每个神经元接收输入，应用权重和偏置，然后通过激活函数产生输出。
+
+感知机：
+感知机是最简单的神经网络，只有一个神经元。
+
+import numpy as np
+
+def perceptron(x, w, b):
+    z = np.dot(x, w) + b
+    return 1 if z > 0 else 0
+
+多层感知机（MLP）：
+多层感知机包含输入层、隐藏层和输出层。
+
+激活函数：
+1. Sigmoid：f(x) = 1 / (1 + exp(-x))
+2. Tanh：f(x) = (exp(x) - exp(-x)) / (exp(x) + exp(-x))
+3. ReLU：f(x) = max(0, x)
+4. Leaky ReLU：f(x) = max(0.01x, x)
+5. Softmax：用于多分类问题的输出层
+
+PyTorch入门：
+PyTorch是Facebook开发的深度学习框架。
+
+安装：
+pip install torch torchvision
+
+导入：
+import torch
+import torch.nn as nn
+import torch.optim as optim
+
+张量操作：
+# 创建张量
+x = torch.tensor([1, 2, 3, 4, 5])
+print(x)
+
+# 创建随机张量
+x = torch.randn(3, 4)
+print(x)
+
+# 张量运算
+y = torch.randn(3, 4)
+z = x + y
+print(z)
+
+# GPU加速
+if torch.cuda.is_available():
+    x = x.cuda()
+    y = y.cuda()
+
+构建神经网络：
+import torch.nn as nn
+
+class SimpleNN(nn.Module):
+    def __init__(self, input_size, hidden_size, output_size):
+        super(SimpleNN, self).__init__()
+        self.fc1 = nn.Linear(input_size, hidden_size)
+        self.relu = nn.ReLU()
+        self.fc2 = nn.Linear(hidden_size, output_size)
+    
+    def forward(self, x):
+        x = self.fc1(x)
+        x = self.relu(x)
+        x = self.fc2(x)
+        return x
+
+# 创建模型
+model = SimpleNN(10, 20, 2)
+print(model)
+
+训练循环：
+# 定义损失函数和优化器
+criterion = nn.CrossEntropyLoss()
+optimizer = optim.Adam(model.parameters(), lr=0.001)
+
+# 训练循环
+for epoch in range(100):
+    # 前向传播
+    outputs = model(inputs)
+    loss = criterion(outputs, labels)
+    
+    # 反向传播和优化
+    optimizer.zero_grad()
+    loss.backward()
+    optimizer.step()
+    
+    if (epoch + 1) % 10 == 0:
+        print(f'Epoch [{epoch+1}/100], Loss: {loss.item():.4f}')
+
+卷积神经网络（CNN）：
+CNN主要用于图像处理任务。
+
+class SimpleCNN(nn.Module):
+    def __init__(self):
+        super(SimpleCNN, self).__init__()
+        self.conv1 = nn.Conv2d(1, 32, kernel_size=3, padding=1)
+        self.pool = nn.MaxPool2d(2, 2)
+        self.conv2 = nn.Conv2d(32, 64, kernel_size=3, padding=1)
+        self.fc1 = nn.Linear(64 * 7 * 7, 128)
+        self.fc2 = nn.Linear(128, 10)
+        self.relu = nn.ReLU()
+    
+    def forward(self, x):
+        x = self.pool(self.relu(self.conv1(x)))
+        x = self.pool(self.relu(self.conv2(x)))
+        x = x.view(-1, 64 * 7 * 7)
+        x = self.relu(self.fc1(x))
+        x = self.fc2(x)
+        return x
+
+循环神经网络（RNN）：
+RNN主要用于序列数据处理，如文本和时间序列。
+
+class SimpleRNN(nn.Module):
+    def __init__(self, input_size, hidden_size, output_size):
+        super(SimpleRNN, self).__init__()
+        self.hidden_size = hidden_size
+        self.rnn = nn.RNN(input_size, hidden_size, batch_first=True)
+        self.fc = nn.Linear(hidden_size, output_size)
+    
+    def forward(self, x):
+        h0 = torch.zeros(1, x.size(0), self.hidden_size)
+        out, _ = self.rnn(x, h0)
+        out = self.fc(out[:, -1, :])
+        return out
+
+LSTM（长短期记忆网络）：
+LSTM是RNN的一种变体，能够更好地处理长序列。
+
+class SimpleLSTM(nn.Module):
+    def __init__(self, input_size, hidden_size, output_size):
+        super(SimpleLSTM, self).__init__()
+        self.hidden_size = hidden_size
+        self.lstm = nn.LSTM(input_size, hidden_size, batch_first=True)
+        self.fc = nn.Linear(hidden_size, output_size)
+    
+    def forward(self, x):
+        h0 = torch.zeros(1, x.size(0), self.hidden_size)
+        c0 = torch.zeros(1, x.size(0), self.hidden_size)
+        out, _ = self.lstm(x, (h0, c0))
+        out = self.fc(out[:, -1, :])
+        return out
+
+模型保存和加载：
+# 保存模型
+torch.save(model.state_dict(), 'model.pth')
+
+# 加载模型
+model = SimpleNN(10, 20, 2)
+model.load_state_dict(torch.load('model.pth'))
+model.eval()
+
+GPU加速：
+# 检查GPU是否可用
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+# 将模型移到GPU
+model = model.to(device)
+
+# 将数据移到GPU
+inputs = inputs.to(device)
+labels = labels.to(device)
+
+常用深度学习框架：
+1. PyTorch：灵活、动态图、研究友好
+2. TensorFlow：生产部署、静态图、生态系统完善
+3. Keras：高级API、易于使用
+4. JAX：高性能、函数式编程

@@ -1,0 +1,106 @@
+Python函数与模块
+
+作者：王五
+日期：2024-03-10
+类别：Python进阶
+
+函数是Python中组织代码的基本单元。通过函数，可以将复杂的任务分解为更小的、可重用的部分。
+
+函数定义：
+使用def关键字定义函数，函数名后跟括号和冒号。
+
+def function_name(parameters):
+    """函数文档字符串"""
+    # 函数体
+    return result
+
+参数类型：
+1. 位置参数：按照位置传递
+2. 关键字参数：通过参数名传递
+3. 默认参数：有默认值的参数
+4. 可变参数：*args接收任意数量的位置参数
+5. 关键字可变参数：**kwargs接收任意数量的关键字参数
+
+示例：
+def greet(name, greeting="你好"):
+    """问候函数"""
+    return f"{greeting}, {name}！"
+
+print(greet("张三"))  # 你好, 张三！
+print(greet("李四", "早上好"))  # 早上好, 李四！
+
+可变参数示例：
+def calculate_sum(*args):
+    """计算任意数量数字的和"""
+    return sum(args)
+
+print(calculate_sum(1, 2, 3))  # 6
+print(calculate_sum(1, 2, 3, 4, 5))  # 15
+
+关键字可变参数示例：
+def print_info(**kwargs):
+    """打印任意关键字参数"""
+    for key, value in kwargs.items():
+        print(f"{key}: {value}")
+
+print_info(name="张三", age=25, city="北京")
+
+Lambda函数：
+Lambda函数是匿名函数，适用于简单的、一次性的操作。
+
+square = lambda x: x ** 2
+print(square(5))  # 25
+
+# 常用于排序
+students = [("张三", 85), ("李四", 92), ("王五", 78)]
+students.sort(key=lambda x: x[1])  # 按成绩排序
+
+模块：
+模块是包含Python代码的文件，可以包含函数、类和变量。
+
+创建模块：
+创建一个名为math_utils.py的文件：
+
+def add(a, b):
+    return a + b
+
+def subtract(a, b):
+    return a - b
+
+PI = 3.14159
+
+使用模块：
+import math_utils
+
+result = math_utils.add(5, 3)
+print(result)  # 8
+
+也可以使用from-import语句：
+from math_utils import add, PI
+
+result = add(5, 3)
+print(PI)  # 3.14159
+
+常用标准库：
+1. os：操作系统相关功能
+2. sys：系统相关功能
+3. datetime：日期和时间处理
+4. json：JSON数据处理
+5. re：正则表达式
+6. math：数学函数
+7. random：随机数生成
+8. collections：高级数据结构
+9. itertools：迭代器工具
+10. functools：函数工具
+
+包：
+包是包含多个模块的文件夹，必须包含__init__.py文件。
+
+mypackage/
+    __init__.py
+    module1.py
+    module2.py
+
+使用包：
+from mypackage import module1
+from mypackage.module2 import some_function

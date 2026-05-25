@@ -1,0 +1,330 @@
+Python测试最佳实践
+
+作者：高十七
+日期：2024-09-01
+类别：软件工程
+
+测试是软件开发中确保代码质量的重要环节。
+
+测试类型：
+1. 单元测试：测试单个函数或类
+2. 集成测试：测试多个组件的交互
+3. 端到端测试：测试整个应用流程
+4. 性能测试：测试系统性能
+5. 安全测试：测试系统安全性
+
+单元测试：
+单元测试是最基础的测试类型，用于测试最小的代码单元。
+
+使用unittest：
+import unittest
+
+def add(a, b):
+    return a + b
+
+class TestAdd(unittest.TestCase):
+    def test_add_positive_numbers(self):
+        self.assertEqual(add(2, 3), 5)
+    
+    def test_add_negative_numbers(self):
+        self.assertEqual(add(-1, -1), -2)
+    
+    def test_add_zero(self):
+        self.assertEqual(add(0, 5), 5)
+
+if __name__ == '__main__':
+    unittest.main()
+
+使用pytest（推荐）：
+pip install pytest
+
+def add(a, b):
+    return a + b
+
+def test_add_positive_numbers():
+    assert add(2, 3) == 5
+
+def test_add_negative_numbers():
+    assert add(-1, -1) == -2
+
+def test_add_zero():
+    assert add(0, 5) == 5
+
+运行测试：
+# 运行所有测试
+pytest
+
+# 运行特定文件
+pytest test_file.py
+
+# 运行特定测试
+pytest test_file.py::test_function
+
+# 显示详细输出
+pytest -v
+
+# 显示print输出
+pytest -s
+
+# 运行匹配的测试
+pytest -k "add"
+
+断言方法：
+# 相等
+assert actual == expected
+
+# 不相等
+assert actual != expected
+
+# 大于
+assert actual > expected
+
+# 小于
+assert actual < expected
+
+# 包含
+assert item in collection
+
+# 不包含
+assert item not in collection
+
+# 是None
+assert value is None
+
+# 不是None
+assert value is not None
+
+# 异常
+with pytest.raises(ValueError):
+    function_that_raises()
+
+# 近似相等
+assert actual == pytest.approx(expected, rel=1e-2)
+
+测试夹具（Fixtures）：
+测试夹具用于设置测试环境和清理资源。
+
+import pytest
+
+@pytest.fixture
+def sample_data():
+    return {"name": "张三", "age": 25}
+
+@pytest.fixture
+def database_connection():
+    conn = create_connection()
+    yield conn
+    conn.close()
+
+def test_with_sample_data(sample_data):
+    assert sample_data["name"] == "张三"
+
+def test_with_database(database_connection):
+    result = database_connection.execute("SELECT * FROM users")
+    assert len(result) > 0
+
+参数化测试：
+import pytest
+
+@pytest.mark.parametrize("input,expected", [
+    (1, 2),
+    (2, 4),
+    (3, 6),
+    (4, 8),
+])
+def test_multiply_by_two(input, expected):
+    assert input * 2 == expected
+
+Mock和Patch：
+用于模拟外部依赖。
+
+from unittest.mock import Mock, patch
+
+def get_user_from_api(user_id):
+    response = requests.get(f"https://api.example.com/users/{user_id}")
+    return response.json()
+
+@patch('requests.get')
+def test_get_user_from_api(mock_get):
+    mock_response = Mock()
+    mock_response.json.return_value = {"id": 1, "name": "张三"}
+    mock_get.return_value = mock_response
+    
+    result = get_user_from_api(1)
+    assert result["name"] == "张三"
+    mock_get.assert_called_once_with("https://api.example.com/users/1")
+
+测试覆盖率：
+用于衡量测试覆盖了多少代码。
+
+安装：
+pip install pytest-cov
+
+运行：
+pytest --cov=myproject
+
+生成HTML报告：
+pytest --cov=myproject --cov-report=html
+
+集成测试：
+集成测试用于测试多个组件的交互。
+
+import pytest
+
+@pytest.fixture
+def app():
+    app = create_app()
+    app.config['TESTING'] = True
+    return app
+
+@pytest.fixture
+def client(app):
+    return app.test_client()
+
+def test_create_user(client):
+    response = client.post('/api/users', json={
+        'username': 'testuser',
+        'email': 'test@example.com'
+    })
+    assert response.status_code == 201
+    assert response.json['username'] == 'testuser'
+
+def test_get_users(client):
+    response = client.get('/api/users')
+    assert response.status_code == 200
+    assert isinstance(response.json, list)
+
+端到端测试：
+端到端测试用于测试整个应用流程。
+
+from selenium import webdriver
+import pytest
+
+@pytest.fixture
+def browser():
+    driver = webdriver.Chrome()
+    yield driver
+    driver.quit()
+
+def test_user_registration(browser):
+    browser.get("http://localhost:8000/register")
+    
+    username_input = browser.find_element("id", "username")
+    username_input.send_keys("testuser")
+    
+    email_input = browser.find_element("id", "email")
+    email_input.send_keys("test@example.com")
+    
+    submit_button = browser.find_element("id", "submit")
+    submit_button.click()
+    
+    success_message = browser.find_element("class", "success")
+    assert "注册成功" in success_message.text
+
+测试目录结构：
+myproject/
+├── src/
+│   ├── __init__.py
+│   ├── calculator.py
+│   └── utils.py
+├── tests/
+│   ├── __init__.py
+│   ├── conftest.py          # 共享夹具
+│   ├── test_calculator.py
+│   └── test_utils.py
+├── pytest.ini               # pytest配置
+└── setup.py
+
+pytest.ini配置：
+[pytest]
+testpaths = tests
+python_files = test_*.py
+python_classes = Test*
+python_functions = test_*
+addopts = -v --tb=short
+
+测试最佳实践：
+1. 测试应该快速运行
+2. 测试应该独立运行
+3. 测试应该可重复
+4. 测试应该自验证
+5. 测试应该及时编写
+6. 测试应该覆盖边界情况
+7. 测试应该清晰易懂
+8. 测试应该维护良好
+
+TDD（测试驱动开发）：
+1. 编写失败的测试
+2. 编写最少代码通过测试
+3. 重构代码
+4. 重复
+
+常见测试模式：
+1. AAA模式：Arrange（准备）、Act（执行）、Assert（断言）
+2. Given-When-Then：给定条件、当操作、那么结果
+3. Setup-Exercise-Verify-Teardown：设置、执行、验证、清理
+
+测试命名规范：
+test_<功能>_<场景>_<预期结果>
+
+示例：
+test_add_positive_numbers_returns_sum
+test_login_invalid_password_raises_error
+test_get_user_nonexistent_returns_404
+
+测试数据管理：
+1. 使用工厂函数创建测试数据
+2. 使用夹具管理测试数据
+3. 使用faker生成假数据
+4. 使用数据库事务回滚数据
+
+import factory
+from faker import Faker
+
+fake = Faker()
+
+class UserFactory(factory.Factory):
+    class Meta:
+        model = User
+    
+    username = factory.LazyFunction(fake.user_name)
+    email = factory.LazyFunction(fake.email)
+    age = factory.LazyFunction(lambda: fake.random_int(min=18, max=65))
+
+性能测试：
+import time
+import pytest
+
+def test_function_performance():
+    start_time = time.time()
+    result = expensive_function()
+    end_time = time.time()
+    
+    assert end_time - start_time < 1.0  # 应该在1秒内完成
+    assert result is not None
+
+持续集成：
+在CI/CD管道中自动运行测试。
+
+GitHub Actions示例：
+name: Python Tests
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.9'
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
+        pip install pytest pytest-cov
+    - name: Run tests
+      run: pytest --cov=myproject --cov-report=xml
+    - name: Upload coverage
+      uses: codecov/codecov-action@v1

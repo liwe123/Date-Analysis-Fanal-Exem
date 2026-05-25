@@ -1,0 +1,88 @@
+Python数据类型详解
+
+作者：李四
+日期：2024-02-20
+类别：Python基础
+
+Python提供了丰富的内置数据类型，可以分为两大类：可变类型和不可变类型。
+
+不可变类型：
+1. 整数（int）：如 42, -10, 0
+2. 浮点数（float）：如 3.14, -0.5, 1.0
+3. 字符串（str）：如 "hello", 'world'
+4. 布尔值（bool）：True 或 False
+5. 元组（tuple）：如 (1, 2, 3)
+6. 集合（frozenset）：不可变集合
+
+可变类型：
+1. 列表（list）：如 [1, 2, 3]
+2. 字典（dict）：如 {"name": "张三", "age": 25}
+3. 集合（set）：如 {1, 2, 3}
+
+列表（list）：
+列表是Python中最常用的数据结构之一，它是有序的、可变的元素集合。
+
+创建列表：
+fruits = ["苹果", "香蕉", "橙子"]
+
+列表操作：
+- 添加元素：fruits.append("葡萄")
+- 插入元素：fruits.insert(1, "草莓")
+- 删除元素：fruits.remove("香蕉")
+- 弹出元素：fruits.pop()
+- 排序：fruits.sort()
+- 反转：fruits.reverse()
+
+列表切片：
+numbers = [0, 1, 2, 3, 4, 5]
+print(numbers[1:4])  # [1, 2, 3]
+print(numbers[:3])   # [0, 1, 2]
+print(numbers[2:])   # [2, 3, 4, 5]
+print(numbers[::2])  # [0, 2, 4]
+
+字典（dict）：
+字典是键值对的无序集合，键必须是不可变类型。
+
+创建字典：
+person = {
+    "name": "张三",
+    "age": 25,
+    "city": "北京"
+}
+
+字典操作：
+- 获取值：person["name"] 或 person.get("name")
+- 设置值：person["email"] = "zhangsan@example.com"
+- 删除键值对：del person["age"]
+- 检查键是否存在："name" in person
+- 获取所有键：person.keys()
+- 获取所有值：person.values()
+- 获取所有键值对：person.items()
+
+集合（set）：
+集合是无序的、不重复的元素集合。
+
+创建集合：
+numbers = {1, 2, 3, 4, 5}
+
+集合操作：
+- 添加元素：numbers.add(6)
+- 删除元素：numbers.remove(3)
+- 并集：set1 | set2
+- 交集：set1 & set2
+- 差集：set1 - set2
+- 对称差集：set1 ^ set2
+
+类型转换：
+- int()：转换为整数
+- float()：转换为浮点数
+- str()：转换为字符串
+- list()：转换为列表
+- tuple()：转换为元组
+- set()：转换为集合
+- dict()：转换为字典
+
+示例：
+num_str = "123"
+num_int = int(num_str)  # 123
+num_float = float(num_str)  # 123.0
