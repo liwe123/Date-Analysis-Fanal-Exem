@@ -4,7 +4,7 @@ generate_onboarding_pdf.py
 ==========================
 将零基础小白组员项目架构、目录与现场操作保姆级指南 (member_onboarding_guide.md)
 编译生成为排版极其专业、紧凑、质感高级的 A4 高清 PDF 指南报告。
-经过深度优化，去除冗余强制分页，紧凑行间距与盒子填充，展现极佳的可读性。
+经过深度优化，彻底修复了前缀与正文折行导致文字超出右边界的排版缺陷。
 """
 
 from __future__ import annotations
@@ -46,7 +46,7 @@ def clean_emojis(text: str) -> str:
 # ── 文本精细分行工具 ───────────────────────────────────
 def split_text_to_lines(pdf: FPDF, text: str, max_w: float) -> list[str]:
     """
-    根据 FPDF 当前字体 and 最大宽度，将包含中英文的文本精确切分成多行，以便在栏宽内自动换行。
+    根据 FPDF 当前字体和最大宽度，将包含中英文的文本精确切分成多行，以便在栏宽内自动换行。
     """
     clean_text = clean_emojis(text)
     tokens = re.findall(
@@ -177,35 +177,30 @@ class OnboardingPdf(FPDF):
         self.ln(1.0)
 
     def paragraph(self, text: str, bold_prefix: str = ""):
-        """正文段落。"""
+        """
+        正文段落。
+        彻底修复文字超出边界的排版问题：使用 FPDF 的 native write() 流式换行引擎，
+        使其百分之百限制在 margin 设置的 170.0mm 打印范围内，绝不溢出。
+        """
         if self.get_y() > 270:
             self.add_page()
-        self.set_font("cn", "", 8.0)
-        self.set_text_color(71, 85, 105)
         
-        full_text = text
+        # 强制回到左边界 20.0mm，防止 x 坐标发生漂移
+        self.set_x(20.0)
+        
+        # 1. 绘制粗体前缀
         if bold_prefix:
             self.set_font("cn", "B", 8.0)
             self.set_text_color(15, 23, 42)
             self.write(3.6, clean_emojis(bold_prefix))
-            self.set_font("cn", "", 8.0)
-            self.set_text_color(71, 85, 105)
             
-        lines = split_text_to_lines(self, full_text, self.PW)
-        for idx, line in enumerate(lines):
-            line_w = self.get_string_width(line)
-            is_last = (idx == len(lines) - 1)
-            if not is_last and line_w > 0 and len(line) > 1 and line_w < self.PW:
-                extra_space = self.PW - line_w
-                extra_char_spacing = extra_space / (len(line) - 1)
-                if extra_char_spacing < 1.0:
-                    self.set_char_spacing(extra_char_spacing)
-                    self.cell(self.PW, 3.6, line)
-                    self.set_char_spacing(0.0)
-                    self.ln(3.6)
-                    continue
-            self.cell(self.PW, 3.6, line)
-            self.ln(3.6)
+        # 2. 绘制普通正文，使用 write 自动排版流式折行
+        self.set_font("cn", "", 8.0)
+        self.set_text_color(71, 85, 105)
+        self.write(3.6, clean_emojis(text))
+        
+        # 3. 换行及段落后间距
+        self.ln(4.2)
         self.ln(0.4)
 
     def bullet_list(self, items: list[str]):
@@ -359,18 +354,9 @@ def build_onboarding_pdf():
     )
     pdf.paragraph(p_arch)
     
-    pdf.paragraph("1. Streamlit 网页前台 (app/streamlit_app.py)：", "前台大厅：")
-    p_front = (
-        "这是公司精美的“接待前台”。用户在网页的聊天输入框里用最口语化的白话文输入问题。前台不负责计算，"
-        "只负责把问题接过来传给后台大脑，并负责把最后生成出的文字像打字机一样蹦出来，附带高亮展示引用文件来源。"
-    )
-    pdf.paragraph(p_front)
+    pdf.paragraph(" 这是公司精美的“接待前台”。用户在网页的聊天输入框里用最口语化的白话文输入问题。前台不负责计算，只负责把问题接过来传给后台大脑，并负责把最后生成出的文字像打字机一样蹦出来，附带高亮展示引用文件来源。", "1. Streamlit 网页前台 (app/streamlit_app.py)：")
     
-    pdf.paragraph("2. Python 后端业务线 (src/)：", "后台大脑：")
-    p_back = (
-        "这是公司的“总机和参谋部”，内部分工高度严密。当用户问了一句‘2025年的紧急通知写了什么？’，大脑会安排以下工作："
-    )
-    pdf.paragraph(p_back)
+    pdf.paragraph(" 这是公司的“总机和参谋部”，内部分工高度严密。当用户问了一句‘2025年的紧急通知写了什么？’，大脑会安排以下工作：", "2. Python 后端业务线 (src/)：")
     
     pdf.bullet_list([
         "意图解析师 (src/query_parser.py)：先分析这句话，提取出核心搜索词为‘紧急通知’，并剥离出限制条件‘年份是 2025 年’。",
@@ -380,7 +366,7 @@ def build_onboarding_pdf():
     ])
     
     # ==========================================
-    # 🌟 PAGE 2: 代码目录生词本 (紧凑流式排版，无需手动分页，让自动换页起效)
+    # 🌟 PAGE 2: 代码目录生词本
     # ==========================================
     pdf.h1("二、 代码目录生词本（我们这几百行代码都放在哪了？）")
     p_dir_intro = (
@@ -399,7 +385,7 @@ def build_onboarding_pdf():
     pdf.paragraph(" 依赖包清单。记录了项目所需的所有第三方 Python 库，用于环境一键搭建安装。", "requirements.txt [包清单]：")
 
     # ==========================================
-    # 🌟 PAGE 3: 终端命令与运行环境速成 (强制分页保持三大部分结构清晰)
+    # 🌟 PAGE 3: 终端命令与运行环境速成
     # ==========================================
     pdf.add_page()
     pdf.h1("三、 终端命令（小黑窗）与运行环境速成")
@@ -436,7 +422,7 @@ def build_onboarding_pdf():
     )
 
     # ==========================================
-    # 🌟 PAGE 4: 组员专区大篇章 (张杰 & 王婷版块) - 流式排版，删除中间强制分页
+    # 🌟 PAGE 4: 组员专区大篇章
     # ==========================================
     pdf.add_page()
     pdf.h1("四、 组员专区 — 动作步骤、运行命令与其后台工程含义")
@@ -458,7 +444,7 @@ def build_onboarding_pdf():
     pdf.draw_cmd_box(
         "AutoDL 端一键拉起 GPU 特征服务",
         "bash setup_autodl.sh",
-        "在云服务器上安装 PyTorch 深度学习框架和依赖包，从 Hugging Face 镜像站下载 1024 维的高端 bge-large-zh 模型并加载到 GPU 显存中，暴露 FastAPI 服务接口静待本地数据发送。"
+        "在云服务器上安装 PyTorch 深度学习框架和依赖包，从 Hugging Face 镜像站下载 1024 维的高端 bge-large-zh模型并加载到 GPU 显存中，暴露 FastAPI 服务接口静待本地数据发送。"
     )
     
     pdf.paragraph(" 运行本地建库命令，将百万级原始文本通过 POST 发送给云端 4090 并入库本地 ChromaDB。", "任务三：百万数据一键云端算力卸载向量建库")
@@ -482,7 +468,7 @@ def build_onboarding_pdf():
     )
 
     # ==========================================
-    # 🌟 PAGE 5: 王婷任务2-3 & 刘洋版块全部任务 - 流式排版，删除中间所有强制分页
+    # 🌟 PAGE 5: 王婷与刘洋版块全部任务
     # ==========================================
     pdf.paragraph(" 勾选侧边栏「调试模式」，提问并现场向老师展示解析出的结构化 JSON 过滤字典。", "任务二：现场演示「打开玻璃盒」智能意图元数据过滤看板")
     pdf.draw_cmd_box(
