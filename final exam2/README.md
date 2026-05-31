@@ -119,7 +119,7 @@ python -m pytest tests/ -v
 
 | 组件 | 选用技术 |
 |------|------|
-| 大语言模型 | DeepSeek V3 / GPT-4o-mini (OpenAI-compatible API) |
+| 大语言模型 | DeepSeek V4-flash / GPT-4o-mini (OpenAI-compatible API) |
 | 特征向量模型 | BAAI/bge-large-zh-v1.5（通过 FastAPI 在 AutoDL 4090 GPU 上高吞吐推理） |
 | 向量数据库 | ChromaDB (HNSW 索引，upsert 幂等去重，SQLite 元数据存储) |
 | 文本流处理 | PyMuPDF (PDF 解析) + BeautifulSoup (HTML标签剥离) + html2text (Markdown转换) |
