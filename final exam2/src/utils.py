@@ -83,3 +83,8 @@ def get_embedding_model_name() -> str:
     """
     return clean_env("OPENAI_EMBEDDING_MODEL", "local") or "local"
 
+
+def get_embedding_base_url() -> str | None:
+    """返回远程嵌入服务的 API 地址（仅在 OPENAI_EMBEDDING_MODEL=remote 时使用）。"""
+    return clean_env("OPENAI_EMBEDDING_BASE_URL")
+

@@ -1,16 +1,17 @@
 """
 embed_store.py
 ==============
-向量存储与检索模块（ChromaDB + OpenAI-compatible 或本地 HuggingFace 嵌入）。
+向量存储与检索模块（ChromaDB + OpenAI-compatible 或本地/远程 HuggingFace 嵌入）。
 
 功能：
-  - 支持本地与远程模型嵌入
+  - 支持本地、远程 GPU 与 OpenAI 兼容 API 三种嵌入模式
   - 支持语义向量搜索、元数据过滤及关键词过滤（混合检索）
   - 支持数据去重写入（upsert）
 """
 
 from __future__ import annotations
 
+import time
 from pathlib import Path
 from typing import Any
 
@@ -19,6 +20,7 @@ from openai import OpenAI
 
 from src.utils import (
     clean_env,
+    get_embedding_base_url,
     get_embedding_model_name,
     get_logger,
     get_openai_client,
@@ -36,11 +38,11 @@ _LOCAL_MODEL_NAME: str | None = None  # 从环境变量动态读取
 
 
 def _resolve_local_model_name() -> str:
-    """获取本地嵌入模型名（优先 LOCAL_EMBEDDING_MODEL 环境变量，否则默认 Qwen/Qwen3-Embedding-0.6B）。"""
+    """获取本地嵌入模型名（优先 LOCAL_EMBEDDING_MODEL 环境变量，否则默认 shibing624/text2vec-base-chinese）。"""
     model = clean_env("LOCAL_EMBEDDING_MODEL")
     if model and model.strip():
         return model.strip()
-    return "Qwen/Qwen3-Embedding-0.6B"
+    return "shibing624/text2vec-base-chinese"
 
 
 def _get_local_embedding_model() -> Any:
@@ -66,6 +68,44 @@ def use_local_embedding() -> bool:
     """判断是否使用本地嵌入（OPENAI_EMBEDDING_MODEL 为 'local' 或未配置时启用）。"""
     model = get_embedding_model_name()
     return model.lower() == "local"
+
+
+# ── 远程嵌入客户端 ────────────────────────────────────────────────
+
+_REMOTE_EMBEDDING_CLIENT: OpenAI | None = None
+
+# 远程请求重试参数
+_REMOTE_MAX_RETRIES = 3
+_REMOTE_RETRY_BASE_DELAY = 2
+
+
+def use_remote_embedding() -> bool:
+    """判断是否使用远程 GPU 嵌入服务（OPENAI_EMBEDDING_MODEL 为 'remote' 时启用）。"""
+    model = get_embedding_model_name()
+    return model.lower() == "remote"
+
+
+def _get_remote_embedding_client() -> OpenAI:
+    """获取远程嵌入服务的 OpenAI 兼容客户端（全局单例）。"""
+    global _REMOTE_EMBEDDING_CLIENT
+    if _REMOTE_EMBEDDING_CLIENT is not None:
+        return _REMOTE_EMBEDDING_CLIENT
+
+    base_url = get_embedding_base_url()
+    if not base_url:
+        raise ValueError(
+            "OPENAI_EMBEDDING_BASE_URL 未配置。"
+            "使用 remote 模式时必须指定远程嵌入服务地址，"
+            "例如: OPENAI_EMBEDDING_BASE_URL=http://your-autodl-ip:6008/v1"
+        )
+
+    # 远程嵌入服务不需要真实 API Key，使用占位符
+    _REMOTE_EMBEDDING_CLIENT = OpenAI(
+        api_key="remote-embedding",
+        base_url=base_url,
+    )
+    logger.info("已连接远程嵌入服务: %s", base_url)
+    return _REMOTE_EMBEDDING_CLIENT
 
 
 # ── 向量数据库存储类 ─────────────────────────────────────────────
@@ -94,13 +134,19 @@ class VectorStore:
             metadata={"hnsw:space": "cosine"},
         )
 
+        # 确定嵌入模式：local / remote / openai-api
         self._use_local = use_local_embedding()
+        self._use_remote = use_remote_embedding()
+
         if self._use_local:
             self.embedding_model = _resolve_local_model_name()
-            logger.info("使用本地嵌入模型: %s", self.embedding_model)
+            logger.info("嵌入模式: 本地 | 模型: %s", self.embedding_model)
+        elif self._use_remote:
+            self.embedding_model = _resolve_local_model_name()
+            logger.info("嵌入模式: 远程 GPU | 模型: %s", self.embedding_model)
         else:
             self.embedding_model = get_embedding_model_name()
-            logger.info("使用远程嵌入模型: %s", self.embedding_model)
+            logger.info("嵌入模式: OpenAI API | 模型: %s", self.embedding_model)
 
     # ── 嵌入 ──────────────────────────────────────────────────────
 
@@ -121,38 +167,120 @@ class VectorStore:
         if self._use_local:
             model = _get_local_embedding_model()
             return model.encode(text, normalize_embeddings=True).tolist()
+
+        if self._use_remote:
+            client = _get_remote_embedding_client()
+            resp = client.embeddings.create(
+                model=self.embedding_model,
+                input=text,
+            )
+            return resp.data[0].embedding
+
         resp = self._get_client().embeddings.create(
             model=self.embedding_model,
             input=text,
         )
         return resp.data[0].embedding
 
-    def get_embeddings(self, texts: list[str]) -> list[list[float]]:
+    def get_embeddings(self, texts: list[str], batch_size: int = 256) -> list[list[float]]:
         """
         批量生成文本的向量嵌入。
 
         参数：
           texts: 输入的文本列表。
+          batch_size: 批处理大小（本地默认256，远程默认512）。
 
         返回值：
           每一项代表对应文本向量的嵌套浮点数列表。
         """
         if self._use_local:
             model = _get_local_embedding_model()
-            logger.info("正在本地编码 %d 段文本（较大模型需要时间，请耐心等待）…", len(texts))
+            logger.info("正在本地编码 %d 段文本（batch_size=%d）…", len(texts), batch_size)
             vecs = model.encode(
                 texts,
                 normalize_embeddings=True,
-                batch_size=32,
+                batch_size=batch_size,
                 show_progress_bar=True,
             )
             logger.info("本地编码完成。")
             return [v.tolist() for v in vecs]
+
+        if self._use_remote:
+            return self._get_embeddings_remote(texts, batch_size=min(batch_size, 512))
+
         resp = self._get_client().embeddings.create(
             model=self.embedding_model,
             input=texts,
         )
         return [item.embedding for item in resp.data]
+
+    def _get_embeddings_remote(
+        self,
+        texts: list[str],
+        batch_size: int = 512,
+    ) -> list[list[float]]:
+        """
+        通过远程 GPU 服务批量编码文本，支持自动重试与进度日志。
+
+        参数：
+          texts: 输入的文本列表。
+          batch_size: 每次 API 请求的文本数量上限。
+
+        返回值：
+          与 texts 等长的嵌入向量列表。
+        """
+        client = _get_remote_embedding_client()
+        total = len(texts)
+        all_embeddings: list[list[float]] = []
+
+        logger.info("开始远程编码 %d 段文本（batch_size=%d）…", total, batch_size)
+        start_time = time.perf_counter()
+
+        for i in range(0, total, batch_size):
+            batch = texts[i: i + batch_size]
+            end_idx = min(i + batch_size, total)
+
+            # 带重试的远程请求
+            for attempt in range(1, _REMOTE_MAX_RETRIES + 1):
+                try:
+                    resp = client.embeddings.create(
+                        model=self.embedding_model,
+                        input=batch,
+                    )
+                    batch_embeddings = [item.embedding for item in resp.data]
+                    all_embeddings.extend(batch_embeddings)
+                    break
+                except Exception as exc:
+                    if isinstance(exc, (KeyboardInterrupt, SystemExit)):
+                        raise
+                    if attempt < _REMOTE_MAX_RETRIES:
+                        delay = _REMOTE_RETRY_BASE_DELAY * (2 ** (attempt - 1))
+                        logger.warning(
+                            "远程编码失败（第%d次），%ds 后重试: %s",
+                            attempt, delay, exc,
+                        )
+                        time.sleep(delay)
+                    else:
+                        logger.error("远程编码重试耗尽，请检查网络或服务状态: %s", exc)
+                        raise RuntimeError(
+                            f"远程嵌入服务请求失败（已重试 {_REMOTE_MAX_RETRIES} 次）: {exc}"
+                        ) from exc
+
+            # 每 5000 条或完成时打印进度
+            if end_idx % 5000 < batch_size or end_idx == total:
+                elapsed = time.perf_counter() - start_time
+                speed = end_idx / elapsed if elapsed > 0 else 0
+                logger.info(
+                    "远程编码进度: %d/%d（%.1f 条/秒，已耗时 %.1f 秒）",
+                    end_idx, total, speed, elapsed,
+                )
+
+        elapsed_total = time.perf_counter() - start_time
+        logger.info(
+            "远程编码完成 — 共 %d 条，总耗时 %.2f 秒，平均 %.1f 条/秒",
+            total, elapsed_total, total / elapsed_total if elapsed_total > 0 else 0,
+        )
+        return all_embeddings
 
     # ── 写入 ──────────────────────────────────────────────────────
 
@@ -167,6 +295,11 @@ class VectorStore:
         if not docs:
             logger.warning("没有可写入向量库的文档。")
             return
+
+        # 远程模式使用更大的批次以提升吞吐量
+        if self._use_remote and batch_size <= 64:
+            batch_size = 256
+            logger.info("远程模式自动调整写入批次: batch_size=%d", batch_size)
 
         total = len(docs)
         for i in range(0, total, batch_size):
@@ -325,4 +458,3 @@ class VectorStore:
             )
         self.client.delete_collection(self.collection.name)
         logger.info("集合 \"%s\" 已删除。", self.collection.name)
-

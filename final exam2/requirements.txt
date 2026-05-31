@@ -5,6 +5,7 @@ python-dotenv>=1.0.0
 streamlit>=1.28.0
 PyMuPDF>=1.23.0
 pyyaml>=6.0
+python-dateutil>=2.8.0  # 用于解析多种日期格式
 pytest>=8.0
 sentence-transformers>=2.2.0
 # PyTorch（需装 CUDA 版本以启用 GPU 加速）:

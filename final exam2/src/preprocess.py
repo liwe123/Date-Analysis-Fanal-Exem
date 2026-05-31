@@ -355,6 +355,48 @@ def _merge_fm_meta(fm_meta: dict, llm_meta: dict) -> dict:
     return merged
 
 
+def _merge_jsonl_meta(jsonl_meta: dict, llm_meta: dict) -> dict:
+    """
+    将 JSONL 元数据与 LLM 提取的元数据合并，JSONL 优先。
+
+    JSONL 字段映射：
+      - author → author
+      - category → category
+      - year (从 created_at 解析) → year
+      - doc_type → 用于推断 category（若 category 为空）
+    """
+    merged = dict(llm_meta)
+
+    # 作者：JSONL 优先
+    if jsonl_meta.get("author"):
+        merged["author"] = jsonl_meta["author"]
+
+    # 年份：从 created_at 解析
+    if jsonl_meta.get("year"):
+        merged["year"] = jsonl_meta["year"]
+
+    # 分类：JSONL 优先，若为空则用 doc_type 推断
+    if jsonl_meta.get("category"):
+        merged["category"] = jsonl_meta["category"]
+    elif jsonl_meta.get("doc_type"):
+        # 根据 doc_type 推断 category
+        doc_type = jsonl_meta["doc_type"].lower()
+        type_mapping = {
+            "ticket": "ticket",
+            "error_log": "error_log",
+            "slack": "slack",
+            "manual": "manual",
+        }
+        merged["category"] = type_mapping.get(doc_type, "general")
+
+    # 语言：根据内容推断（中文字符占比）
+    # 这里简单处理，后续可在 preprocess 中进一步优化
+    if not merged.get("language"):
+        merged["language"] = "zh"
+
+    return merged
+
+
 # ── 主处理流程 ───────────────────────────────────────────────────
 
 def process_documents(
@@ -363,6 +405,7 @@ def process_documents(
     overlap: int = 120,
     is_extract_meta: bool = True,
     max_workers: int = DEFAULT_MAX_WORKERS,
+    metadata_strategy: str = "merge",
 ) -> list[dict]:
     """
     完整的文档处理流程：
@@ -370,6 +413,10 @@ def process_documents(
 
     参数：
       max_workers : LLM 元数据提取的并发线程数（仅在 is_extract_meta=True 时生效）
+      metadata_strategy : 元数据合并策略
+        - "merge": 优先使用 JSONL/Front-Matter 元数据，缺失时用 LLM 补充
+        - "llm_only": 忽略 JSONL/Front-Matter 元数据，使用 LLM 提取
+        - "jsonl_only": 仅使用 JSONL/Front-Matter 元数据，跳过 LLM 提取
     """
     processed: list[dict] = []
 
@@ -381,7 +428,18 @@ def process_documents(
     logger.info("文档清洗完成，共 %d 篇。", len(cleaned_docs))
 
     # ── 阶段 2：并发提取元数据（或使用默认值） ──
-    if is_extract_meta:
+    if metadata_strategy == "jsonl_only":
+        # 仅使用 JSONL/Front-Matter 元数据，跳过 LLM 提取
+        llm_metas = [
+            {
+                "author": None, "year": None,
+                "category": _guess_category(doc.get("source", "unknown")),
+                "language": "zh", "summary": "",
+            }
+            for doc, _ in cleaned_docs
+        ]
+        logger.info("使用 jsonl_only 策略，跳过 LLM 元数据提取。")
+    elif is_extract_meta and metadata_strategy != "jsonl_only":
         client = get_openai_client()
         tasks = [
             (cleaned, doc.get("source", "unknown"))
@@ -400,19 +458,43 @@ def process_documents(
         ]
 
     # ── 阶段 3：分块组装 ──
-    for _, ((doc, cleaned), llm_meta) in enumerate(zip(cleaned_docs, llm_metas)):
+    for doc_idx, ((doc, cleaned), llm_meta) in enumerate(zip(cleaned_docs, llm_metas)):
         filename = doc.get("source", "unknown")
 
-        # 合并 Front-Matter 元数据
+        # 合并元数据（根据策略）
         fm_meta = doc.get("fm_meta", {})
-        if fm_meta:
-            llm_meta = _merge_fm_meta(fm_meta, llm_meta)
+        if metadata_strategy == "merge" and fm_meta:
+            # 判断是 JSONL 还是 Front-Matter
+            if fm_meta.get("doc_type") or fm_meta.get("created_at"):
+                # JSONL 元数据
+                llm_meta = _merge_jsonl_meta(fm_meta, llm_meta)
+            else:
+                # Front-Matter 元数据
+                llm_meta = _merge_fm_meta(fm_meta, llm_meta)
+        elif metadata_strategy == "jsonl_only" and fm_meta:
+            # 仅使用 JSONL/Front-Matter 元数据
+            if fm_meta.get("doc_type") or fm_meta.get("created_at"):
+                llm_meta = {
+                    "author": fm_meta.get("author"),
+                    "year": fm_meta.get("year"),
+                    "category": fm_meta.get("category", "general"),
+                    "language": fm_meta.get("language", "zh"),
+                    "summary": fm_meta.get("summary", ""),
+                }
+            else:
+                llm_meta = {
+                    "author": fm_meta.get("author"),
+                    "year": fm_meta.get("year") if fm_meta.get("year") else None,
+                    "category": fm_meta.get("category", "general"),
+                    "language": fm_meta.get("language", "zh"),
+                    "summary": "",
+                }
 
         chunks = chunk_text(cleaned, chunk_size=chunk_size, overlap=overlap)
 
         for idx, chunk in enumerate(chunks):
             processed.append({
-                "id": f"{filename}_{idx}",
+                "id": f"{filename}_{doc_idx}_{idx}",
                 "text": chunk["text"],
                 "metadata": {
                     "source":     filename,

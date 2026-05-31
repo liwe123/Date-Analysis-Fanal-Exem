@@ -18,6 +18,8 @@ def build_index(
     chunk_size: int = 700,
     overlap: int = 120,
     max_workers: int = 32,
+    include_jsonl: bool = True,
+    metadata_strategy: str = "merge",
 ) -> None:
     """
     读取原始数据目录中的文档，进行清洗、分块，并调用 LLM 提取元数据建立向量索引。
@@ -27,9 +29,11 @@ def build_index(
       chunk_size  : 语义分块的大小（字符数）
       overlap     : 相邻分块的重叠字符数
       max_workers : 元数据提取并发线程数
+      include_jsonl : 是否加载 JSONL 文件
+      metadata_strategy : 元数据合并策略（merge/llm_only/jsonl_only）
     """
     from src.embed_store import VectorStore
-    from src.ingest import load_text_files
+    from src.ingest import load_text_files, load_jsonl_files
     from src.preprocess import process_documents
     from src.utils import get_logger
 
@@ -39,15 +43,28 @@ def build_index(
     raw_dir = BASE_DIR / "data" / "raw"
     target_dir = Path(data_dir) if data_dir is not None else raw_dir
     logger.info("文档目录: %s", target_dir)
+
+    # 加载文本文件（.md/.txt/.pdf）
     documents = load_text_files(target_dir)
-    logger.info("读取到 %d 个原始文档。", len(documents))
+    logger.info("读取到 %d 个原始文档（txt/md/pdf）。", len(documents))
+
+    # 加载 JSONL 文件
+    if include_jsonl:
+        jsonl_dir = BASE_DIR / "data"
+        jsonl_docs = load_jsonl_files(jsonl_dir)
+        documents.extend(jsonl_docs)
+        logger.info("读取到 %d 个 JSONL 文档，总计 %d 个文档。", len(jsonl_docs), len(documents))
 
     if not documents:
-        logger.warning("没有读取到任何 txt 或 md 文件。")
+        logger.warning("没有读取到任何文档。")
         return
 
     processed_docs = process_documents(
-        documents, chunk_size=chunk_size, overlap=overlap, max_workers=max_workers,
+        documents,
+        chunk_size=chunk_size,
+        overlap=overlap,
+        max_workers=max_workers,
+        metadata_strategy=metadata_strategy,
     )
     logger.info("处理后得到 %d 个文本块。", len(processed_docs))
 
@@ -176,6 +193,13 @@ def create_parser() -> argparse.ArgumentParser:
     build_parser.add_argument("--chunk-size", type=int, default=700, help="分块大小（字符）")
     build_parser.add_argument("--overlap", type=int, default=120, help="分块重叠（字符）")
     build_parser.add_argument("--max-workers", type=int, default=32, help="LLM 元数据提取并发数")
+    build_parser.add_argument("--no-jsonl", action="store_true", help="不加载 JSONL 文件")
+    build_parser.add_argument(
+        "--metadata-strategy",
+        choices=["merge", "llm_only", "jsonl_only"],
+        default="merge",
+        help="元数据合并策略：merge（默认）/llm_only/jsonl_only",
+    )
 
     ask_parser = subparsers.add_parser("ask", help="问答模式")
     ask_parser.add_argument("--question", type=str, default="", help="单次问题；不填则进入交互模式")
@@ -194,7 +218,14 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.command == "build":
-        build_index(args.data_dir, args.chunk_size, args.overlap, args.max_workers)
+        build_index(
+            data_dir=args.data_dir,
+            chunk_size=args.chunk_size,
+            overlap=args.overlap,
+            max_workers=args.max_workers,
+            include_jsonl=not args.no_jsonl,
+            metadata_strategy=args.metadata_strategy,
+        )
     elif args.command == "ask":
         if args.question:
             ask_once(args.question, top_k=args.top_k)
