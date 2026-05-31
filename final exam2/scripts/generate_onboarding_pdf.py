@@ -3,7 +3,8 @@
 generate_onboarding_pdf.py
 ==========================
 将零基础小白组员项目架构、目录与现场操作保姆级指南 (member_onboarding_guide.md)
-编译生成为排版极其专业、质感高级的 A4 高清 PDF 指南报告。
+编译生成为排版极其专业、紧凑、质感高级的 A4 高清 PDF 指南报告。
+经过深度优化，去除冗余强制分页，紧凑行间距与盒子填充，展现极佳的可读性。
 """
 
 from __future__ import annotations
@@ -45,7 +46,7 @@ def clean_emojis(text: str) -> str:
 # ── 文本精细分行工具 ───────────────────────────────────
 def split_text_to_lines(pdf: FPDF, text: str, max_w: float) -> list[str]:
     """
-    根据 FPDF 当前字体和最大宽度，将包含中英文的文本精确切分成多行，以便在栏宽内自动换行。
+    根据 FPDF 当前字体 and 最大宽度，将包含中英文的文本精确切分成多行，以便在栏宽内自动换行。
     """
     clean_text = clean_emojis(text)
     tokens = re.findall(
@@ -79,8 +80,8 @@ def split_text_to_lines(pdf: FPDF, text: str, max_w: float) -> list[str]:
 class OnboardingPdf(FPDF):
     def __init__(self):
         super().__init__(orientation="P", unit="mm", format="A4")
-        self.set_margins(20.0, 18.0, 20.0)
-        self.set_auto_page_break(True, margin=18)
+        self.set_margins(20.0, 14.0, 20.0) # 紧凑页边距
+        self.set_auto_page_break(True, margin=14)
         
         # 加载仿宋 (simfang) 和黑体 (simhei) 字体
         self.add_font("cn", "", str(FONT_DIR / "simfang.ttf"))
@@ -93,101 +94,101 @@ class OnboardingPdf(FPDF):
         """专业页眉。"""
         if self.page_no() == 1:
             return
-        self.set_font("cn", "", 7.5)
-        self.set_text_color(110, 120, 130)
-        self.cell(self.PW, 4, "RAG 检索增强生成系统 — 零基础小白组员架构与操作指南", align="L")
-        self.set_xy(20.0, self.get_y() + 4.0)
+        self.set_font("cn", "", 7.2)
+        self.set_text_color(120, 130, 140)
+        self.cell(self.PW, 3.5, "RAG 检索增强生成系统 — 零基础小白组员架构与操作指南", align="L")
+        self.set_xy(20.0, self.get_y() + 3.5)
         
         # 页眉分割线
-        self.set_draw_color(220, 225, 230)
-        self.set_line_width(0.2)
+        self.set_draw_color(225, 229, 233)
+        self.set_line_width(0.15)
         self.line(20.0, self.get_y(), 190.0, self.get_y())
-        self.set_y(self.get_y() + 4.5)
+        self.set_y(self.get_y() + 3.5)
 
     def footer(self):
         """带页码的页脚。"""
-        self.set_y(-14)
+        self.set_y(-12)
         
         # 页脚分割线
-        self.set_draw_color(230, 235, 240)
-        self.set_line_width(0.15)
+        self.set_draw_color(235, 238, 242)
+        self.set_line_width(0.12)
         self.line(20.0, self.get_y(), 190.0, self.get_y())
         
-        self.set_y(-11)
-        self.set_font("cn", "", 7.5)
-        self.set_text_color(150, 150, 150)
-        self.cell(self.PW, 5, f"— {self.page_no()} —", align="C")
+        self.set_y(-9)
+        self.set_font("cn", "", 7.2)
+        self.set_text_color(160, 160, 160)
+        self.cell(self.PW, 4, f"— {self.page_no()} —", align="C")
 
     # ── 标题与排版样式 ──
     def main_title(self, title: str):
         """绘制主标题。"""
-        self.ln(2.0)
-        self.set_font("cn", "B", 14.5)
-        self.set_text_color(15, 23, 42)  # 深灰黑，偏 Slate
-        self.cell(self.PW, 8, clean_emojis(title), align="C")
-        self.ln(9.0)
+        self.ln(1.5)
+        self.set_font("cn", "B", 13.0)
+        self.set_text_color(30, 41, 59)  # 深 Slate 灰
+        self.cell(self.PW, 6.5, clean_emojis(title), align="C")
+        self.ln(7.5)
         
         # 双重底线
-        self.set_draw_color(15, 23, 42)
-        self.set_line_width(0.4)
+        self.set_draw_color(30, 41, 59)
+        self.set_line_width(0.35)
         self.line(20.0, self.get_y(), 190.0, self.get_y())
-        self.set_line_width(0.12)
-        self.line(20.0, self.get_y() + 0.8, 190.0, self.get_y() + 0.8)
-        self.ln(4.0)
+        self.set_line_width(0.1)
+        self.line(20.0, self.get_y() + 0.6, 190.0, self.get_y() + 0.6)
+        self.ln(3.0)
 
     def h1(self, text: str):
         """一级标题。"""
-        if self.get_y() > 255:
+        if self.get_y() > 262:
             self.add_page()
-        self.ln(3.5)
-        self.set_font("cn", "B", 10.5)
-        self.set_text_color(15, 23, 42)
-        self.cell(self.PW, 5, clean_emojis(text), align="L")
-        self.ln(5.5)
+        self.ln(2.0)
+        self.set_font("cn", "B", 9.8)
+        self.set_text_color(30, 41, 59)
+        self.cell(self.PW, 4.5, clean_emojis(text), align="L")
+        self.ln(4.5)
         
         # 下划短线
         y = self.get_y() - 0.5
-        self.set_draw_color(15, 23, 42)
-        self.set_line_width(0.5)
+        self.set_draw_color(30, 41, 59)
+        self.set_line_width(0.4)
         self.line(20.0, y, 45.0, y)
-        self.set_draw_color(225, 229, 233)
-        self.set_line_width(0.15)
+        self.set_draw_color(228, 231, 235)
+        self.set_line_width(0.12)
         self.line(45.0, y, 190.0, y)
-        self.ln(2.5)
+        self.ln(1.8)
 
     def h2(self, text: str):
         """二级标题。"""
-        if self.get_y() > 260:
+        if self.get_y() > 265:
             self.add_page()
-        self.ln(2.5)
-        self.set_font("cn", "B", 9.2)
-        self.set_text_color(51, 65, 85)
+        self.ln(1.8)
+        self.set_font("cn", "B", 8.8)
+        self.set_text_color(71, 85, 105)
         
         # 绘制背景装饰条
         x, y = self.get_x(), self.get_y()
-        self.set_fill_color(243, 244, 246)
-        self.rect(20.0, y, self.PW, 5.0, "F")
-        self.set_fill_color(51, 65, 85)
-        self.rect(20.0, y, 1.6, 5.0, "F")
+        self.set_fill_color(248, 250, 252)
+        self.rect(20.0, y, self.PW, 4.2, "F")
+        self.set_fill_color(71, 85, 105)
+        self.rect(20.0, y, 1.2, 4.2, "F")
         
-        self.set_xy(23.0, y + 0.5)
-        self.cell(self.PW - 3.0, 4.0, clean_emojis(text), border=0)
-        self.set_xy(20.0, y + 5.0)
-        self.ln(1.5)
+        self.set_xy(22.5, y + 0.3)
+        self.cell(self.PW - 2.5, 3.6, clean_emojis(text), border=0)
+        self.set_xy(20.0, y + 4.2)
+        self.ln(1.0)
 
     def paragraph(self, text: str, bold_prefix: str = ""):
         """正文段落。"""
-        if self.get_y() > 268:
+        if self.get_y() > 270:
             self.add_page()
-        self.set_font("cn", "", 8.5)
+        self.set_font("cn", "", 8.0)
         self.set_text_color(71, 85, 105)
         
         full_text = text
         if bold_prefix:
-            self.set_font("cn", "B", 8.5)
+            self.set_font("cn", "B", 8.0)
             self.set_text_color(15, 23, 42)
-            self.write(4.0, clean_emojis(bold_prefix))
-            self.set_font("cn", "", 8.5)
+            self.write(3.6, clean_emojis(bold_prefix))
+            self.set_font("cn", "", 8.0)
             self.set_text_color(71, 85, 105)
             
         lines = split_text_to_lines(self, full_text, self.PW)
@@ -197,22 +198,22 @@ class OnboardingPdf(FPDF):
             if not is_last and line_w > 0 and len(line) > 1 and line_w < self.PW:
                 extra_space = self.PW - line_w
                 extra_char_spacing = extra_space / (len(line) - 1)
-                if extra_char_spacing < 1.2:
+                if extra_char_spacing < 1.0:
                     self.set_char_spacing(extra_char_spacing)
-                    self.cell(self.PW, 4.0, line)
+                    self.cell(self.PW, 3.6, line)
                     self.set_char_spacing(0.0)
-                    self.ln(4.0)
+                    self.ln(3.6)
                     continue
-            self.cell(self.PW, 4.0, line)
-            self.ln(4.0)
-        self.ln(0.8)
+            self.cell(self.PW, 3.6, line)
+            self.ln(3.6)
+        self.ln(0.4)
 
     def bullet_list(self, items: list[str]):
         """无序列表。"""
-        self.set_font("cn", "", 8.5)
+        self.set_font("cn", "", 8.0)
         self.set_text_color(71, 85, 105)
         for item in items:
-            if self.get_y() > 268:
+            if self.get_y() > 270:
                 self.add_page()
             
             clean_item = clean_emojis(item)
@@ -220,44 +221,44 @@ class OnboardingPdf(FPDF):
             # 绘制小圆点
             self.set_fill_color(71, 85, 105)
             y_curr = self.get_y()
-            self.ellipse(23.0, y_curr + 1.4, 1.0, 1.0, "F")
+            self.ellipse(22.5, y_curr + 1.2, 0.8, 0.8, "F")
             
-            w_text = self.PW - 5.5
+            w_text = self.PW - 4.5
             lines = split_text_to_lines(self, clean_item, w_text)
             for idx, line in enumerate(lines):
-                self.set_x(25.0)
+                self.set_x(24.5)
                 line_w = self.get_string_width(line)
                 is_last = (idx == len(lines) - 1)
                 if not is_last and line_w > 0 and len(line) > 1 and line_w < w_text:
                     extra_space = w_text - line_w
                     extra_char_spacing = extra_space / (len(line) - 1)
-                    if extra_char_spacing < 1.2:
+                    if extra_char_spacing < 1.0:
                         self.set_char_spacing(extra_char_spacing)
-                        self.cell(w_text, 4.0, line)
+                        self.cell(w_text, 3.6, line)
                         self.set_char_spacing(0.0)
-                        self.ln(4.0)
+                        self.ln(3.6)
                         continue
-                self.cell(w_text, 4.0, line)
-                self.ln(4.0)
-            self.ln(0.6)
+                self.cell(w_text, 3.6, line)
+                self.ln(3.6)
+            self.ln(0.3)
 
     # ── 高清 Terminal 终端命令盒子绘制 ──
     def draw_cmd_box(self, title: str, command: str, explanation: str):
         """
-        绘制极其美观、带左侧高亮边框和 Slate 深灰背景的终端操作命令卡片盒子。
+        绘制极其美观、紧凑、带左侧高亮边框和 Slate 深灰背景的终端操作命令卡片盒子。
         """
-        self.ln(1.5)
+        self.ln(0.8)
         w_box = self.PW
         
         # 1. 预估整体的高度以判断是否需要跨页
         c_lines = split_text_to_lines(self, command, w_box - 24.0)
         e_lines = split_text_to_lines(self, clean_emojis(explanation), w_box - 24.0)
         
-        # 预估高度计算 (标题一行 4mm，割线加间距 4mm)
-        h_est = 4.0 + (len(c_lines) * 4.0) + (len(e_lines) * 3.8) + 10.0
+        # 预估高度计算 (标题一行 3.2mm，割线加间距 3.2mm)
+        h_est = 3.0 + (len(c_lines) * 3.6) + (len(e_lines) * 3.4) + 7.5
         
         # 防溢出跨页保护
-        if self.get_y() + h_est > 268:
+        if self.get_y() + h_est > 272:
             self.add_page()
             
         y_curr = self.get_y()
@@ -265,72 +266,72 @@ class OnboardingPdf(FPDF):
         # 2. 绘制卡片背景 (淡 Slate 灰)
         self.set_fill_color(248, 250, 252) 
         self.set_draw_color(226, 232, 240) 
-        self.set_line_width(0.18)
+        self.set_line_width(0.15)
         self.rect(20.0, y_curr, w_box, h_est, "DF")
         
         # 3. 绘制左侧 Slate 深蓝灰色亮条
         self.set_fill_color(30, 41, 59) # Slate 800
-        self.rect(20.0, y_curr, 1.5, h_est, "F")
+        self.rect(20.0, y_curr, 1.2, h_est, "F")
         
         # 4. 绘制 Title (黑体，深 Slate)
-        self.set_font("cn", "B", 8.0)
+        self.set_font("cn", "B", 7.6)
         self.set_text_color(30, 41, 59)
-        self.set_xy(23.0, y_curr + 2.0)
-        self.cell(w_box - 5.0, 4.0, clean_emojis(title), border=0)
+        self.set_xy(22.5, y_curr + 1.5)
+        self.cell(w_box - 5.0, 3.2, clean_emojis(title), border=0)
         
         # 绘制卡片内割线
-        y_w = y_curr + 6.2
+        y_w = y_curr + 5.0
         self.set_draw_color(226, 232, 240)
-        self.set_line_width(0.08)
-        self.line(23.0, y_w, 187.0, y_w)
-        y_w += 1.8
+        self.set_line_width(0.06)
+        self.line(22.5, y_w, 187.5, y_w)
+        y_w += 1.4
         
-        # 5. 绘制 "运行命令" (Courier Monospace 质感，在卡片内嵌套一个独立代码灰框)
-        self.set_font("cn", "B", 8.0)
+        # 5. 绘制 "运行命令"
+        self.set_font("cn", "B", 7.5)
         self.set_text_color(194, 65, 12) # 橙红色
-        self.set_xy(23.0, y_w)
-        self.cell(20.0, 4.0, "运行命令：", border=0)
+        self.set_xy(22.5, y_w)
+        self.cell(20.0, 3.6, "运行命令：", border=0)
         
         # 代码背景灰框
-        h_code = len(c_lines) * 4.0 + 1.6
+        h_code = len(c_lines) * 3.6 + 1.2
         self.set_fill_color(241, 245, 249) # 代码背景 Slate 100
         self.set_draw_color(226, 232, 240)
-        self.rect(38.0, y_w - 0.4, w_box - 22.0, h_code, "DF")
+        self.rect(37.5, y_w - 0.2, w_box - 21.5, h_code, "DF")
         
-        self.set_font("cn", "B", 8.0)
+        self.set_font("cn", "B", 7.5)
         self.set_text_color(15, 23, 42) # Monospace 灰黑
         for idx, line in enumerate(c_lines):
-            self.set_xy(39.5, y_w + idx * 4.0 + 0.4)
-            self.cell(w_box - 24.0, 3.6, line, border=0)
-        y_w += h_code + 2.0
+            self.set_xy(39.0, y_w + idx * 3.6 + 0.2)
+            self.cell(w_box - 24.0, 3.2, line, border=0)
+        y_w += h_code + 1.6
         
-        # 6. 绘制 "后台含义" (SimFang)
-        self.set_font("cn", "B", 7.8)
+        # 6. 绘制 "后台含义"
+        self.set_font("cn", "B", 7.4)
         self.set_text_color(30, 41, 59)
-        self.set_xy(23.0, y_w)
-        self.cell(20.0, 3.8, "工程含义：", border=0)
+        self.set_xy(22.5, y_w)
+        self.cell(20.0, 3.4, "工程含义：", border=0)
         
-        self.set_font("cn", "", 7.8)
+        self.set_font("cn", "", 7.4)
         self.set_text_color(71, 85, 105)
         for idx, line in enumerate(e_lines):
-            self.set_xy(38.0, y_w + idx * 3.8)
+            self.set_xy(37.5, y_w + idx * 3.4)
             # 两端对齐
             line_w = self.get_string_width(line)
-            w_item = w_box - 23.0
+            w_item = w_box - 22.0
             is_last = (idx == len(e_lines) - 1)
             if not is_last and line_w > 0 and len(line) > 1 and line_w < w_item:
                 extra_space = w_item - line_w
                 extra_char_spacing = extra_space / (len(line) - 1)
                 if extra_char_spacing < 1.0:
                     self.set_char_spacing(extra_char_spacing)
-                    self.cell(w_item, 3.8, line)
+                    self.cell(w_item, 3.4, line)
                     self.set_char_spacing(0.0)
                     continue
-            self.cell(w_item, 3.8, line)
+            self.cell(w_item, 3.4, line)
         
         # 重置坐标到卡片底部
         self.set_xy(20.0, y_curr + h_est)
-        self.ln(2.2)
+        self.ln(1.2)
 
 
 # ── 主编译流水线 ──────────────────────────────────────
@@ -374,17 +375,13 @@ def build_onboarding_pdf():
     pdf.bullet_list([
         "意图解析师 (src/query_parser.py)：先分析这句话，提取出核心搜索词为‘紧急通知’，并剥离出限制条件‘年份是 2025 年’。",
         "特征翻译官 (scripts/embedding_server.py)：用远程 GPU 显卡（本地显卡太弱，去云端租用 4090 显卡）把问题翻译成 1024 维的数字向量（门牌号）。",
-        "图书管理员 (src/embed_store.py)：拿着门牌号去向量数据库里算距离，把 2025 年标签下相似度前 3 名的原文分块捞出来。"
-    ])
-
-    # ==========================================
-    # 🌟 PAGE 2: 全局图纸 (续) & 代码目录生词本
-    # ==========================================
-    pdf.add_page()
-    pdf.bullet_list([
+        "图书管理员 (src/embed_store.py)：拿着门牌号去向量数据库里算距离，把 2025 年标签下相似度前 3 名的原文分块捞出来。",
         "答案合成师 (src/qa.py)：把这 3 段召回的真实原文拼在一起，附带‘不许胡说八道’的硬约束，喂给大模型 API 合成出带上标引用的最终答案。"
     ])
     
+    # ==========================================
+    # 🌟 PAGE 2: 代码目录生词本 (紧凑流式排版，无需手动分页，让自动换页起效)
+    # ==========================================
     pdf.h1("二、 代码目录生词本（我们这几百行代码都放在哪了？）")
     p_dir_intro = (
         "答辩时如果老师让你在文件夹里指出代码文件，请对照下面这张大白话文件定位导航生词表："
@@ -402,7 +399,7 @@ def build_onboarding_pdf():
     pdf.paragraph(" 依赖包清单。记录了项目所需的所有第三方 Python 库，用于环境一键搭建安装。", "requirements.txt [包清单]：")
 
     # ==========================================
-    # 🌟 PAGE 3: 终端命令与运行环境速成
+    # 🌟 PAGE 3: 终端命令与运行环境速成 (强制分页保持三大部分结构清晰)
     # ==========================================
     pdf.add_page()
     pdf.h1("三、 终端命令（小黑窗）与运行环境速成")
@@ -439,7 +436,7 @@ def build_onboarding_pdf():
     )
 
     # ==========================================
-    # 🌟 PAGE 4: 张杰版块操作指南 (任务1-2)
+    # 🌟 PAGE 4: 组员专区大篇章 (张杰 & 王婷版块) - 流式排版，删除中间强制分页
     # ==========================================
     pdf.add_page()
     pdf.h1("四、 组员专区 — 动作步骤、运行命令与其后台工程含义")
@@ -463,11 +460,7 @@ def build_onboarding_pdf():
         "bash setup_autodl.sh",
         "在云服务器上安装 PyTorch 深度学习框架和依赖包，从 Hugging Face 镜像站下载 1024 维的高端 bge-large-zh 模型并加载到 GPU 显存中，暴露 FastAPI 服务接口静待本地数据发送。"
     )
-
-    # ==========================================
-    # 🌟 PAGE 5: 张杰任务3 & 王婷版块操作指南 (任务1)
-    # ==========================================
-    pdf.add_page()
+    
     pdf.paragraph(" 运行本地建库命令，将百万级原始文本通过 POST 发送给云端 4090 并入库本地 ChromaDB。", "任务三：百万数据一键云端算力卸载向量建库")
     pdf.draw_cmd_box(
         "百万数据云端卸载建库",
@@ -489,9 +482,8 @@ def build_onboarding_pdf():
     )
 
     # ==========================================
-    # 🌟 PAGE 6: 王婷任务2-3 & 刘洋版块操作指南 (任务1)
+    # 🌟 PAGE 5: 王婷任务2-3 & 刘洋版块全部任务 - 流式排版，删除中间所有强制分页
     # ==========================================
-    pdf.add_page()
     pdf.paragraph(" 勾选侧边栏「调试模式」，提问并现场向老师展示解析出的结构化 JSON 过滤字典。", "任务二：现场演示「打开玻璃盒」智能意图元数据过滤看板")
     pdf.draw_cmd_box(
         "开启调试侧边抽屉面板",
@@ -513,11 +505,6 @@ def build_onboarding_pdf():
     pdf.paragraph(p_ly_intro)
     
     pdf.paragraph(" 一键运行全量 Pytest 测试。在控制台展示 82 个测试用例 100% 通过的绿色画面。", "任务一：一键跑通 82 个断网高保真 Mock 自动化测试用例")
-
-    # ==========================================
-    # 🌟 PAGE 7: 刘洋任务1-3 (续)
-    # ==========================================
-    pdf.add_page()
     pdf.draw_cmd_box(
         "一键启动 Pytest 自动化校验实验室",
         "python -m pytest tests/ -v",
@@ -531,7 +518,7 @@ def build_onboarding_pdf():
         "ChromaDB 底层是 SQLite 关系元数据和 Parquet 向量磁盘文件。这行命令直接对该持久化文件夹进行物理压缩，生成 vector_store_backup.tar.gz 容灾备份快照，可进行云端极速备份。"
     )
     
-    pdf.paragraph(" 现场在文件夹中删除 vector_store 目录模拟数据损坏，一键解包在 1 秒内满状态原地复活系统。", "任务三：模拟数据库硬盘损坏故障并执行 1 秒秒级灾备复原")
+    pdf.paragraph(" 现场在文件夹中删除 vector_store 目录模拟数据损坏，一键解包在 1秒内满状态原地复活系统。", "任务三：模拟数据库硬盘损坏故障并执行 1秒秒级灾备复原")
     pdf.draw_cmd_box(
         "解压缩容灾快照执行秒级原地复活",
         "tar -xzvf vector_store_backup.tar.gz",
