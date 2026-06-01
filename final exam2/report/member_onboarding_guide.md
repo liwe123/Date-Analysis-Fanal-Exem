@@ -112,10 +112,12 @@ OPENAI_EMBEDDING_BASE_URL=https://...  # 租用的 AutoDL 4090 云端显卡的�
 作为前端工程师，你负责现场把网页前台一键运行起来，并在浏览器上“向评委展示肌肉”，演示系统的智能意图识别和安全过滤。
 
 #### 动作一：一键启动 Streamlit 对话网页
-* **小黑窗运行命令**：
+* **小黑窗运行命令（推荐，百分百不报错的极速运行法）**：
   ```bash
-  streamlit run app/streamlit_app.py
+  .venv\Scripts\python -m streamlit run app/streamlit_app.py
   ```
+  *(注：如果你的 PowerShell 已经成功激活了虚拟环境，也可以简写为 `streamlit run app/streamlit_app.py`。但为了防止 Windows 系统权限拦截虚拟环境激活脚本，强烈推荐直接使用上面的 `.venv\Scripts\python -m ...` 绝对路径指令，百分之百不报错！)*
+
 * **这个动作在干嘛**：在本地启动一个轻量级的 Python 网页服务器，占用端口 `8501`。控制台会自动弹出一个浏览器网页（网址为 `http://localhost:8501`），展现在你面前的是一个极其 premium、带聊天气泡、流式蹦字和调试看板的现代问答网页。
 
 #### 动作二：演示“打开玻璃盒”调试模式（现场操作加分项）

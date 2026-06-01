@@ -463,9 +463,10 @@ def build_onboarding_pdf():
     pdf.paragraph(" 运行 Streamlit 启动命令，网页会自动在默认浏览器中弹出来。", "任务一：一键启动 Streamlit 智能问答对话前台网页")
     pdf.draw_cmd_box(
         "本地一键拉起 Web 网页前台",
-        "streamlit run app/streamlit_app.py",
+        ".venv\\Scripts\\python -m streamlit run app/streamlit_app.py",
         "在本地启动一个轻量网页服务器，占用端口 8501 并自动弹出带有气泡聊天、打字机流式字元输出、以及玻璃盒调试看板的现代拟物化 Web 交互界面。"
     )
+
 
     # ==========================================
     # 🌟 PAGE 5: 王婷与刘洋版块全部任务
