@@ -18,6 +18,7 @@ from openai import OpenAI
 # 动态添加路径以防导入失败
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from app.rendering import safe_text_to_html
 from src.embed_store import VectorStore
 from src.preprocess import process_documents
 from src.qa import generate_answer
@@ -116,14 +117,20 @@ with st.sidebar:
     try:
         count, sources = get_store_stats()
 
+        # 处理超大数量时的显示逻辑
+        real_sources = [s for s in sources if not s.startswith("...")]
+        display_sources_count = len(real_sources)
+        sources_metric_val = f"{display_sources_count}+" if count > 10000 else str(display_sources_count)
+        expander_title = f"📋 文档来源列表（{sources_metric_val}）"
+
         col1, col2 = st.columns(2)
         with col1:
             st.metric("文档块数", count)
         with col2:
-            st.metric("来源数", len(sources))
+            st.metric("来源数", sources_metric_val)
 
         if sources:
-            with st.expander(f"📋 文档来源列表（{len(sources)}）"):
+            with st.expander(expander_title):
                 search_src = st.text_input(
                     "来源过滤",
                     key="src_filter",
@@ -221,11 +228,12 @@ for msg in st.session_state.messages:
             unsafe_allow_html=True,
         )
     else:
+        safe_content = safe_text_to_html(msg["content"])
         st.markdown(
             '<div class="message-assistant">'
             '<div class="avatar-wrapper"><div class="avatar">🤖</div></div>'
             '<div class="bubble-wrapper"><div class="bubble">'
-            f'{msg["content"]}'
+            f"{safe_content}"
             "</div></div></div>",
             unsafe_allow_html=True,
         )
@@ -241,7 +249,8 @@ if question:
     if not question:
         st.stop()
 
-    if any(question.lower().endswith(ext) for ext in (".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp", ".svg", ".tiff")):
+    image_suffixes = (".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp", ".svg", ".tiff")
+    if any(question.lower().endswith(ext) for ext in image_suffixes):
         st.error("❌ 不支持图片输入。请输入文字问题，或描述你想了解的图像内容。")
         st.stop()
 
@@ -259,72 +268,76 @@ if question:
         unsafe_allow_html=True,
     )
 
-    msg_placeholder = st.empty()
-
-    with msg_placeholder.container():
-        st.markdown(
-            '<div class="message-assistant">'
-            '<div class="avatar-wrapper"><div class="avatar">🤖</div></div>'
-            '<div class="bubble-wrapper">'
-            '<div class="bubble">'
-            '<div class="typing-indicator">'
-            '<span class="dot"></span><span class="dot"></span><span class="dot"></span>'
-            "</div></div></div></div>",
-            unsafe_allow_html=True,
-        )
+    # ── 使用 st.status 展示实时思考过程（原生组件，即刻渲染，不白屏） ──
+    answer = None
+    results = None
+    error_msg = None
 
     try:
-        client = get_cached_client()
-        store = get_cached_store()
+        with st.status("🤖 正在思考...", expanded=True) as thinking:
+            client = get_cached_client()
+            store = get_cached_store()
 
-        with st.spinner("🧠 正在分析问题意图..."):
+            # ── 步骤 1：意图解析 ──
+            st.write("🧠 正在分析问题意图并提取关键词...")
             parsed = parse_query(question, client=client)
+            search_query = parsed.get("search_query", question)
+            filters = parsed.get("filters")
 
-        search_query = parsed.get("search_query", question)
-        filters = parsed.get("filters")
-
-        if show_debug:
-            escaped_query = html.escape(search_query)
-            escaped_filters = html.escape(str(filters))
-            debug_html = f"<div class=\"debug-box\"><strong>🔍 核心搜索词：</strong><code>{escaped_query}</code>"
+            st.write(f"✅ 核心搜索词：`{search_query}`")
             if filters:
-                debug_html += f"<br><strong>🏷 元数据过滤：</strong><code>{escaped_filters}</code>"
-            debug_html += "</div>"
-            msg_placeholder.markdown(
-                '<div class="message-assistant">'
-                '<div class="avatar-wrapper"><div class="avatar">🤖</div></div>'
-                '<div class="bubble-wrapper"><div class="bubble">'
-                f"{debug_html}"
-                "</div></div></div>",
-                unsafe_allow_html=True,
-            )
+                st.write(f"🏷️ 元数据过滤：`{filters}`")
+            if show_debug:
+                st.write(f"🐛 原始解析结果：`{parsed}`")
 
-        with st.spinner("📖 正在检索相关文档..."):
+            # ── 步骤 2：文档检索 ──
+            thinking.update(label="📖 正在检索相关文档...", expanded=True)
+            st.write("📖 正在从知识库中检索最匹配的文档片段...")
             results = store.search(search_query, top_k=top_k, where=filters, max_distance=max_dist)
 
-        if not results:
-            warning_msg = (
-                "😕 **未检索到相关内容**\n\n"
-                "**可能的原因：**\n"
-                "- 知识库中暂无相关文档资料\n"
-                "- 搜索关键词与文档内容不匹配\n"
-                "- 距离过滤条件过严（可在侧边栏放宽 `max_distance`）\n\n"
-                "请尝试换个问法，或使用更通用的关键词。"
-            )
-            msg_placeholder.markdown(
-                '<div class="message-assistant">'
-                '<div class="avatar-wrapper"><div class="avatar">🤖</div></div>'
-                '<div class="bubble-wrapper"><div class="bubble">'
-                f"{warning_msg}"
-                "</div></div></div>",
-                unsafe_allow_html=True,
-            )
-            st.session_state.messages.append({"role": "assistant", "content": warning_msg})
-            st.stop()
+            if not results:
+                thinking.update(label="😕 未检索到相关内容", state="error", expanded=True)
+                st.write("❌ 未召回任何匹配片段，请尝试换个问法或放宽 max_distance。")
+                warning_msg = (
+                    "😕 **未检索到相关内容**\n\n"
+                    "**可能的原因：**\n"
+                    "- 知识库中暂无相关文档资料\n"
+                    "- 搜索关键词与文档内容不匹配\n"
+                    "- 距离过滤条件过严（可在侧边栏放宽 `max_distance`）\n\n"
+                    "请尝试换个问法，或使用更通用的关键词。"
+                )
+                st.session_state.messages.append({"role": "assistant", "content": warning_msg})
+                st.stop()
 
-        with st.spinner("✍ 正在生成回答..."):
+            st.write(f"✅ 成功召回 **{len(results)}** 个相关文档片段")
+            for i, r in enumerate(results, 1):
+                score = r.get("score")
+                sim = max(0, (1 - score / 2)) * 100 if score is not None else 0
+                st.write(f"　{i}. `{r['source']}` — 相似度 ≈{sim:.0f}%")
+
+            # ── 步骤 3：答案生成 ──
+            thinking.update(label="✍ 正在生成回答...", expanded=True)
+            st.write("✍ 正在基于检索到的资料生成精准回答...")
             answer = generate_answer(question, results, client=client)
+            st.write("✅ 回答生成完毕")
 
+            thinking.update(label="✅ 思考完成", state="complete", expanded=False)
+
+    except Exception as exc:
+        if isinstance(exc, (KeyboardInterrupt, SystemExit)):
+            raise
+        err_str = str(exc)
+        if "image" in err_str.lower() or "image_url" in err_str.lower():
+            error_msg = "❌ **图片不被支持**\n\n当前模型仅接受文字输入，请勿在问题中包含图片或文件路径。"
+        elif "api" in err_str.lower() or "key" in err_str.lower():
+            error_msg = "⚠ **API 配置问题**\n\n请检查 `.env` 文件中的 `OPENAI_API_KEY` 和 `OPENAI_BASE_URL` 是否正确。"
+        elif "rate" in err_str.lower() or "limit" in err_str.lower():
+            error_msg = "⏳ **请求频率过高**\n\nAPI 达到速率限制，请稍后再试。"
+        else:
+            error_msg = f"⚠ **出错了**\n\n```\n{html.escape(err_str[:500])}\n```"
+
+    # ── 渲染最终回答气泡（或错误信息） ──
+    if answer and results:
         source_items = ""
         for idx, item in enumerate(results, 1):
             score = item.get("score")
@@ -362,15 +375,16 @@ if question:
                 "</div>"
             )
 
+        safe_answer = safe_text_to_html(answer)
         full_answer = (
-            answer
+            safe_answer
             + '<div class="source-section"><details>'
             + f"<summary>📎 检索来源（{len(results)} 条）</summary>"
             + source_items
             + "</details></div>"
         )
 
-        msg_placeholder.markdown(
+        st.markdown(
             '<div class="message-assistant">'
             '<div class="avatar-wrapper"><div class="avatar">🤖</div></div>'
             '<div class="bubble-wrapper"><div class="bubble">'
@@ -378,28 +392,15 @@ if question:
             "</div></div></div>",
             unsafe_allow_html=True,
         )
-
         st.session_state.messages.append({"role": "assistant", "content": answer})
 
-    except Exception as exc:
-        if isinstance(exc, (KeyboardInterrupt, SystemExit)):
-            raise
-        err_str = str(exc)
-
-        if "image" in err_str.lower() or "image_url" in err_str.lower():
-            error_msg = "❌ **图片不被支持**\n\n当前模型仅接受文字输入，请勿在问题中包含图片或文件路径。"
-        elif "api" in err_str.lower() or "key" in err_str.lower():
-            error_msg = "⚠ **API 配置问题**\n\n请检查 `.env` 文件中的 `OPENAI_API_KEY` 和 `OPENAI_BASE_URL` 是否正确。"
-        elif "rate" in err_str.lower() or "limit" in err_str.lower():
-            error_msg = "⏳ **请求频率过高**\n\nAPI 达到速率限制，请稍后再试。"
-        else:
-            error_msg = f"⚠ **出错了**\n\n```\n{html.escape(err_str[:500])}\n```"
-
-        msg_placeholder.markdown(
+    elif error_msg:
+        safe_error = safe_text_to_html(error_msg)
+        st.markdown(
             '<div class="message-assistant">'
             '<div class="avatar-wrapper"><div class="avatar">🤖</div></div>'
             '<div class="bubble-wrapper"><div class="bubble">'
-            f"{error_msg}"
+            f"{safe_error}"
             "</div></div></div>",
             unsafe_allow_html=True,
         )

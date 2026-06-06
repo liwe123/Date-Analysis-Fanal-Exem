@@ -8,6 +8,16 @@ pyyaml>=6.0
 python-dateutil>=2.8.0  # 用于解析多种日期格式
 pytest>=8.0
 sentence-transformers>=2.2.0
+torch>=2.0.0
+fastapi>=0.110.0
+uvicorn>=0.27.0
+pydantic>=2.0.0
+fpdf2>=2.7.0
+beautifulsoup4>=4.12.0
+requests>=2.31.0
+lxml>=4.9.0
+html2text>=2020.1.16
+pysocks>=1.7.1
 # PyTorch（需装 CUDA 版本以启用 GPU 加速）:
 #   pip install torch --index-url https://download.pytorch.org/whl/cu124
 # 国内可改用: pip install torch -i https://pypi.tuna.tsinghua.edu.cn/simple

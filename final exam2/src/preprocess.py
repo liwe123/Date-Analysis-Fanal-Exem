@@ -25,6 +25,7 @@ from src.utils import get_logger, get_model_name, get_openai_client
 logger = get_logger("preprocess")
 
 DEFAULT_MAX_WORKERS = 32
+SUPPORTED_METADATA_STRATEGIES = {"merge", "llm_only", "jsonl_only"}
 
 
 # ── 清洗 ──────────────────────────────────────────────────────────
@@ -419,6 +420,10 @@ def process_documents(
         - "jsonl_only": 仅使用 JSONL/Front-Matter 元数据，跳过 LLM 提取
     """
     processed: list[dict] = []
+    if metadata_strategy not in SUPPORTED_METADATA_STRATEGIES:
+        raise ValueError(
+            "metadata_strategy 必须是 merge、llm_only 或 jsonl_only。"
+        )
 
     # ── 阶段 1：清洗所有文档 ──
     cleaned_docs: list[tuple[dict, str]] = []

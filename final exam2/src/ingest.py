@@ -1,7 +1,7 @@
 """
 ingest.py
 =========
-文档摄取模块：读取原始文件，支持 .md / .txt / .pdf / .jsonl 格式。
+文档摄取模块：读取原始文件，支持 .md / .txt / .pdf 与 .jsonl 格式。
 
 返回的文档字典中包含从文件名/YAML 前置元数据/JSONL 字段推断的基础信息。
 """
@@ -30,7 +30,7 @@ try:
 except ImportError:
     HAS_DATEUTIL = False
 
-SUPPORTED_SUFFIXES = {".txt", ".md", ".pdf", ".jsonl"}
+SUPPORTED_SUFFIXES = {".txt", ".md", ".pdf"}
 
 
 def _parse_front_matter(text: str) -> tuple[dict, str]:

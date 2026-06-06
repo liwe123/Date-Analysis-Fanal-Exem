@@ -38,11 +38,11 @@ _LOCAL_MODEL_NAME: str | None = None  # 从环境变量动态读取
 
 
 def _resolve_local_model_name() -> str:
-    """获取本地嵌入模型名（优先 LOCAL_EMBEDDING_MODEL 环境变量，否则默认 shibing624/text2vec-base-chinese）。"""
+    """获取本地嵌入模型名（优先 LOCAL_EMBEDDING_MODEL 环境变量，否则默认 BAAI/bge-large-zh-v1.5）。"""
     model = clean_env("LOCAL_EMBEDDING_MODEL")
     if model and model.strip():
         return model.strip()
-    return "shibing624/text2vec-base-chinese"
+    return "BAAI/bge-large-zh-v1.5"
 
 
 def _get_local_embedding_model() -> Any:
@@ -99,12 +99,12 @@ def _get_remote_embedding_client() -> OpenAI:
             "例如: OPENAI_EMBEDDING_BASE_URL=http://your-autodl-ip:6008/v1"
         )
 
-    # 远程嵌入服务不需要真实 API Key，使用占位符
+    token = clean_env("EMBEDDING_SERVER_TOKEN", "remote-embedding") or "remote-embedding"
     _REMOTE_EMBEDDING_CLIENT = OpenAI(
-        api_key="remote-embedding",
+        api_key=token,
         base_url=base_url,
     )
-    logger.info("已连接远程嵌入服务: %s", base_url)
+    logger.info("已连接远程嵌入服务: %s（token=%s）", base_url, "已配置" if token != "remote-embedding" else "未配置")
     return _REMOTE_EMBEDDING_CLIENT
 
 
@@ -143,7 +143,11 @@ class VectorStore:
             logger.info("嵌入模式: 本地 | 模型: %s", self.embedding_model)
         elif self._use_remote:
             self.embedding_model = _resolve_local_model_name()
-            logger.info("嵌入模式: 远程 GPU | 模型: %s", self.embedding_model)
+            logger.info(
+                "嵌入模式: 远程 GPU | 模型: %s | 地址: %s",
+                self.embedding_model,
+                get_embedding_base_url() or "未配置",
+            )
         else:
             self.embedding_model = get_embedding_model_name()
             logger.info("嵌入模式: OpenAI API | 模型: %s", self.embedding_model)
@@ -343,6 +347,74 @@ class VectorStore:
         返回值：
           符合过滤条件且距离最接近的前 K 个文档片段字典列表。
         """
+        # 🔴 关键优化：双路检索融合机制（Bypass HNSW Graph Isolation）
+        # 如果 where 过滤条件为空且没有关键字过滤，由于数据库中包含庞大的 1.2M 故障日志，
+        # 课程文档（仅 420 块）在稠密的 HNSW 图中处于极度边缘的“孤岛”区域，纯向量检索会被故障日志的稠密节点“围困”而无法到达课程文档。
+        # 因此，当没有指定过滤条件时，我们强力执行双路并行检索：
+        #   第一路：强制过滤在课程文档分类内（wiki/faq/notice/case_study/report/term/general）
+        #   第二路：放开过滤全量数据库检索
+        # 然后将两路结果合并、根据文本内容去重、按相似度（距离）重新排序并截取前 top_k 个返回。
+        if where is None and keyword is None:
+            query_embedding = self.get_embedding(query)
+
+            # 1. 第一路：课程文档检索
+            course_cats = ["wiki", "faq", "notice", "case_study", "report", "term", "general"]
+            course_where = {"category": {"$in": course_cats}}
+            course_kwargs: dict[str, Any] = {
+                "query_embeddings": [query_embedding],
+                "n_results": top_k,
+                "include": ["documents", "metadatas", "distances"],
+                "where": course_where,
+            }
+
+            # 2. 第二路：全量检索
+            general_kwargs: dict[str, Any] = {
+                "query_embeddings": [query_embedding],
+                "n_results": top_k,
+                "include": ["documents", "metadatas", "distances"],
+            }
+
+            results_list: list[dict] = []
+            errors: list[Exception] = []
+            for kwargs in [course_kwargs, general_kwargs]:
+                try:
+                    results = self.collection.query(**kwargs)
+                    docs = results.get("documents", [[]])[0]
+                    metas = results.get("metadatas", [[]])[0]
+                    distances = results.get("distances", [[]])[0] if results.get("distances") else []
+
+                    for idx, (doc, meta) in enumerate(zip(docs, metas)):
+                        dist = distances[idx] if idx < len(distances) else None
+                        if max_distance is not None and dist is not None:
+                            if dist > max_distance:
+                                continue
+                        results_list.append({
+                            "text": doc,
+                            "source": meta.get("source", "unknown") if meta else "unknown",
+                            "metadata": meta,
+                            "score": dist,
+                        })
+                except Exception as exc:
+                    if isinstance(exc, (KeyboardInterrupt, SystemExit)):
+                        raise
+                    errors.append(exc)
+                    logger.warning("分路检索发生错误: %s", exc)
+
+            if len(errors) == 2:
+                raise RuntimeError("双路检索全部失败，请检查向量库或嵌入模型配置。") from errors[-1]
+
+            # 去重并排序
+            seen_texts = set()
+            merged_results = []
+            for item in results_list:
+                if item["text"] not in seen_texts:
+                    seen_texts.add(item["text"])
+                    merged_results.append(item)
+
+            merged_results.sort(key=lambda x: x["score"] if x["score"] is not None else 1.0)
+            return merged_results[:top_k]
+
+        # ── 单路正常检索 ──
         query_embedding = self.get_embedding(query)
 
         query_kwargs: dict[str, Any] = {
@@ -421,6 +493,7 @@ class VectorStore:
     def list_sources(self) -> list[str]:
         """
         获取向量数据库中所有独立、不重复的文档来源文件名（分批查询优化性能）。
+        对于超大型数据库，限制扫描范围以防界面冻结。
 
         返回值：
           已排序的独立文件名列表。
@@ -428,10 +501,14 @@ class VectorStore:
         total = self.count()
         if total == 0:
             return []
-        
+
         sources: set[str] = set()
         limit = 1000
-        for offset in range(0, total, limit):
+
+        # 如果数据量极大，限制扫描前 10,000 条以保护性能
+        max_scan = min(total, 10000)
+
+        for offset in range(0, max_scan, limit):
             batch = self.collection.get(
                 include=["metadatas"],
                 limit=limit,
@@ -443,7 +520,10 @@ class VectorStore:
                     if m and m.get("source"):
                         sources.add(m["source"])
         
-        return sorted(list(sources))
+        result = sorted(list(sources))
+        if total > max_scan:
+            result.append("... (数据量过大，仅列出部分来源)")
+        return result
 
     def delete_collection(self, confirm: bool = False) -> None:
         """

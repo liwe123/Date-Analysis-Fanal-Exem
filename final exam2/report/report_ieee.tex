@@ -1,337 +1,256 @@
-\documentclass[10pt,twocolumn]{article}
+\documentclass[conference]{IEEEtran}
 
-% ── 页面与排版 ──────────────────────────────────────────────
-\usepackage[margin=0.75in]{geometry}
-\usepackage{parskip}
-\setlength{\parskip}{0.4em}
-\setlength{\parindent}{0pt}
-
-% ── 字体与中文支持 ──────────────────────────────────────────
-\usepackage{ctex}  % 自动处理中文字体，兼容 LuaLaTeX/XeLaTeX
-
-% ── 数学与符号 ──────────────────────────────────────────────
+% ── 中文与基础排版 ─────────────────────────────────────
+\usepackage[UTF8]{ctex}
 \usepackage{amsmath,amssymb}
-
-% ── 图表 ────────────────────────────────────────────────────
-\usepackage{graphicx}
 \usepackage{booktabs}
-\usepackage{multirow}
-\usepackage{float}
-
-% ── 代码 ────────────────────────────────────────────────────
+\usepackage{graphicx}
+\usepackage{url}
 \usepackage{listings}
+\usepackage{xcolor}
+
 \lstset{
-  basicstyle=\ttfamily\scriptsize,
+  basicstyle=\ttfamily\footnotesize,
   breaklines=true,
   frame=single,
-  columns=fullflexible
+  columns=fullflexible,
+  keywordstyle=\color{blue},
+  commentstyle=\color{gray}
 }
-
-% ── 链接 ────────────────────────────────────────────────────
-\usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
-
-% ── 标题 ────────────────────────────────────────────────────
-\usepackage{titlesec}
-\titleformat{\section}{\large\bfseries}{\thesection}{1em}{}
-\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection}{1em}{}
-
-% ── 引用 ────────────────────────────────────────────────────
-\usepackage[numbers,sort&compress]{natbib}
-
-% ── 页眉页脚 ────────────────────────────────────────────────
-\usepackage{fancyhdr}
-\pagestyle{fancy}
-\fancyhf{}
-\fancyhead[C]{\small RAG 知识库检索增强生成系统 — 工程设计文档}
-\fancyfoot[C]{\thepage}
-\renewcommand{\headrulewidth}{0.4pt}
 
 \begin{document}
 
-% ── 标题 ────────────────────────────────────────────────────
-\title{\Large\bfseries RAG 知识库检索增强生成系统：工程设计文档}
+\title{面向课程知识库的检索增强生成系统设计与实现}
+
 \author{
-  方向 B：智能客户支持与检索增强生成助手
+\IEEEauthorblockN{大数据学期项目方向 B}
+\IEEEauthorblockA{RAG 检索增强生成助手\\
+Python 3.11 + ChromaDB + Streamlit + AutoDL RTX 4090}
 }
-\date{}
+
 \maketitle
-\thispagestyle{fancy}
 
-% ─────────────────────────────────────────────────────────────
-\section{执行摘要}
-% ─────────────────────────────────────────────────────────────
+\begin{abstract}
+本文设计并实现了一个面向课程知识库与技术问答资料的检索增强生成
+（Retrieval-Augmented Generation, RAG）系统。系统覆盖文档摄取、
+文本清洗、语义分块、结构化元数据提取、向量索引、混合检索、答案生成
+与来源追溯等完整链路。针对本地 GTX 1660 SUPER 显存不足以稳定完成
+百万级文本分块向量化的问题，本文采用 ``本地 ETL + 云端 GPU 推理''
+的协同架构，在 AutoDL RTX 4090 上部署 OpenAI 兼容 Embedding 服务，
+本地仅负责数据处理与 ChromaDB 写入。同时，系统新增 Bearer Token
+保护远程推理接口，并对 Streamlit 前端输出进行 HTML 转义，降低公网
+服务滥用与页面注入风险。最终项目形成 CLI 与 Web 双入口，配套 91 个
+自动化测试用例，验证了摄取、预处理、检索、问答与安全渲染等核心行为。
+\end{abstract}
 
-\textbf{业务问题}：企业员工每天在数百份非结构化文档中查找答案，传统关键词搜索无法理解``交作业''与``提交方式''的语义等价关系，导致重复提问率高、信息检索效率低下。
+\begin{IEEEkeywords}
+RAG, ChromaDB, 向量检索, AutoDL, RTX 4090, Streamlit, 文档问答
+\end{IEEEkeywords}
 
-\textbf{为什么传统方法做不到}：关键词搜索依赖字面匹配——用户搜``怎么交作业''，文档中写的是``提交方式''，返回零结果。当文档规模超过数百份且表述方式多样时，基于 TF-IDF 或 BM25 的检索召回率急剧下降。
+\section{引言}
+课程项目、实验通知、知识点说明、Stack Overflow 问答和技术博客通常以
+Markdown、PDF、HTML 片段等非结构化形式分散存在。传统关键词检索依赖
+字面匹配，难以理解 ``交作业'' 与 ``提交方式''、``RAG'' 与
+``检索增强生成'' 等语义等价表达。本文实现的 RAG 系统通过向量语义
+召回和大语言模型答案生成，将杂乱资料转化为可追溯、可交互、可维护的
+课程知识库助手。
 
-\textbf{核心交付}：我们构建了一个端到端 RAG 系统，从 176 篇杂乱文档自动构建可搜索向量索引，支持语义检索 + 元数据过滤 + LLM 答案生成 + 来源追溯。系统在 41 个域内查询上实现 87.8\% 的 Recall@3，端到端稳态延迟 6.2 秒，建库成本 $<$\textyen 1。
+本文的工程重点不只在问答效果，还包括可复现性与可运行性：第一，本地
+显卡显存有限，百万级分块直接本地向量化会出现显存压力；第二，远程
+GPU 服务若直接暴露到公网，存在被他人消耗算力的风险；第三，前端若
+直接渲染模型输出，存在 HTML 注入隐患。因此，本文在系统架构中同时
+加入云端算力卸载、安全鉴权和输出转义机制。
 
-% ─────────────────────────────────────────────────────────────
-\section{系统架构}
-% ─────────────────────────────────────────────────────────────
+\section{系统总体架构}
+系统采用分层流水线设计，如图式流程所示：
 
-\subsection{数据流}
+\begin{lstlisting}[language=bash,caption={RAG 数据流}]
+data/raw + external corpus
+  -> ingest.py        # md/txt/pdf/jsonl 摄取
+  -> preprocess.py    # 清洗、分块、元数据提取
+  -> embed_store.py   # local/remote/openai embedding
+  -> ChromaDB         # HNSW + cosine
+  -> query_parser.py  # 查询意图和过滤条件
+  -> qa.py            # 答案生成与来源标注
+  -> CLI / Streamlit
+\end{lstlisting}
 
-系统采用七层流水线架构，数据从原始文档流向可查询的向量索引：
-
-\begin{verbatim}
-原始文档 (176篇)
-  | ingest.py (摄取)
-  v
-clean_text() (清洗: HTML/实体/控制符/空白)
-  | chunk_text() (分块: 段落->句子->贪心->滑窗)
-  | extract_metadata() (LLM 提取元数据)
-  v
-Qwen3-Embedding-0.6B (本地GPU嵌入, 1024维)
-  | ChromaDB (HNSW索引, cosine距离)
-  v
-query_parser.py (LLM意图解析)
-  | embed_store.search() (混合检索)
-  | qa.py (答案生成 + 来源标注)
-  v
-CLI / Streamlit Web 界面
-\end{verbatim}
-
-\subsection{技术栈}
-
-\begin{table}[H]
+\begin{table}[!t]
 \centering
-\caption{核心技术栈}
-\label{tab:techstack}
-\begin{tabular}{@{}lll@{}}
-\toprule
-\textbf{层级} & \textbf{组件} & \textbf{技术} \\
-\midrule
-文档摄取 & PDF/MD/TXT & PyMuPDF + PyYAML \\
-文本清洗 & 正则流水线 & Python re \\
-语义分块 & 四层算法 & 自研 (700字符) \\
-元数据 & LLM 结构化 & DeepSeek V4 Flash \\
-嵌入 & 本地 GPU & Qwen3-Embedding \\
-向量库 & HNSW 索引 & ChromaDB \\
-查询解析 & LLM 意图 & DeepSeek V4 Flash \\
-答案生成 & LLM+来源 & DeepSeek V4 Flash \\
-前端 & Web 界面 & Streamlit \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\subsection{模块职责}
-
-\begin{table}[H]
-\centering
-\caption{模块职责划分}
+\caption{核心模块职责}
 \label{tab:modules}
 \begin{tabular}{@{}ll@{}}
 \toprule
 \textbf{模块} & \textbf{职责} \\
 \midrule
-ingest.py & 递归读取，解析 Front-Matter \\
-collect\_*.py & Wikipedia/SO/CSDN 三源采集 \\
-preprocess.py & 清洗+分块+元数据提取 \\
-embed\_store.py & ChromaDB 封装：嵌入/检索 \\
-query\_parser.py & 自然语言$\to$结构化参数 \\
-qa.py & System Prompt + 来源强制 \\
-main.py & CLI 子命令编排 \\
-streamlit\_app.py & Web UI + 调试模式 \\
+ingest.py & 读取 md/txt/pdf，JSONL 专用解析 \\
+preprocess.py & 文本清洗、语义分块、元数据提取 \\
+embed\_store.py & 嵌入生成、ChromaDB 写入与检索 \\
+query\_parser.py & 自然语言查询解析为 search query 与 filters \\
+qa.py & 基于检索片段生成答案并补全来源 \\
+streamlit\_app.py & Web 交互、增量入库、调试状态展示 \\
+embedding\_server.py & AutoDL 远程 OpenAI 兼容向量服务 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-% ─────────────────────────────────────────────────────────────
-\section{设计决策与取舍}
-% ─────────────────────────────────────────────────────────────
+\section{数据摄取与预处理}
+\subsection{摄取边界}
+文本摄取器只读取 \texttt{.md}、\texttt{.txt} 和 \texttt{.pdf}，
+\texttt{.jsonl} 由专用函数读取。这样避免同一 JSONL 数据既被当作普通
+文本摄取，又被结构化解析器再次摄取，导致重复入库。JSONL 记录会被映射
+为统一结构：\texttt{source}、\texttt{path}、\texttt{text} 与
+\texttt{fm\_meta}。
 
-\subsection{向量数据库：ChromaDB vs Milvus vs Qdrant}
+\subsection{清洗与分块}
+系统通过正则流水线清除 HTML 标签、解码常见实体、删除控制字符并合并
+空白行。分块采用段落优先、句子保护、贪心合并、长句滑窗的四层策略。
+默认参数为 \texttt{chunk\_size=700}、\texttt{overlap=120}，在中文
+课程资料中能兼顾语义完整性和向量聚焦度。
 
-\begin{table}[H]
+\subsection{元数据策略}
+元数据策略支持 \texttt{merge}、\texttt{llm\_only} 与
+\texttt{jsonl\_only}。最新版本对该参数进行白名单校验，非法值直接
+抛出 \texttt{ValueError}，避免静默走错路径。Front-Matter 与 JSONL
+元数据优先于 LLM 自动提取结果，以保证人工标注和原始数据字段的可信度。
+
+\section{向量化与云端算力卸载}
+\subsection{本地显存瓶颈}
+项目初期尝试在本地 GTX 1660 SUPER 上完成大规模文本分块向量化。由于
+本地显存较小，批量运行高维中文 Embedding 模型时容易触发显存不足或
+吞吐不稳定。该问题不是单次查询阶段的瓶颈，而是集中建库阶段的典型
+大数据工程瓶颈。
+
+\subsection{AutoDL RTX 4090 远程服务}
+为解决建库阶段算力问题，系统在 AutoDL RTX 4090 实例上部署
+\texttt{scripts/embedding\_server.py}。该服务基于 FastAPI、PyTorch
+和 SentenceTransformers，暴露 OpenAI 兼容的 \texttt{/v1/embeddings}
+接口。本地 \texttt{embed\_store.py} 在 \texttt{OPENAI\_EMBEDDING\_MODEL=remote}
+时，将文本批次发送给云端服务，并把返回的 1024 维向量写入本地 ChromaDB。
+
+\begin{table}[!t]
 \centering
-\caption{向量数据库选型对比}
-\label{tab:vectordb}
-\begin{tabular}{@{}p{1.8cm}p{2.2cm}p{2.2cm}@{}}
-\toprule
-\textbf{方案} & \textbf{优势} & \textbf{劣势} \\
-\midrule
-\textbf{ChromaDB} & pip install 即用，零部署 & 不支持分布式，复合语法不直观 \\
-Milvus & 生产级分布式 & 需 Docker+etcd+MinIO \\
-Qdrant & Rust 高性能 & 需独立服务进程 \\
-Pinecone & 全托管 & 付费 SaaS，数据外传 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\textbf{选择理由}：课程场景无并发/分布式需求，ChromaDB 零部署成本。已做抽象封装，未来可平滑迁移。已知代价：复合 where 条件需显式 \$and 操作符。
-
-\subsection{分块策略：四层语义分块}
-
-采用\textbf{四层优先级}算法：段落边界$\to$句子边界$\to$贪心合并$\to$滑窗切割。参数：chunk\_size=700，overlap=120。
-
-\begin{itemize}
-  \item \textbf{固定长度}：实现快但破坏语义——可能把一句话切在中间
-  \item \textbf{四层语义分块}：尊重边界，重叠确保连续性（\textbf{选择}）
-  \item \textbf{标题感知}：依赖文档格式，不适用于 FAQ
-\end{itemize}
-
-\textbf{700 字符选择依据}：$<$400 导致语义碎片化，$>$1000 稀释向量聚焦度。700 字符约 350 中文字，平衡精度与完整性。
-
-\subsection{嵌入模型：Qwen3-Embedding vs ada-002 vs MiniLM}
-
-\begin{table}[H]
-\centering
-\caption{嵌入模型对比}
+\caption{Embedding 模式对比}
 \label{tab:embedding}
-\begin{tabular}{@{}lccc@{}}
+\begin{tabular}{@{}llll@{}}
 \toprule
-\textbf{方案} & \textbf{维度} & \textbf{成本} & \textbf{中文} \\
+\textbf{模式} & \textbf{模型} & \textbf{优势} & \textbf{适用场景} \\
 \midrule
-\textbf{Qwen3-0.6B} & 1024 & 免费(GPU) & 优秀 \\
-ada-002 & 1536 & \$0.0001/1K & 良好 \\
-MiniLM-L6 & 384 & 免费 & 一般 \\
+local & BAAI/bge-large-zh-v1.5 & 离线、零 API 成本 & 小批量或显存充足 \\
+remote & BAAI/bge-large-zh-v1.5 & 4090 高吞吐 & 百万级建库 \\
+openai-api & 兼容 Embedding API & 免维护 & 无本地/云端 GPU \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\textbf{选择理由}：零 API 成本、原生中文语义理解、1024 维区分度优于 384 维。已知代价：首次加载 $\sim$16s 冷启动。
+\subsection{公网服务安全}
+AutoDL 自定义服务通常会获得公网地址。若不加限制，任何人都可能直接调用
+Embedding 接口消耗 GPU 资源。因此系统新增 \texttt{EMBEDDING\_SERVER\_TOKEN}：
+当云端配置该变量后，服务端会校验
+\texttt{Authorization: Bearer <token>}；本地客户端读取同名变量并自动
+作为 OpenAI-compatible API key 发送。未配置 token 时保留兼容模式，
+便于课堂演示和本地调试。
 
-\subsection{LLM 选择：DeepSeek V4 Flash}
+\section{检索与答案生成}
+\subsection{混合检索}
+系统支持向量语义搜索、ChromaDB 元数据过滤和文档关键词过滤。对于多键
+where 条件，系统将隐式多条件转换为显式 \texttt{\$and}，以适配 ChromaDB
+查询语法。
 
-DeepSeek 与 GPT-4o-mini 同价位（$\sim$\$0.15/百万 token），国内网络访问更稳定。本地 7B 模型在 CPU 上延迟 $>$10s，不适合交互场景。
+\subsection{双路召回}
+在未指定过滤条件时，系统采用双路召回：第一路优先检索课程相关分类
+（wiki、faq、notice、case\_study、report、term、general），第二路
+执行全库检索。两路结果按文本去重并按距离排序。若单路失败，系统记录
+warning 并返回另一条成功路线；若两路均失败，则抛出 \texttt{RuntimeError}，
+避免将配置错误误报为 ``未检索到内容''。
 
-\subsection{查询解析：LLM 意图提取}
+\subsection{答案生成与前端防注入}
+答案生成模块要求 LLM 仅基于检索片段回答，并在回答中包含来源标注。
+Streamlit 前端保留来源卡片的自定义 HTML，但模型回答、历史消息和错误
+信息均先进行 HTML 转义，再转换换行为 \texttt{<br>}，防止知识库内容或
+模型输出注入页面脚本。
 
-用一次轻量 LLM 调用将自然语言转为结构化参数：
-\begin{verbatim}
-输入: "2024年的通知讲了啥"
-输出: {search_query: "通知",
-       filters: {year:2024, category:"notice"}}
-\end{verbatim}
-
-\textbf{回退策略}：JSON 解析异常时，search\_query 回退为原始问题，filters=None，降级为纯语义搜索。评估中 3/50 个查询触发回退。
-
-% ─────────────────────────────────────────────────────────────
-\section{评估与失效模式}
-% ─────────────────────────────────────────────────────────────
-
-\subsection{评估方法}
-
-构建 50 个测试查询，覆盖 5 类：课程信息(10)、技术概念(10)、跨文档(10)、元数据过滤(10)、边界/超纲(10)。
-
-\subsection{评估结果}
-
-\begin{table}[H]
+\section{实现与接口配置}
+\begin{table}[!t]
 \centering
-\caption{评估关键指标}
-\label{tab:eval}
+\caption{关键环境变量}
+\label{tab:env}
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{变量} & \textbf{用途} \\
+\midrule
+OPENAI\_API\_KEY & 对话模型 API Key \\
+OPENAI\_MODEL & 答案生成与查询解析模型 \\
+OPENAI\_EMBEDDING\_MODEL & local / remote / API 模型名 \\
+OPENAI\_EMBEDDING\_BASE\_URL & 远程 Embedding 服务地址 \\
+EMBEDDING\_SERVER\_TOKEN & 远程 Embedding 服务访问令牌 \\
+LOCAL\_EMBEDDING\_MODEL & 本地或远程实际加载的模型名 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+典型远程配置如下：
+\begin{lstlisting}[language=bash,caption={远程 4090 向量化配置}]
+OPENAI_EMBEDDING_MODEL=remote
+OPENAI_EMBEDDING_BASE_URL=https://<autodl-service>/v1
+EMBEDDING_SERVER_TOKEN=<same-token-on-server>
+LOCAL_EMBEDDING_MODEL=BAAI/bge-large-zh-v1.5
+\end{lstlisting}
+
+\section{测试与验证}
+项目测试使用 \texttt{pytest}，通过 mock 隔离 OpenAI、ChromaDB 和外部网络。
+当前共 91 个测试用例，覆盖摄取、预处理、向量检索、查询解析、问答生成、
+Streamlit 安全渲染与集成链路。最新全量测试结果为：
+
+\begin{lstlisting}[language=bash,caption={测试结果}]
+python -m pytest tests/ -v
+91 passed in 11.18s
+\end{lstlisting}
+
+\begin{table}[!t]
+\centering
+\caption{测试覆盖概览}
+\label{tab:tests}
 \begin{tabular}{@{}lc@{}}
 \toprule
-\textbf{指标} & \textbf{数值} \\
+\textbf{模块} & \textbf{测试数} \\
 \midrule
-Recall@3 (域内) & 87.8\% (36/41) \\
-幻觉率 (超纲) & 1/9 (11.1\%) \\
-平均延迟 (稳态) & 6.2s \\
-查询解析成功率 & 94\% (47/50) \\
+embed\_store & 15 \\
+ingest & 27 \\
+preprocess & 28 \\
+qa & 9 \\
+query\_parser & 5 \\
+integration & 4 \\
+app.rendering & 2 \\
+\midrule
+\textbf{总计} & \textbf{91} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\begin{table}[H]
-\centering
-\caption{分类别 Recall@3}
-\label{tab:recall}
-\begin{tabular}{@{}lc@{}}
-\toprule
-\textbf{类别} & \textbf{命中率} \\
-\midrule
-课程信息 & 90\% (9/10) \\
-技术概念 & 100\% (10/10) \\
-跨文档综合 & 100\% (10/10) \\
-元数据过滤 & 70\% (7/10) \\
-\bottomrule
-\end{tabular}
-\end{table}
+\section{成本与工程收益}
+本项目将成本集中在建库阶段：远程 RTX 4090 负责高吞吐向量化，本地保留
+ChromaDB 持久化结果用于后续演示和查询。这样既避开了本地显存不足，也
+避免每次查询都依赖云端 GPU。与完全调用商业 Embedding API 相比，该
+方案更适合一次性大规模建库、之后多次本地演示的课程项目场景。
 
-\subsection{失效模式}
+\section{结论}
+本文实现的 RAG 系统完成了从非结构化资料到可追溯问答的端到端闭环。
+在工程上，系统重点解决了本地显存不足、远程服务公网暴露、前端模型输出
+不可信、JSONL 重复摄取和检索错误静默降级等问题。最终系统以 AutoDL
+RTX 4090 完成大规模向量化，以 ChromaDB 保存本地索引，以 Streamlit 和
+CLI 提供双入口，并以 91 个自动化测试保证核心行为稳定。
 
-\textbf{失效 1：复合 where 条件不兼容。} Q31 ``2025年的通知''触发 ChromaDB 报错，回退为纯语义搜索。根因：ChromaDB 不支持隐式 AND。已修复：自动转为 \$and 格式。
-
-\textbf{失效 2：超纲查询幻觉。} Q44 ``Python for循环''检索到 SO 代码片段，LLM 给出详细代码。根因：检索结果表面相关但主题不匹配。修复方向：System Prompt 增加主题相关性约束。
-
-\textbf{失效 3：查询解析 JSON 错误。} Q32/Q38/Q39 返回非标准 JSON。系统正确回退为纯语义搜索，但丢失过滤能力。
-
-\subsection{事后剖析}
-
-\textbf{失败 1：SentenceTransformer 方法名变更。} commit 92bc9b2 将 \texttt{get\_sentence\_embedding\_dimension()} 改为 \texttt{get\_embedding\_dimension()}，基于 PyTorch deprecation 警告。但当前版本仍用旧方法名，导致全链路崩溃。单元测试因 Mock 了整个模型未发现。\textbf{教训}：Mock 测试无法发现 API 兼容性问题；需集成冒烟测试。
-
-\textbf{失败 2：极短文档静默丢弃。} 早期 \texttt{clean\_text()} 对 $<$10 字符文档直接丢弃，导致 FAQ 短答案丢失。修复：\texttt{chunk\_text()} 末尾兜底保留非空极短文档。\textbf{教训}：清洗应区分``噪声''和``短但有效''内容。
-
-% ─────────────────────────────────────────────────────────────
-\section{延迟与成本估算}
-% ─────────────────────────────────────────────────────────────
-
-\subsection{延迟预算}
-
-\begin{table}[H]
-\centering
-\caption{端到端延迟分解 (稳态)}
-\label{tab:latency}
-\begin{tabular}{@{}lcc@{}}
-\toprule
-\textbf{组件} & \textbf{耗时} & \textbf{占比} \\
-\midrule
-查询解析 (LLM) & 2.7s & 43\% \\
-向量检索 & 0.25s & 4\% \\
-答案生成 (LLM) & 3.2s & 53\% \\
-\midrule
-\textbf{端到端} & \textbf{6.2s} & 100\% \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\textbf{瓶颈}：LLM 调用占 96\%。向量检索仅 250ms。
-
-\subsection{课程项目实际成本}
-
-\begin{table}[H]
-\centering
-\caption{API 调用成本}
-\label{tab:cost}
-\begin{tabular}{@{}lccl@{}}
-\toprule
-\textbf{调用类型} & \textbf{次数} & \textbf{单价} & \textbf{总成本} \\
-\midrule
-元数据(LLM) & 176 & \textyen 0.005 & \textyen 0.88 \\
-查询解析 & 每次 & \textyen 0.005 & 按量 \\
-答案生成 & 每次 & \textyen 0.01 & 按量 \\
-嵌入(本地) & 450+ & 免费 & \textyen 0 \\
-\midrule
-\textbf{建库} & — & — & $<$\textyen 1.0 \\
-\textbf{单次查询} & — & — & $\sim$\textyen 0.02 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\subsection{云成本估算 (10TB/天)}
-
-20$\times$ ecs.g6.4xlarge 实例 + OSS 存储 + LLM API，月估算 \textyen 60,000--160,000。Embedding 本地化可节省 30--50\% 模型调用费用。
-
-% ─────────────────────────────────────────────────────────────
-\section*{附录：演示方案 (15分钟)}
-% ─────────────────────────────────────────────────────────────
-
-\begin{table}[H]
-\centering
-\small
-\begin{tabular}{@{}cl@{}}
-\toprule
-\textbf{时长} & \textbf{内容} \\
-\midrule
-1min & 开场钩子：业务问题引入 \\
-3--4min & 现场演示：Streamlit 端到端 \\
-4min & 架构深潜：数据生命周期追踪 \\
-2min & ``我们搞砸了''：失败案例分享 \\
-5min & Q\&A 技术总监提问 \\
-\bottomrule
-\end{tabular}
-\end{table}
+\begin{thebibliography}{00}
+\bibitem{rag}
+P. Lewis et al., ``Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks,''
+NeurIPS, 2020.
+\bibitem{chroma}
+Chroma, ``ChromaDB Documentation,'' \url{https://docs.trychroma.com/}.
+\bibitem{bge}
+BAAI, ``BGE Embedding Models,'' \url{https://huggingface.co/BAAI/bge-large-zh-v1.5}.
+\bibitem{ieee}
+IEEE, ``IEEE Conference Template,'' \url{https://www.ieee.org/conferences/publishing/templates.html}.
+\end{thebibliography}
 
 \end{document}

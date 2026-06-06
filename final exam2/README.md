@@ -3,7 +3,7 @@
 > 基于检索增强生成（RAG）的智能问答系统 | 大数据学期项目 — 方向 B
 
 [![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/)
-[![Tests](https://img.shields.io/badge/tests-82%20passed-green.svg)](https://github.com/liwe123/Date-Analysis-Fanal-Exem)
+[![Tests](https://img.shields.io/badge/tests-91%20passed-green.svg)](https://github.com/liwe123/Date-Analysis-Fanal-Exem)
 [![License](https://img.shields.io/badge/license-MIT-orange.svg)](LICENSE)
 [![GPU](https://img.shields.io/badge/GPU-CUDA%2012.4-brightgreen.svg)](https://pytorch.org/)
 
@@ -12,13 +12,13 @@
 ## ✨ 特性
 
 - **RAG 全流水线**：文档摄取 → 清洗分块 → 向量索引 → 混合检索 → LLM 答案生成 + 引用追溯。
-- **算力云端卸载**：支持 **remote 远程 GPU 嵌入模式**，一键在租用的 AutoDL **RTX 4090（24GB）** 云服务器上通过 FastAPI 部署高性能 `BAAI/bge-large-zh-v1.5`（1024 维）模型，仅耗时 **2.5 小时、花费 4.70 元**即完成了 1,000,176 行大数据的切块向量化建库（共 1,215,021 个 Chunk），吞吐量极佳。同时也支持本机 local 嵌入模式与远程公有云 API 模式。
+- **算力云端卸载**：支持 **remote 远程 GPU 嵌入模式**，一键在租用的 AutoDL **RTX 4090（24GB）** 云服务器上通过 FastAPI 部署高性能 `BAAI/bge-large-zh-v1.5`（1024 维）模型。本项目的大规模数据已完成清洗、分块与向量化，并落入本地 ChromaDB 持久化结果；本地 GTX 1660 SUPER 显存不足时，可将批量 Embedding 推理卸载到云端 4090，保留本地 ETL 与向量库写入流程。
 - **混合检索**：向量语义搜索 + 显式多键复合过滤器（ChromaDB 复合 where 兼容格式自动转换）。
 - **AI 查询解析**：大模型自然语言自动分类并提取语义搜索词与 filters 元数据过滤条件（年份/分类/作者/语言）。
 - **高鲁棒性预处理**：32 线程并发调用 LLM 提取元数据，遇到 API 高频 429 限流时自动进行带随机抖动的指数退避重试，极短有效文本自动兜底。
 - **双端入口**：现代化 Streamlit Web 界面（高级护眼视觉，内置开发者调试“玻璃盒看板”与数据增量写入安全网关） + CLI 命令行。
 - **自动采集**：Wikipedia + Stack Overflow + CSDN 三源自动采集，BeautifulSoup 抓取 + html2text 极致过滤 90% 以上网页噪声，仅保留纯净 Markdown 语法。
-- **自动化测试**：**82 个自动化测试用例**，全量 Mock 装饰器解耦，无物理网络与 API 密钥依赖，3 秒内离线一键跑通，用例通过率 100%。
+- **自动化测试**：**91 个自动化测试用例**，全量 Mock 装饰器解耦，无物理网络与 API 密钥依赖，离线一键跑通，用例通过率 100%。
 - **答辩保姆级支撑礼包**：附带团队 4 人任务分工报告 PDF、面向小白组员的项目架构与傻瓜式操作指南 PDF、评委高频提问防守卡片盒 PDF 以及 15 分钟现场演示逐字解说词。
 
 ---
@@ -29,7 +29,7 @@
 本地 ETL (src/ingest.py, preprocess.py) ──(切分 120万块)──> 批量打包 (batch_size=256)
                                                                  │
                                                                  ↓ (HTTP POST 并发卸载)
-ChromaDB 本地向量库 <──(写入 1024维向量)── 本地 embed_store.py <── AutoDL 4090 GPU (FastAPI)
+ChromaDB 本地向量库 <──(写入 1024维向量)── 本地 embed_store.py <── AutoDL 4090 GPU (FastAPI + Token)
 
                                        ↓
 
@@ -64,7 +64,7 @@ pip install -r requirements.txt
 2. **SSH 登录服务器一键拉起服务**：
    ```bash
    chmod +x setup_autodl.sh
-   bash setup_autodl.sh
+   EMBEDDING_SERVER_TOKEN=<自定义访问令牌> bash setup_autodl.sh
    ```
 3. **本地 `.env` 配置文件配置**：
    ```bash
@@ -74,7 +74,10 @@ pip install -r requirements.txt
    OPENAI_API_KEY=sk-xxxx...
    OPENAI_EMBEDDING_MODEL=remote
    OPENAI_EMBEDDING_BASE_URL=https://<AutoDL分配的高速公网网址>/v1
+   EMBEDDING_SERVER_TOKEN=<与云端服务一致的访问令牌>
    ```
+   AutoDL 自定义服务通常是公网地址，建议在云端和本地同时配置
+   `EMBEDDING_SERVER_TOKEN`，避免他人直接消耗你的 GPU 推理资源。
 
 ### 3. 一键建立向量索引
 
@@ -106,12 +109,13 @@ python -m pytest tests/ -v
 
 | 模块 | 测试数 | 覆盖细节 |
 |------|--------|------|
-| `preprocess` | 27 | 数据清洗标签去除、语义分块、Front-Matter 合并、JSON 安全解析、极短兜底与元数据提取 |
-| `embed_store` | 10 | 数据库初始化、语义相似度搜索、max_distance 距离过滤、复合 AND 过滤器转换、ChromaDB upsert 幂等写入 |
-| `ingest` | 26 | YAML 嵌套解析、多源文本递归加载、PDF 解析、空文件与 JSONL 异常数据跳过 |
+| `preprocess` | 28 | 数据清洗标签去除、语义分块、Front-Matter 合并、JSON 安全解析、策略校验与元数据提取 |
+| `embed_store` | 15 | 数据库初始化、双路检索融合、max_distance 距离过滤、远程 Token、ChromaDB upsert 幂等写入 |
+| `ingest` | 27 | YAML 嵌套解析、多源文本递归加载、PDF 解析、JSONL 专用摄取与异常数据跳过 |
 | `qa` | 9 | 上下文生成、引用去重补全、年份格式化头部应用、异常链抛出与 KeyboardInterrupt 保护 |
 | `query_parser` | 5 | 正常意图解析、空过滤降级、Markdown 过滤、API 异常与 JSON 格式错误兜底 |
 | `integration` | 4 | 摄取→清洗预处理集成、语义搜索→大模型问答全链路端到端集成测试 |
+| `app.rendering` | 2 | Streamlit 气泡文本 HTML 转义与换行保留 |
 
 ---
 
@@ -124,7 +128,7 @@ python -m pytest tests/ -v
 | 向量数据库 | ChromaDB (HNSW 索引，upsert 幂等去重，SQLite 元数据存储) |
 | 文本流处理 | PyMuPDF (PDF 解析) + BeautifulSoup (HTML标签剥离) + html2text (Markdown转换) |
 | 前端交互 | Streamlit (高级视觉， session_state 记忆，开发者调试看板，安全转义网关) |
-| 单元测试 | Pytest (82 个用例，100% Mock 离线化，3秒快速校验) |
+| 单元测试 | Pytest (91 个用例，100% Mock 离线化) |
 
 ---
 
@@ -144,7 +148,7 @@ python -m pytest tests/ -v
 │   ├── qa.py                # LLM 问答生成 (带上下文截断与Facts引用)
 │   ├── query_parser.py      # 查询意图解析 (Markdown 剥离)
 │   └── utils.py             # 公共工具（环境变量读取、日志规范、客户端单例）
-├── tests/                   # 82 个离线 Mock 自动化测试用例
+├── tests/                   # 91 个离线 Mock 自动化测试用例
 ├── scripts/
 │   ├── embedding_server.py  # AutoDL 远程 FastAPI 向量推理服务
 │   ├── setup_autodl.sh      # AutoDL 远程一键部署环境脚本

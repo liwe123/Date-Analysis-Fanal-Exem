@@ -48,6 +48,16 @@ class TestLoadTextFiles:
         assert "test.txt" in names
         assert "test.csv" not in names
 
+    def test_text_loader_skips_jsonl(self, tmp_path):
+        (tmp_path / "dataset.jsonl").write_text(
+            '{"doc_id": "1", "content": "jsonl content"}\n',
+            encoding="utf-8",
+        )
+
+        docs = load_text_files(tmp_path, recursive=False)
+
+        assert docs == []
+
     def test_empty_directory(self, tmp_path):
         docs = load_text_files(tmp_path)
         assert docs == []

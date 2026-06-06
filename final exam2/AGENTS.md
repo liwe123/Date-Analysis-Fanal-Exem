@@ -12,7 +12,7 @@
 | 语言 | Python 3.11+ |
 | 核心能力 | 文档摄取 → 清洗分块 → 向量索引 → 混合检索 → 答案生成 |
 | 入口 | `src/main.py` (CLI), `app/streamlit_app.py` (Web) |
-| 测试 | `pytest` (54 个用例, `tests/`) |
+| 测试 | `pytest` (91 个用例, `tests/`) |
 | 编码 | UTF-8，注释/文档字符串用中文 |
 
 ---
@@ -160,7 +160,9 @@ main.py / streamlit_app.py
 | `OPENAI_EMBEDDING_MODEL` | ❌ | `local` | Embedding 模型名（若设为 local 或为空，则默认启用本地嵌入模式） |
 | `OPENAI_MODEL` | ❌ | `gpt-4o-mini` | 对话模型名 |
 | `OPENAI_BASE_URL` | ❌ | `None` | 自定义 API 地址 |
-| `LOCAL_EMBEDDING_MODEL` | ❌ | `Qwen/Qwen3-Embedding-0.6B` | 本地嵌入模型名 |
+| `OPENAI_EMBEDDING_BASE_URL` | ❌ | `None` | 远程 Embedding 服务地址 |
+| `EMBEDDING_SERVER_TOKEN` | ❌ | `None` | AutoDL 远程 Embedding 服务访问令牌 |
+| `LOCAL_EMBEDDING_MODEL` | ❌ | `BAAI/bge-large-zh-v1.5` | 本地/远程嵌入模型名 |
 | `HF_ENDPOINT` | ❌ | `https://hf-mirror.com` | Hugging Face 镜像端点（用于本地模型国内加速下载） |
 
 
@@ -378,12 +380,16 @@ PyMuPDF>=1.23.0               # PDF 解析
 pyyaml>=6.0                   # Front-Matter 解析
 pytest>=8.0                   # 测试框架
 sentence-transformers>=2.2.0  # 本地嵌入模型
+fastapi>=0.110.0              # 远程 Embedding 服务 Web 框架
+uvicorn>=0.27.0               # 远程 Embedding 服务 ASGI 服务器
+pydantic>=2.0.0               # 远程服务请求/响应模型
 beautifulsoup4>=4.12.0        # HTML 解析（语料抓取用）
 requests>=2.31.0              # HTTP 请求客户端（语料抓取用）
 lxml>=4.9.0                   # 高效 XML/HTML 解析引擎
 html2text>=2020.1.16          # 将 HTML 网页转换为干净的 Markdown 文本
 pysocks>=1.7.1                # SOCKS5 代理支持
 python-pptx>=0.6.21           # PowerPoint (.pptx) 文档生成工具
+fpdf2>=2.7.0                  # PDF 文档生成工具
 torch>=2.0.0                  # 本地深度学习框架（本地 Embedding 支持）
 ```
 

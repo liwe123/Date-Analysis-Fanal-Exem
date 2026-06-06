@@ -21,6 +21,7 @@ MODEL_NAME="BAAI/bge-large-zh-v1.5"
 PORT=6008
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 SERVER_SCRIPT="${SCRIPT_DIR}/embedding_server.py"
+EMBEDDING_SERVER_TOKEN="${EMBEDDING_SERVER_TOKEN:-}"
 
 # ── 设置 HuggingFace 镜像端点（国内加速下载） ────────────
 export HF_ENDPOINT="https://hf-mirror.com"
@@ -72,6 +73,11 @@ echo ""
 echo "[INFO] 服务即将启动，使用 Ctrl+C 可停止"
 echo "[INFO] 健康检查地址: http://0.0.0.0:${PORT}/health"
 echo "[INFO] 嵌入接口地址: http://0.0.0.0:${PORT}/v1/embeddings"
+if [[ -n "${EMBEDDING_SERVER_TOKEN}" ]]; then
+  echo "[INFO] 已启用 EMBEDDING_SERVER_TOKEN 访问令牌保护"
+else
+  echo "[WARN] 未配置 EMBEDDING_SERVER_TOKEN，公网服务将不启用令牌保护"
+fi
 echo ""
 
-python "${SERVER_SCRIPT}" --model "${MODEL_NAME}" --port "${PORT}"
+EMBEDDING_SERVER_TOKEN="${EMBEDDING_SERVER_TOKEN}" python "${SERVER_SCRIPT}" --model "${MODEL_NAME}" --port "${PORT}"

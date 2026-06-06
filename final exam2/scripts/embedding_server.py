@@ -17,7 +17,7 @@ from typing import Any
 
 import torch
 import uvicorn
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from sentence_transformers import SentenceTransformer
@@ -38,6 +38,7 @@ _dimension: int = 0
 
 # 单次请求允许的最大文本数量
 MAX_BATCH_SIZE: int = 512
+EMBEDDING_SERVER_TOKEN_ENV = "EMBEDDING_SERVER_TOKEN"
 
 # ── 请求 / 响应数据模型 ──────────────────────────────────
 
@@ -140,13 +141,29 @@ def health_check() -> dict[str, Any]:
     }
 
 
+def _verify_token(authorization: str | None) -> None:
+    """在配置 token 时校验 Bearer 授权头。"""
+    expected_token = os.environ.get(EMBEDDING_SERVER_TOKEN_ENV, "").strip()
+    if not expected_token:
+        return
+
+    expected_header = f"Bearer {expected_token}"
+    if authorization != expected_header:
+        raise HTTPException(status_code=401, detail="远程嵌入服务授权失败")
+
+
 @app.post("/v1/embeddings", response_model=EmbeddingResponse)
-def create_embeddings(request: EmbeddingRequest) -> EmbeddingResponse:
+def create_embeddings(
+    request: EmbeddingRequest,
+    authorization: str | None = Header(default=None),
+) -> EmbeddingResponse:
     """
     生成文本嵌入向量，兼容 OpenAI ``/v1/embeddings`` 接口格式。
 
     支持单条文本（str）或批量文本（list[str]），最多 512 条。
     """
+    _verify_token(authorization)
+
     if _model is None:
         raise HTTPException(status_code=503, detail="模型尚未加载完成，请稍后重试")
 

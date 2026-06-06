@@ -10,10 +10,15 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+import src.embed_store as embed_store
 from src.embed_store import VectorStore
 
 
 class TestVectorStoreInit:
+    def test_default_local_model_name(self):
+        with patch("src.embed_store.clean_env", return_value=None):
+            assert embed_store._resolve_local_model_name() == "BAAI/bge-large-zh-v1.5"
+
     def test_default_collection_name(self):
         with patch("src.embed_store.chromadb.PersistentClient"), \
              patch("src.embed_store.get_openai_client"), \
@@ -34,6 +39,20 @@ class TestVectorStoreInit:
                 name="my_collection",
                 metadata={"hnsw:space": "cosine"},
             )
+
+    def test_remote_client_uses_embedding_server_token(self):
+        embed_store._REMOTE_EMBEDDING_CLIENT = None
+
+        with patch("src.embed_store.get_embedding_base_url", return_value="http://remote.test/v1"), \
+             patch("src.embed_store.clean_env", return_value="secret-token"), \
+             patch("src.embed_store.OpenAI") as mock_openai:
+            embed_store._get_remote_embedding_client()
+
+        mock_openai.assert_called_once_with(
+            api_key="secret-token",
+            base_url="http://remote.test/v1",
+        )
+        embed_store._REMOTE_EMBEDDING_CLIENT = None
 
 
 class TestDeleteCollection:
@@ -120,6 +139,70 @@ class TestSearch:
             assert len(results) == 1
             assert results[0]["source"] == "fb.md"
             assert call_count == 2
+
+    def test_dual_path_search_merges_and_deduplicates(self):
+        with patch("src.embed_store.chromadb.PersistentClient"), \
+             patch("src.embed_store.get_openai_client"), \
+             patch("src.embed_store.use_local_embedding", return_value=False), \
+             patch("src.embed_store.use_remote_embedding", return_value=False), \
+             patch("src.embed_store.get_embedding_model_name", return_value="test-emb"):
+            store = VectorStore()
+            store.get_embedding = MagicMock(return_value=[0.1, 0.2])
+            store.collection.query = MagicMock(side_effect=[
+                {
+                    "documents": [["课程文档", "重复文档"]],
+                    "metadatas": [[{"source": "course.md"}, {"source": "dup.md"}]],
+                    "distances": [[0.1, 0.4]],
+                },
+                {
+                    "documents": [["重复文档", "全库文档"]],
+                    "metadatas": [[{"source": "dup2.md"}, {"source": "general.md"}]],
+                    "distances": [[0.2, 0.3]],
+                },
+            ])
+
+            results = store.search("测试", top_k=5)
+
+            assert [r["text"] for r in results] == ["课程文档", "全库文档", "重复文档"]
+            assert store.collection.query.call_count == 2
+
+    def test_dual_path_search_keeps_successful_route(self):
+        with patch("src.embed_store.chromadb.PersistentClient"), \
+             patch("src.embed_store.get_openai_client"), \
+             patch("src.embed_store.use_local_embedding", return_value=False), \
+             patch("src.embed_store.use_remote_embedding", return_value=False), \
+             patch("src.embed_store.get_embedding_model_name", return_value="test-emb"):
+            store = VectorStore()
+            store.get_embedding = MagicMock(return_value=[0.1, 0.2])
+            store.collection.query = MagicMock(side_effect=[
+                RuntimeError("course route failed"),
+                {
+                    "documents": [["全库文档"]],
+                    "metadatas": [[{"source": "general.md"}]],
+                    "distances": [[0.2]],
+                },
+            ])
+
+            results = store.search("测试", top_k=5)
+
+            assert len(results) == 1
+            assert results[0]["source"] == "general.md"
+
+    def test_dual_path_search_raises_when_all_routes_fail(self):
+        with patch("src.embed_store.chromadb.PersistentClient"), \
+             patch("src.embed_store.get_openai_client"), \
+             patch("src.embed_store.use_local_embedding", return_value=False), \
+             patch("src.embed_store.use_remote_embedding", return_value=False), \
+             patch("src.embed_store.get_embedding_model_name", return_value="test-emb"):
+            store = VectorStore()
+            store.get_embedding = MagicMock(return_value=[0.1, 0.2])
+            store.collection.query = MagicMock(side_effect=[
+                RuntimeError("course route failed"),
+                RuntimeError("general route failed"),
+            ])
+
+            with pytest.raises(RuntimeError, match="双路检索全部失败"):
+                store.search("测试", top_k=5)
 
 
 class TestCountAndListSources:

@@ -161,6 +161,12 @@ class TestExtractMetadata:
 
 
 class TestProcessDocuments:
+    def test_invalid_metadata_strategy(self):
+        docs = [{"source": "wiki_01.md", "path": "p.md", "text": "Hadoop tutorial"}]
+
+        with pytest.raises(ValueError, match="metadata_strategy"):
+            process_documents(docs, is_extract_meta=False, metadata_strategy="bad")
+
     def test_is_extract_meta_false(self):
         docs = [{"source": "wiki_01.md", "path": "p.md", "text": "Hadoop tutorial"}]
         processed = process_documents(docs, is_extract_meta=False)

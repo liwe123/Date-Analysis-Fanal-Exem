@@ -7,4 +7,4 @@ vector_store/
 .pytest_cache/
 .vscode/
 .claude/
-
+models/
