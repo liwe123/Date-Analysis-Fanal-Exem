@@ -232,7 +232,7 @@ html, body, .stApp {
 /* Chat Bubbles */
 .chat-container { display: flex; flex-direction: column; gap: 1.5rem; padding-bottom: 2rem; }
 
-.message-user { justify-content: flex-end; animation: slideUp 0.3s ease-out; }
+.message-user { justify-content: flex-end; }
 .message-user .bubble {
   background: var(--msg-user-bg);
   color: var(--msg-user-text);
@@ -244,7 +244,7 @@ html, body, .stApp {
   box-shadow: var(--shadow-md);
 }
 
-.message-assistant { justify-content: flex-start; animation: slideUp 0.4s ease-out; }
+.message-assistant { justify-content: flex-start; }
 .message-assistant .avatar-wrapper { width: 32px; margin-right: 16px; }
 .message-assistant .avatar {
   width: 32px; height: 32px;

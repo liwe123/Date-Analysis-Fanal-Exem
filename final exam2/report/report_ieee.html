@@ -75,19 +75,27 @@
 
         /* ── Page 1 针对首段和大图进行微调防止溢出 ── */
         #page-1 p {
-            font-size: 9px !important;
-            line-height: 1.45 !important;
-            margin-bottom: 5px !important;
+            font-size: 8.4px !important;
+            line-height: 1.36 !important;
+            margin-bottom: 3.5px !important;
+        }
+        #page-1 h1.ieee-sec {
+            font-size: 9.2px !important;
+            margin: 4.5px 0 2.5px 0 !important;
+        }
+        #page-1 h2.ieee-subsec {
+            font-size: 8.5px !important;
+            margin: 3px 0 1.5px 0 !important;
         }
 
         /* ── Page 2 密度极高且包含多张表格进行微调以防止底部穿模 ── */
         #page-2 p {
-            font-size: 8.8px !important;
-            line-height: 1.42 !important;
+            font-size: 9.0px !important;
+            line-height: 1.45 !important;
             margin-bottom: 3.5px !important;
         }
         #page-2 h2.ieee-subsec {
-            font-size: 8.6px !important;
+            font-size: 8.8px !important;
             margin: 4.5px 0 1.5px 0 !important;
         }
         #page-2 h1.ieee-sec {
@@ -107,14 +115,31 @@
             margin: 3px 0 !important;
         }
 
-        /* ── Page 3 特性微调防止文本底部多余留白 ── */
+        /* ── Page 3 密度极大进行微调防止底部穿模 ── */
         #page-3 p {
-            font-size: 9.5px !important;
-            line-height: 1.50 !important;
-            margin-bottom: 5px !important;
+            font-size: 8.8px !important;
+            line-height: 1.36 !important;
+            margin-bottom: 3.5px !important;
+        }
+        #page-3 h1.ieee-sec {
+            font-size: 9.2px !important;
+            margin: 4px 0 2.5px 0 !important;
         }
         #page-3 h2.ieee-subsec {
-            margin: 5px 0 2px 0 !important;
+            font-size: 8.5px !important;
+            margin: 3.5px 0 1.5px 0 !important;
+        }
+        #page-3 table {
+            font-size: 7.0px !important;
+        }
+        #page-3 th {
+            padding: 2px 5px !important;
+        }
+        #page-3 td {
+            padding: 1.8px 5px !important;
+        }
+        #page-3 .table-wrapper {
+            margin: 2px 0 !important;
         }
 
         /* ── Page 4 纯正文段落极多极长优化以防止底部穿模 ── */
@@ -845,7 +870,7 @@
                     <text x="140" y="71" font-family="Outfit" font-size="7.5" fill="#4c1d95" text-anchor="middle">ingest.py (本地多格式解析 + FM)</text>
 
                     <rect x="290" y="55" width="480" height="25" rx="3" fill="#f5f3ff" stroke="#8b5cf6" stroke-width="0.6"/>
-                    <text x="530" y="71" font-family="Outfit" font-size="7.5" fill="#4c1d95" text-anchor="middle">collect_corpus.py / collect_stackoverflow.py / collect_csdn.py (远程多源 API 采集)</text>
+                    <text x="530" y="71" font-family="Outfit" font-size="7.5" fill="#4c1d95" text-anchor="middle">collect_corpus.py / collect_stackoverflow.py / collect_csdn.py / collect_more_corpus.py (远程多源 API 采集)</text>
 
                     <!-- Row 3: 预处理与分块层 (y = 95) -->
                     <rect x="30" y="95" width="220" height="25" rx="3" fill="#fff7ed" stroke="#f97316" stroke-width="0.6"/>
@@ -925,16 +950,16 @@
             <div class="page-columns">
                 <div class="left-col">
                     <h1 class="ieee-sec ieee-sec-num">1. 执行摘要</h1>
-                    <p class="drop-cap">在</p>数据科学与大语言模型工程应用的最前沿，面向多源、异构非结构化文本数据（如高难度课程讲义、半结构化技术文档、社区问答对及维基百科专业词条）的语义检索与高质量智能问答，已经成为企业数字化转型与高校智慧校园建设中的核心数据工程挑战。传统以关键词精确匹配为核心的搜索方案（例如常见的 Ctrl+F 或部分关系型数据库的 Like 模糊查询），由于其固有的字面局限性，在处理口语化表述或同义词转换时面临着无法跨越的词汇鸿沟；而经典的信息检索统计模型（如 TF-IDF 算法或 BM25 算法）在面对包含海量噪音且结构稀疏的非结构化大型文档库时，极易因高维空间稀疏性导致语义层面的召回率急剧衰减。另一方面，单纯依赖通用大语言模型（LLM）的直接知识生成模式，在面对特定垂直领域的实时更新知识库时，不仅极易产生严重的“幻觉”现象，且无法给出可信度高、可溯源的知识实体与数据来源引用，因而无法满足严苛工程场景对事实准确性的基本要求。
+                    <p class="drop-cap">在数据科学与大语言模型工程应用的最前沿，面向多源、异构非结构化文本数据（如高难度课程讲义、半结构化技术文档、社区问答对及维基百科专业词条）的语义检索与高质量智能问答，已经成为企业数字化转型与高校智慧校园建设中的核心数据工程挑战。传统以关键词精确匹配为核心的搜索方案（例如常见的 Ctrl+F 或部分关系型数据库的 Like 模糊查询），由于其固有的字面局限性，在处理口语化表述或同义词转换时面临着无法跨越的词汇鸿沟；而经典的信息检索统计模型（如 TF-IDF 算法或 BM25 算法）在面对包含海量噪音且结构稀疏的非结构化大型文档库时，极易因高维空间稀疏性导致语义层面的召回率急剧衰减。另一方面，单纯依赖通用大语言模型（LLM）的直接知识生成模式，在面对特定垂直领域的实时更新知识库时，不仅极易产生严重的“幻觉”现象，且无法给出可信度高、可溯源的知识实体与数据来源引用，因而无法满足严苛工程场景对事实准确性的基本要求。</p>
                     <p>为此，本项目紧密结合数据科学与大数据工程的行业实践规范，设计并开发了一套端到端的检索增强生成（RAG）智能助手系统。该系统针对包含课程核心资料 50+ 篇、Wikipedia 特定专业词条 83 条、Stack Overflow 高质量技术问答 30 篇及 CSDN 垂直博客 18 篇在内的共 1,215,021 个具有典型多源异构特性的非结构化文档分块，构建了全自动的数据流加工、清洗与索引构建流水线（ETL）。在离线数据流中，系统创新地设计了云端算力卸载机制，租用 AutoDL 远程云显卡（NVIDIA RTX 4090，24GB 显存）并运行基于 FastAPI 构建的并行 Embedding 服务器，并通过 <code>EMBEDDING_SERVER_TOKEN</code> 启用 Bearer Token 鉴权，以 batch_size=256 离线处理百万级数据，持久化写入进程内 ChromaDB 向量数据库，从而构筑了高鲁棒性的语义关联索引。在线服务路径中，系统实现了基于 LLM 动态意图解析与元数据属性级过滤的混合语义多维检索体系（Hybrid Search），最终结合严格提示词约束（Prompt Engineering），由生成器合成附带精准可信数据来源标注的最终答案。</p>
-                    <p>系统评估结果表明，在包含 50 个真实、多维度且具有高度口语化干扰的复杂查询测试集下，本系统展现出了卓越的工程稳健性与极高的检索精度：在域内语义检索测试中，Recall@3 指标高达 87.8%，人工综合评分均值达到 4.36/5，幻觉率得到显著抑制，且 91 项 pytest 测试用例全部通过，覆盖远程 Token 鉴权、双路检索降级、JSONL 摄取隔离与前端安全渲染。在计算资源与运行成本的控制方面，本系统展现了极高的工业性价比：通过本地及云端算力融合部署，整体数据流水线百万级建库总开销仅为 5.58 元（其中 AutoDL 算力租赁 4.70 元，LLM 元数据 API 开销 0.88 元），在稳态运行状态下，系统的端到端单次查询平均延迟为 6.2s，单次查询 API 开销仅约 0.015 元（每千次高频查询成本约为 15 元）。这充分证明了本系统是一套可水平扩展、高性价比、工业级表现的非结构化大数据语义挖掘与检索生成解决方案，为高校信息化及企业智慧客服场景下非结构化大数据向可信知识的科学转化提供了坚实的数据科学系统工程范式。</p>
+                    <p>系统评估结果表明，在包含 50 个真实、多维度且具有高度口语化干扰的复杂查询测试集下，本系统展现出了卓越的工程稳健性与极高的检索精度：在域内语义检索测试中，Recall@3 指标高达 87.8%，人工综合评分均值达到 4.36/5，超纲查询防幻觉准确率达 55.6%（5/9 正确拒答），实际发生实质性编造的仅 1 例（Q44），且 91 项 pytest 测试用例全部通过，覆盖远程 Token 鉴权、双路检索降级、JSONL 摄取隔离与前端安全渲染。在计算资源与运行成本的控制方面，本系统展现了极高的工业性价比：通过本地及云端算力融合部署，整体数据流水线百万级建库总开销仅为 5.58 元（其中 AutoDL 算力租赁 4.70 元，LLM 元数据 API 开销 0.88 元），在稳态运行状态下，系统的端到端单次查询平均延迟为 5.6s，单次查询 API 开销仅约 0.015 元（每千次高频查询成本约为 15 元）。这充分证明了本系统是一套可水平扩展、高性价比、工业级表现的非结构化大数据语义挖掘与检索生成解决方案，为高校信息化及企业智慧客服场景下非结构化大数据向可信知识的科学转化提供了坚实的数据科学系统工程范式。</p>
                 </div>
 
                 <div class="right-col">
                     <h1 class="ieee-sec ieee-sec-num">2. 系统架构</h1>
                     <h2 class="ieee-subsec">2.1 数据流概览</h2>
-                    <p>整个 RAG 智能助手系统由 11 个职责高度单一的子模块构成，严密拼装成一条高内聚、低耦合的七层流水线架构。在离线语料入库阶段，原始语料首先输入 `ingest.py` 模块进行内容提取与解析；其中 `.jsonl` 文件由 `load_jsonl_files()` 单独读取，`load_text_files()` 仅处理 `.md`、`.txt`、`.pdf`，避免同一 JSONL 记录被普通文本路径重复摄取；随后，`preprocess.py` 执行核心的文本预处理流程，包括运行正则表达式去噪流水线（彻底清洗 HTML 标签、系统控制符）、自研四层算法的语义分块处理，以及利用大模型异步批量提取元数据。为应对 100 万规模的计算瓶颈，系统通过 `scripts/setup_autodl.sh` 一键拉起租用的 AutoDL 远程云显卡环境（配备 RTX 4090 GPU，24GB VRAM），运行 FastAPI 驱动的远程推理服务器 `scripts/embedding_server.py`，并要求公网请求携带 <code>Authorization: Bearer &lt;token&gt;</code>。最后由本地流水线将分块以 Batch=256 异步发送至云端，在 50ms 内完成 BAAI/bge-large-zh-v1.5 模型的高维稠密向量计算，最后调用 ChromaDB 进行持久化入库。</p>
-                    <p>在在线实时查询服务路径中，系统数据流的流向如下：用户输入的自然语言提问首先由 `query_parser.py` 解析，调用 LLM 动态抽取出纯语义搜索查询词（`search_query`）与用于过滤的属性级结构化约束（`filters`）；接着，`embed_store.search()` 执行“课程文档优先 + 全库检索”的双路召回策略，并结合向量余弦距离度量与 SQL 属性条件匹配，从数据库中召回与问题最相关的 Top-K 个高质量文本数据块；最后，`qa.py` 作为答案生成的核心模块，将检索到的文本上下文结合高度结构化的 System Prompt 拼接后，送入 LLM 合成最终的生成结果，答案中严格强制标注了参考块的真实物理来源。最终，系统提供了两份独立的交互入口：命令行界面（CLI，`python main.py ask`）与基于 Web UI 的 Streamlit 交互平台。</p>
+                    <p>整个 RAG 智能助手系统由 11 个职责高度单一的子模块构成，严密拼装成一条高内聚、低耦合的七层流水线架构。在离线语料入库阶段，原始语料首先输入 `ingest.py` 模块进行内容提取与解析；其中 `.jsonl` 文件由 `load_jsonl_files()` 单独读取，`load_text_files()` 仅处理 `.md`、`.txt`、`.pdf`，避免同一 JSONL 记录被普通文本路径重复摄取。这一“数据摄取隔离设计”（Ingestion Isolation）实现了对离线半结构化数据源的解耦，防止因大规模元数据重复摄取引发的向量库冗余与搜索空间膨胀问题。随后，`preprocess.py` 执行核心的文本预处理流程，包括运行正则表达式去噪流水线（彻底清洗 HTML 标签、系统控制符）、自研四层算法的语义分块处理，以及利用大模型异步批量提取元数据。在语料采集层，系统除了使用基础的维基抓取脚本外，还引入了 `collect_more_corpus.py` 自适应高级语料采集模块，基于 Wikipedia API 实现了多页级搜索采集、限流控速与去重分页。为应对大规模向量计算瓶颈，系统通过 `scripts/setup_autodl.sh` 一键拉起租用的 AutoDL 远程云显卡环境（配备 RTX 4090 GPU，24GB VRAM），运行 FastAPI 驱动的远程推理服务器 `scripts/embedding_server.py`，并要求公网请求携带 <code>Authorization: Bearer &lt;token&gt;</code>。最后由本地流水线将分块以 Batch=256 异步发送至云端，在 50ms 内完成 BAAI/bge-large-zh-v1.5 模型的高维稠密向量计算，最后调用 ChromaDB 进行持久化入库。</p>
+                    <p>在在线实时查询服务路径中，系统数据流的流向如下：用户输入的自然语言提问首先由 `query_parser.py` 解析，调用 LLM 动态抽取出纯语义搜索查询词（`search_query`）与用于过滤的属性级结构化约束（`filters`）；接着，`embed_store.search()` 执行“课程文档优先 + 全库检索”的双路召回策略。具体地，双路检索机制（Dual-Path Retrieval）首先在独立的 `course_docs` 集合中执行前置检索，确保官方教材、课后 FAQ 和考试说明等域内高优先级权威信息被优先召回；在域内召回评分不足或内容缺失时，系统会自动路由并检索全库（包含 CSDN、SO、Wiki），这一降级策略既保障了高准确度信息的优先权，又提供了全库背景知识的兜底支撑，是系统检索机制的关键创新。最后结合向量余弦距离度量与 SQL 属性条件匹配，从数据库中召回与问题最相关的 Top-K 个高质量文本数据块。最后，`qa.py` 作为答案生成的核心模块，将检索到的文本上下文结合高度结构化的 System Prompt 拼接后，送入 LLM 合成最终的生成结果，答案中严格强制标注了参考块的真实物理来源。最终，系统提供了两份独立的交互入口：命令行界面（CLI，`python main.py ask`）与基于 Web UI 的 Streamlit 交互平台。此外，本系统还集成了安全渲染模块 `app/rendering.py`（对网页展示文本进行安全过滤）以及独立的性能评测脚本 `evaluation.py` 与 `latency_benchmark.py`，用于实现科学的指标量化监控。</p>
                     <p>整个系统的架构开发严格遵循以下五项基础软件工程与数据科学设计原则：(1) 模块化原则——彻底杜绝行数冗长、多重职责重合的“上帝脚本”，保证各层级代码边界清晰；(2) 路径可移植原则——所有数据读写及物理资产的相对定位路径统一从 `BASE_DIR`（基于 `Path(__file__)`）中动态推导，彻底抹除硬编码绝对路径的安全隐患；(3) 环境变量隔离原则——大模型 API 密钥、本地模型路径等高敏感配置通过独立的 `.env` 环境变量文件进行精细化管理；(4) 单例设计模式——将大语言模型客户端及本地向量加载器注册为单例缓存对象，实现网络连接与 GPU 显存的全局高效复用；(5) 优雅降级设计——当意图解析器在遭遇恶意注入或无法理解的异常口语时，自动平滑回退至全局纯语义搜索，若元数据检索失效则平滑转为全库最近邻语义检索，最大程度保障系统在复杂边界下的高可用度。</p>
                     
                 </div>
@@ -942,7 +967,7 @@
         </div>
 
         <div class="page-footer">
-            <span class="ieee-copyright">978-1-6654-9567-7/26/$31.00 ©2026 IEEE</span>
+            <span class="ieee-copyright">大数据课程学期项目报告 · 2026</span>
             <span>— 1 —</span>
         </div>
     </div>
@@ -980,8 +1005,8 @@
                             </tr>
                             <tr>
                                 <td>语料采集</td>
-                                <td>三源 API</td>
-                                <td>Wikipedia/SO/CSDN 脚本</td>
+                                <td>四源 API</td>
+                                <td>Wikipedia/SO/CSDN/扩展自适应脚本</td>
                             </tr>
                             <tr>
                                 <td>文本清洗</td>
@@ -1058,9 +1083,9 @@
             <div class="page-columns" style="height: 195mm;">
                 <div class="left-col">
                     <h2 class="ieee-subsec">2.3 一条数据的完整生命周期</h2>
-                    <p>为了深入理解 RAG 系统的底层数据流变，我们以一个高度复杂的真实查询——“2025年的通知有哪些？”为例，对系统内部各模块的响应时序与数据流转进行全链路追踪与时序剖析：首先，查询通过 Web 界面被 `query_parser.py` 接收，模块封装当前问题并向大模型 DeepSeek V4 Flash发起低延迟推理，大模型返回带有严格 JSON Schema 结构的解析结果，包含 `search_query: '通知'` 以及结构化元数据过滤条件 `filters: {year: 2025, category: 'notice'}`。这一过程包含了自然语言意图向结构化数据逻辑的精准转换，消耗网络延迟约 2.7 秒，共包含约 500 个输入 Token 和 50 个结构化输出 Token。</p>
+                    <p>为了深入理解 RAG 系统的底层数据流变，我们以一个高度复杂的真实查询——“2025年的通知有哪些？”为例，对系统内部各模块的响应时序与数据流转进行全链路追踪与时序剖析：首先，查询通过 Web 界面被 `query_parser.py` 接收，模块封装当前问题并向大模型（由环境变量 OPENAI_MODEL 配置为 deepseek-v4-flash）发起低延迟推理，大模型返回带有严格 JSON Schema 结构的解析结果，包含 `search_query: '通知'` 以及结构化元数据过滤条件 `filters: {year: 2025, category: 'notice'}`。这一过程包含了自然语言意图向结构化数据逻辑的精准转换，消耗网络延迟约 2.3 秒，共包含约 500 个输入 Token 和 50 个结构化输出 Token。</p>
                     <p>接下来，数据流进入核心的混合语义检索层。`embed_store.py` 自动获取生成的语义查询词“通知”，在在线查询状态下携带 Bearer Token 将其送入由 FastAPI 承载的远程 AutoDL RTX 4090 向量计算服务，在 50 毫秒内计算出该查询的 1024 维高稠密实数特征向量。随后，系统在本地 ChromaDB 中存储的 1,215,021 个高维文档分块上，执行基于分层可导航小世界图（HNSW）的近似最近邻（ANN）搜索，并结合元数据引擎执行 `year=2025` 且 `category='notice'` 的 SQL 属性过滤。ChromaDB 在 250 毫秒内完成了这一系列复杂的代数计算与过滤操作，返回带有精确余弦距离评分的 Top-3 数据文本分块及它们的元数据。</p>
-                    <p>最后，召回的 3 个高质量文本分块与原始问题一并被封装进预设的 System Prompt 中，送往 `qa.py` 模块。生成器调用 DeepSeek V4 Flash 模型，在严格的事实约束提示下，对上下文进行高度压缩与推理合成，在 3.2 秒内生成了一个逻辑严密、表达流畅的中文答案，并在答案末尾精准地以角标形式标注了真实数据来源如 `[来源: wiki_2025_announcement.md]`。整个端到端处理共耗时 6.2 秒，其中大模型的网络请求占总耗时的 96% 以上，而向量计算与库检索仅占 4%，体现了数据流“在线推理重、离线计算快”的典型特征。</p>
+                    <p>最后，召回的 3 个高质量文本分块与原始问题一并被封装进预设的 System Prompt 中，送往 `qa.py` 模块。生成器调用大模型，在严格的事实约束提示下，对上下文进行高度压缩与推理合成，在 3.1 秒内生成了一个逻辑严密、表达流畅的中文答案，并在答案末尾精准地以角标形式标注了真实数据来源如 `[来源: wiki_2025_announcement.md]`。整个端到端处理共耗时 5.6 秒，其中大模型的网络请求占总耗时的 95% 以上，而向量计算与库检索仅占 5% 左右，体现了数据流“在线推理重、离线计算快”的典型特征。</p>
                     
                     <h2 class="ieee-subsec">2.4 玻璃盒展示</h2>
                     <p>作为数据科学专业的系统实现，本项目从工程伦理与科学验证的角度出发，彻底摒弃了主流市售 RAG 软件常见的“API 黑盒包装”弊端。系统在 Streamlit 交互界面的显要位置设计并实现了独立的“开发者调试与玻璃盒展示面板”（Glassbox Display Panel）。当用户发起查询时，调试面板会以高对比度的前端组件形式，将系统运行的中间状态数据全部透明化：不仅实时打印出大模型意图解析产出的中间 JSON 过滤对象，还将召回的每一条知识参考分块的底数据直接展现在用户面前。这不仅为开发者提供了极速的问题排查闭环，更能让最终用户通过清晰的溯源线索，在 1秒内验证大模型回答的事实准确性。</p>
@@ -1169,10 +1194,10 @@
             <div class="page-columns" style="height: 255mm;">
                 <div class="left-col">
                     <h2 class="ieee-subsec">3.4 LLM 选择与三重角色</h2>
-                    <p class="no-indent">在本系统中，大语言模型 DeepSeek V4 Flash 扮演了整个数据闭环与推理生成中心的三重核心角色，这体现了我们在异构计算资源调度上的工程取舍。第一重角色是离线流水线中的元数据提取引擎：系统在 `preprocess.py` 中构建了 `concurrent.futures.ThreadPoolExecutor` 高并发多线程池，并发大小设为 32，对 1,000,176 行分块文档进行并行发出提取请求。在遭遇国内公有云高频 API 并发下的“429 访问限流”警告时，系统底层实现了智能重试调度（通过指数退避机制：2s -> 4s -> 8s 递增重试，最大重试 3 次），仅花费了 0.88 元的超低成本便完成了全语料的属性分类。第二重角色是在线查询解析器（Query Parser）：当用户提问时，大模型在 Temperature=0 的严格确定性约束下，将自然口语解析为无杂质的规范 JSON 数据结构，当解析格式受网络波动异常中断时，底层数据层能自动捕获并无缝平滑退避。第三重角色是最终的答案合成与引用注入器：基于严格 Facts 事实一致性模板，强制要求 LLM 在没有检索证据或知识不足时执行拒答，并对最终答案的每个断言强制标注角标引用。相比于 GPT-4o-mini 等高开销模型，DeepSeek V4 Flash 凭借其极具竞争力的价格、超低的首字输出延迟（TTFT）以及强悍的中文语义加工能力，成为了本项目中无可替代的高性价比核心选择。</p>
+                    <p class="no-indent">在本系统中，大语言模型（由环境变量 OPENAI_MODEL 配置为 deepseek-v4-flash）扮演了整个数据闭环与推理生成中心的三重核心角色，这体现了我们在异构计算资源调度上的工程取舍。第一重角色是离线流水线中的元数据提取引擎：系统在 `preprocess.py` 中构建了 `concurrent.futures.ThreadPoolExecutor` 高并发多线程池，并发大小设为 32，对总分块中需要大模型分类与摘要提取的 1,000,176 行分块文档进行并行发出提取请求（其余 214,845 行分块由于在源头已自带元数据结构，直接免除 LLM 提取以节约资源与 API 成本）。在遭遇国内公有云高频 API 并发下的“429 访问限流”警告时，系统底层实现了智能重试调度（通过指数退避机制：2s -> 4s -> 8s 递增重试，最大重试 3 次），仅花费了 0.88 元的超低成本便完成了全语料的属性分类。第二重角色是在线查询解析器（Query Parser）：当用户提问时，大模型在 Temperature=0 的严格确定性约束下，将自然口语解析为无杂质的规范 JSON 数据结构，当解析格式受网络波动异常中断时，底层数据层能自动捕获并无缝平滑退避。第三重角色是最终的答案合成与引用注入器：基于严格 Facts 事实一致性模板，强制要求 LLM 在没有检索证据或知识不足时执行拒答，并对最终答案的每个断言强制标注角标引用。相比于 GPT-4o-mini 等高开销模型，DeepSeek 凭借其极具竞争力的价格、超低的首字输出延迟（TTFT）以及强悍的中文语义加工能力，成为了本项目中无可替代的高性价比核心选择。</p>
 
                     <h2 class="ieee-subsec">3.5 查询解析：LLM 意图提取 vs 规则引擎</h2>
-                    <p class="no-indent">对于用户的实时输入意图提取，我们放弃了传统的基于正则表达式与限定分词（如 Jieba）的规则过滤引擎。我们最初尝试手工编写了 15 条涵盖高校及技术场景中高频特征词的规则（例如“去年”映射到 `year: 2025`，“维基”映射到 `category: 'wiki'` 等），但在自建的 20 个高度口语化查询测试集中，规则引擎的意图识别率与元数据抽取准确度仅为 55%。其根本症结在于自然语言具有无限的表达多样性与含蓄性（例如“老师之前在群里发过的那个说明在哪儿呢？”这样的提问，在分词和词典匹配上极难精确地映射到“通知”或“2025年”）。大模型意图解析器则通过高维语义理解，在此类口语化长尾句法上实现了 94% 以上的惊人精准分类，虽然每次解析会为系统引入额外 2 秒左右的网络延迟，但其换来的极高泛化能力与意图精准抽取率是系统高可靠性的核心技术基神。同时，我们通过配置“解析失效自动回退至纯向量全局相似度检索”的异常处理机制，确保了即使在大模型网络中断的极端情况下，检索流程也绝不会卡死或静默崩溃。</p>
+                    <p class="no-indent">对于用户的实时输入意图提取，我们放弃了传统的基于正则表达式与限定分词（如 Jieba）的规则过滤引擎。我们最初尝试手工编写了 15 条涵盖高校及技术场景中高频特征词的规则（例如“去年”映射到 `year: 2025`，“维基”映射到 `category: 'wiki'` 等），但在自建的 20 个高度口语化查询测试集中，规则引擎的意图识别率与元数据抽取准确度仅为 55%。其根本症结在于自然语言具有无限的表达多样性与含蓄性（例如“老师之前在群里发过的那个说明在哪儿呢？”这样的提问，在分词和词典匹配上极难精确地映射到“通知”或“2025年”）。大模型意图解析器则通过高维语义理解，在此类口语化长尾句法上实现了 94% 以上的惊人精准分类，虽然每次解析会为系统引入额外 2 秒左右的网络延迟，但其换来的极高泛化能力与意图精准抽取率是系统高可靠性的核心技术基石。同时，我们通过配置“解析失效自动回退至纯向量全局相似度检索”的异常处理机制，确保了即使在大模型网络中断的极端情况下，检索流程也绝不会卡死或静默崩溃。</p>
 
                     <h2 class="ieee-subsec">3.6 失败尝试：正则分块的教训</h2>
                     <p class="no-indent">在项目的研发初期，我们犯过典型的“技术简化反模式”错误：我们最初试图基于纯文本处理的正则表达式 `[。！？；]` 作为硬性边界，当累积字数接近 700 字符时执行物理切分。虽然这一算法在排版干净、句式简短的英文测试集上表现尚可，但在处理真实且复杂的中文技术及课程文档时，它暴露了两个导致系统数据链路严重退化的致命漏洞：(1) 中文代码块劫持漏洞——正则分块器无法识别文本中的 markdown 代码块标记，导致大量描述算法和数据结构的完整代码块从中间被硬生生切断，使得后续检索时代码块支离破碎，大模型阅读到残缺上下文后生成了严重编译错误的伪代码；(2) FAQ 孤儿块漏失漏洞——课程常见 FAQ 中，问题与回答往往高度简短且紧凑，但如果它们在字数上被正则机制分到了相邻的两个不同向量块中，在语义空间中它们各自将由于失去对方的信息支持而导致特征空间向量距离暴增，Recall@3 检索命中率因此直接跌落至 62%。这次血淋淋的数据工程失败让我们深刻认识到：文本清洗与分块应当具备“结构与语义感知”（Structure & Semantic Awareness），而非机械地进行文本字符截断。新版自研分块代码虽然增加了约 60 行，但完全扫除了代码块被截断的隐患，Recall 实现了大幅跃升。</p>
@@ -1208,13 +1233,13 @@
                                 </tr>
                                 <tr>
                                     <td>幻觉率(超纲)</td>
-                                    <td>1/9 (11.1%)</td>
-                                    <td>超纲查询编造答案</td>
+                                    <td>4/9 (44.4%)</td>
+                                    <td>超纲查询中 4 次被评估标记为幻觉（含 3 次已拒答但引用无关来源，实质编造仅 11.1%）</td>
                                 </tr>
                                 <tr>
                                     <td>平均延迟(稳态)</td>
-                                    <td>6.2s</td>
-                                    <td>解析2.7s+检索0.25s+生成3.2s</td>
+                                    <td>5.6s</td>
+                                    <td>解析2.3s+检索0.25s+生成3.1s</td>
                                 </tr>
                                 <tr>
                                     <td>解析成功率</td>
@@ -1224,7 +1249,7 @@
                             </tbody>
                         </table>
                     </div>
-                    <p class="no-indent" style="font-size: 8.5px; margin-top: 4px;">对评估结果各子维度的进一步统计表明，系统在不同难度类别下的表现呈现出一定的梯度差异：在技术概念类与跨文档联合推理类的查询中，由于我们本地部署的优秀 <code>BAAI/bge-large-zh-v1.5</code> 高维度特征表征能力极其强悍，系统在此两项的检索召回率达到了令人惊叹的 100%（20/20）；在常规的课程 FAQ 检索中，亦获得了 90%（9/10）的高位命中表现。然而，在元数据限制类的查询中，召回率则下滑至 70%（7/10）。经深层次的底层数据追踪，我们发现其核心技术根源在于：ChromaDB 向量数据库在执行多维度的复合 SQL where 字典限制时，其底层的查询引擎对嵌套或多重隐式 AND 条件的逻辑校验偶发解析冲突，导致系统在部分带有高度口语化年限表述的属性限制下，意外丢弃了正确的元数据标记块，进而退避回纯语义最近邻检索。这一统计退化现象为我们指明了后续针对数据库嵌套逻辑进行底层优化的重要方向。</p>
+                    <p class="no-indent" style="font-size: 8.5px; margin-top: 4px;">对评估结果各子维度的进一步统计表明，系统在不同难度类别下的表现呈现出一定的梯度差异：在技术概念类与跨文档联合推理类的查询中，由于我们本地部署的优秀 <code>BAAI/bge-large-zh-v1.5</code> 高维度特征表征能力极其强悍，系统在此两项的检索召回率达到了令人惊叹的 100%（20/20）；在常规的课程 FAQ 检索中，亦获得了 90%（9/10）的高位命中表现。然而，在元数据限制类的查询中，召回率则下滑至 70%（7/10）。在防幻觉安全维度上，评估脚本中超纲查询的被判定幻觉率为 44.4%（4/9），而人工评分中真正判定为“应拒答却编造”的比例仅为 11.1%（1/9），两者的差异主要来自判定标准：在 Q41（钢琴考级）、Q42（天气）与 Q47（GitHub地址）的超纲防御中，大模型虽然正确输出了“无法基于参考资料回答”的拒答词，但由于在检索召回阶段依然匹配并引用了底层的无关文档，被严格的评估脚本自动判定为“伴随引用幻觉”；而真正的实质性编造仅在 Q44（Python for循环）中发生。经深层次的底层数据追踪，我们发现其核心检索技术退化根源在于：ChromaDB 向量数据库在执行多维度的复合 SQL where 字典限制时，其底层的查询引擎对嵌套或多重隐式 AND 条件的逻辑校验偶发解析冲突，导致系统在部分带有高度口语化年限表述的属性限制下，意外丢弃了正确的元数据标记块，进而退避回纯语义最近邻检索。这一统计退化现象为我们指明了后续针对数据库嵌套逻辑进行底层优化的重要方向。</p>
 
                     <h2 class="ieee-subsec">4.3 人工评分分布</h2>
                     <div class="table-wrapper" style="margin: 2px 0;">
@@ -1295,7 +1320,7 @@
                 <div class="left-col">
                     <h2 class="ieee-subsec">4.4 典型问答示例</h2>
                     <p class="no-indent">为了形象地展示系统在真实环境下的多维响应机理，我们摘录了三个典型的评估实测案例进行对比与深度剖析。第一个是获得满分（5分）的优秀案例：当输入查询“什么是 RAG 系统？”时，<code>query_parser</code> 瞬间精准抽取出 <code>search_query: 'RAG 系统'</code>，ChromaDB 在 20 毫秒内召回了余弦空间距离极近的 <code>wiki_检索增强生成.md</code>（距离 0.162）和 <code>rag_system_notes.md</code>（距离 0.246）。由于召回块信噪比极高，大模型在没有原文档干扰的上下文中，生成了一个全面涵盖数据摄取、检索、答案合成三阶段定义的中文解答，且精准引用了这两份物理文件，表现无可挑剔。</p>
-                    <p>第二个是获得 4 分的亚健康案例：当用户输入“2025年的通知有哪些？”时，意图解析器成功提取出了 <code>{year: 2025, category: 'notice'}</code>。但在向量距离比对中，由于知识库中 2025 年的特定通知样本量较为稀疏，ChromaDB 的 where 多重判定触发了底层逻辑警告，系统自动执行降级算法，平滑降级为全局语义相似度搜索。大模型最终基于语义关联召回了 2024 年底发出的下一年度预备通知，虽然信息主体高度相关且保证了系统未卡死，但在年限精确度上存在轻微偏移。第三个则是典型的 1 分失效幻觉案例：当恶意输入属于超纲技术问题的“Python 的 for 循环应该怎么写？”时，由于语料库中存在 Stack Overflow 采集的涉及 pandas 代码块片段（余弦距离 0.448 表现出虚假的语义相似性），LLM 虽然受到“仅根据参考资料回答”的限制，但由于该问题本身难度极低，大模型内部的先验通用知识被过度激活，绕过了 Prompt 约束，给出了一份详细的代码教程。这表明当检索到的块存在“表面相似但主题无关”（即语义漂移）时，系统面临防御穿透的安全漏洞。</p>
+                    <p>第二个是获得 4 分的亚健康案例：当用户输入“2025年的通知有哪些？”时，意图解析器成功提取出了 <code>{year: 2025, category: 'notice'}</code>。但在向量距离比对中，由于知识库中 2025 年的特定通知样本量较为稀疏，ChromaDB 的 where 多重判定触发了底层逻辑警告，系统自动执行降级算法，平滑降级为全局语义相似度搜索。大模型最终基于语义关联召回了 2024 年底发出的下一年度预备通知，虽然信息主体高度相关且保证了系统未卡死，但在年限精确度上存在轻微偏移。第三个则是典型的 1 分失效幻觉案例：当恶意输入属于超纲技术问题的“Python 的 for 循环应该怎么写？”时，由于语料库中存在 Stack Overflow 采集的涉及 pandas 代码块片段（余弦距离 0.448 表现出虚假的语义相似性），LLM 虽然受到“仅根据参考资料回答”的限制，但由于该问题本身难度极低，大模型内部的先验通用知识被过度激活，绕过了 Prompt 约束，给出了一份详细的代码教程。这表明当检索到的块存在“表面相似但主题无关”（即语义漂移）时，系统面临防御穿透的安全漏洞。而在其他 3 例标记为自动评估幻觉的超纲提问（Q41钢琴考级、Q42天气、Q47GitHub地址）中，大模型已经正确输出了“无法回答”，但由于检索层依然强行召回了不相关的底库文档并在答复中进行了引用，在脚本评估中仍被计入幻觉。这提示我们超纲防线的构建需要区分“内容实质编造”与“拒答后关联引用”两种不同表现。</p>
 
                     <h2 class="ieee-subsec">4.5 失效模式分析</h2>
                     <p class="no-indent">通过对评估数据中失败或表现欠佳案例的深度剖析，我们归纳并定位了系统底层存在的三项典型“失效模式”（Failure Modes），并一一制定了对应的高级防御方案：首先，失效模式 1——复合条件 SQL 过滤退化。在处理复杂的多级 filters 查询时，ChromaDB 偶发因属性 AND 逻辑校验异常而返回空集合，导致检索强制降级为纯语义检索。其核心根源在于关系型 SQLite 与 Parquet 向量特征表的跨引擎联合过滤在复杂边界上存在数据不一致。我们的修复方案是：在 <code>embed_store.py</code> 检索层增加一个智能字典映射层，将大模型输出的多级 JSON 字典在传入数据库前，提前扁平化重构为标准的单级 dict 对象，并主动重写为严格的 <code>{$and: [...]}</code> 嵌套字典格式，彻底杜绝了检索退化现象的发生。</p>
@@ -1312,7 +1337,8 @@
                     <p class="no-indent">本系统的研发全过程，不仅致力于功能实现，更在系统架构设计上进行了深度反思，积极、主动地识别并绕过了数据科学与大数据工程开发中五项典型的高危“反模式”（Anti-Patterns）：首先，彻底击碎“上帝脚本（God Script）反模式”——系统没有把语料读取、特征向量生成、网络调用、Streamlit 绘图等所有工作胡乱塞进一个 <code>main.py</code> 中，而是将业务严密分割在 11 个独立模块里，极大保证了系统的可维护性与协作扩展空间；其次，坚决消灭“硬编码路径反模式”——彻底根除任何涉及开发者机器绝对路径的代码，所有本地持久化资产均从系统 BASE_DIR 动态自适应推导，确保代码在他人电脑上能够“即拷即用”；第三，绕过“Print调试反模式”——废除所有随意的 print 语句，统一配置基于 <code>logging</code> 标准库的 <code>get_logger(__name__)</code>，使系统具备工业级的分级日志追踪能力。第四，杜绝“静默吞噬异常反模式”——我们严密禁止任何包含 <code>except: pass</code> 或无捕获逻辑的空白 except 块，所有的异常处理均至少包含 <code>logger.warning</code> 的日志轨迹记录，且在底层异常中严格保证 <code>KeyboardInterrupt</code> 和 <code>SystemExit</code> 等系统级硬中断信号能够穿透捕获，防止系统变成无法结束运行的“僵尸进程”；第五，避开“倒置流水线反模式”——即“先写酷炫的前端 UI 界面，后写底层数据计算引擎”的浮躁作风。我们严格贯彻了“行走的骨架”（Walking Skeleton）开发策略，在开发的第一天就用纯 CLI 命令行走通了从一句话到向量库查找的最小可行闭环，随后才逐步添加元数据并发处理和 Streamlit Web 前端，保证了系统底层的极高稳健性。</p>
 
                     <h2 class="ieee-subsec">4.8 安全与 Prompt Injection</h2>
-                    <p class="no-indent">在大数据应用与 LLM 深度集成时代，系统的安全性不仅取决于 Prompt 约束，也取决于服务边界与前端渲染边界。当前版本已完成两项关键加固：第一，远程 AutoDL Embedding 服务支持 <code>EMBEDDING_SERVER_TOKEN</code>，当服务端配置 token 后，<code>/v1/embeddings</code> 必须携带 <code>Authorization: Bearer &lt;token&gt;</code> 才能访问，本地 <code>embed_store.py</code> 也会同步读取该 token 并传入 OpenAI-compatible 客户端；第二，Streamlit 前端不再把 LLM 回答和历史 assistant 消息直接拼入 <code>unsafe_allow_html=True</code>，而是通过 <code>app/rendering.py</code> 先执行 HTML 转义，再将换行安全转换为 <code>&lt;br&gt;</code>。来源卡片仍保留自定义 HTML，但标题、路径、摘要和错误信息全部经过转义处理。这样即使外部语料或模型输出中包含脚本片段，也不会在浏览器端被执行。</p>
+                    <p class="no-indent">在大数据应用与 LLM 深度集成时代，系统的安全性不仅取决于 Prompt 约束，也取决于服务边界与前端渲染边界。当前版本已完成两项关键加固：第一，远程 AutoDL Embedding 服务支持 <code>EMBEDDING_SERVER_TOKEN</code>，当服务端配置 token 后，<code>/v1/embeddings</code> 必须携带 <code>Authorization: Bearer &lt;token&gt;</code> 才能访问，本地 <code>embed_store.py</code> 也会同步读取该 token 并传入 OpenAI-compatible 客户端；第二，Streamlit 前端不再把 LLM 回答和历史 assistant 消息直接拼入 <code>unsafe_allow_html=True</code>，而是通过 <code>app/rendering.py</code> 中的 `safe_text_to_html` 先使用标准库 `html.escape(text)` 执行 HTML 安全转义，再将换行符 `
+` 安全转换为 <code>&lt;br&gt;</code>。来源卡片仍保留自定义 HTML，但标题、路径、摘要和错误信息全部经过严格转义。这样即使外部语料或模型输出中包含脚本片段，也不会在浏览器端被执行，有效杜绝了潜在的 DOM 型跨站脚本（XSS）漏洞注入风险。</p>
                 </div>
             </div>
         </div>
@@ -1394,8 +1420,8 @@
                                 <tr>
                                     <td>查询解析(LLM)</td>
                                     <td>2.2s</td>
-                                    <td>2.7s</td>
-                                    <td>43%</td>
+                                    <td>2.3s</td>
+                                    <td>41%</td>
                                 </tr>
                                 <tr>
                                     <td>向量检索</td>
@@ -1406,19 +1432,20 @@
                                 <tr>
                                     <td>答案生成(LLM)</td>
                                     <td>3.5s</td>
-                                    <td>3.2s</td>
-                                    <td>53%</td>
+                                    <td>3.1s</td>
+                                    <td>55%</td>
                                 </tr>
                                 <tr>
                                     <td>端到端总计</td>
-                                    <td>22.0s</td>
-                                    <td>6.2s</td>
+                                    <td>21.9s</td>
+                                    <td>5.6s</td>
                                     <td>100%</td>
                                 </tr>
                             </tbody>
                         </table>
+                        <div style="font-size: 7px; color: var(--text-muted); margin-top: 2px; text-align: left;">* 注: 包含首次冷启动时加载 HNSW 索引至内存以及本地特征表征模型加载的一次性开销。</div>
                     </div>
-                    <p class="no-indent" style="font-size: 8.2px; margin-bottom: 2px;">对于实时在线系统的延迟性能，我们建立了严密的“延迟预算”（Latency Budget）模型，以秒级精度对端到端的时序进行定位与优化。在系统遭遇首次冷启动运行时，需要为本地 GPU 加载 BAAI/bge-large-zh-v1.5 嵌入模型分配约 16 秒的冷加载开销；而在系统进入常驻内存的稳态运行状态后，总体的端到端平均响应延迟稳定在优秀的 6.2 秒左右。通过时序分解，我们发现大模型调用（意图解析 2.7s 以及最终的答案生成合成 3.2s）占用了总体稳态延迟的 96% 以上，这也是整个 RAG 系统中无可回避的绝对计算瓶颈。相比之下，经过 CUDA 加速的本地高稠密向量生成（50ms）与 ChromaDB 的 HNSW 近似最近邻向量检索（200ms）总计仅耗时 250 毫秒，占比不足 4%。针对这一瓶颈，我们提出的四个性能优化路径包括：(1) 热点问题建立 LRU 缓存；(2) 换用轻量级本地模型；(3) 特征计算与意图解析并行；(4) 前端流式传输（Streaming Output）以极大地缓解用户的等待延迟。</p>
+                    <p class="no-indent" style="font-size: 8.2px; margin-bottom: 2px;">对于实时在线系统的延迟性能，我们建立了严密的“延迟预算”（Latency Budget）模型，以秒级精度对端到端的时序进行定位与优化。在系统遭遇首次冷启动运行时，需要为本地 GPU 加载 BAAI/bge-large-zh-v1.5 嵌入模型分配约 16 秒的冷加载开销；而在系统进入常驻内存的稳态运行状态后，总体的端到端平均响应延迟稳定在优秀的 5.6 秒左右。通过时序分解，我们发现大模型网络请求时延（意图解析 2.3s 以及最终的答案生成合成 3.1s）占用了总体稳态延迟的 95% 以上，这也是整个 RAG 系统中无可回避的绝对计算瓶颈。相比之下，经过 CUDA 加速的本地高稠密向量生成（50ms）与 ChromaDB 的 HNSW 近似最近邻向量检索（200ms）总计仅耗时 250 毫秒，占比不足 5%。针对这一瓶颈，我们提出的四个性能优化路径包括：(1) 热点问题建立 LRU 缓存；(2) 换用轻量级本地模型；(3) 特征计算与意图解析并行；(4) 前端流式传输（Streaming Output）以极大地缓解用户的等待延迟。</p>
 
                     <h2 class="ieee-subsec">5.2 课程项目实际成本</h2>
                     <div class="table-wrapper" style="margin: 2px 0;">
@@ -1788,7 +1815,7 @@
                         `}`,
                 embedding: `[INFO] embed_store: 本地加载 BAAI/bge-large-zh-v1.5 模型...\n` +
                            `[INFO] embed_store: 转换为 1024 维稠密实数张量: [0.0124, -0.0984, 0.4412, ...]\n` +
-                           `[SUCCESS] embed_store: 向量提取完毕，耗时: <span class="terminal-success">48.2ms</span>，API费用: <span class="terminal-success">元0.00 (完全免费)</span>`,
+                           `[SUCCESS] embed_store: 向量提取完毕，耗时: <span class="terminal-success">48.2ms</span>，API费用: <span class="terminal-success">0.00 元 (完全免费)</span>`,
                 retrieval: `[INFO] embed_store: ChromaDB 接收复合过滤: {"year": 2025, "category": "notice"}\n` +
                            `<span class="terminal-warning">[WARNING] embed_store: 检索发生错误，回退为纯向量搜索!</span>\n` +
                            `[INFO] embed_store: 执行 HNSW 索引余弦距离搜索 (top_k=3)...\n` +
@@ -1798,7 +1825,7 @@
                            `  - [分块 3] score: <span class="terminal-success">0.485</span> | source: <span class="terminal-val">faq_rules.txt</span> | text: "课程日常通知更新规范..."`,
                 qa: `[INFO] qa: 注入 3 个参考数据源 (共 1850 tokens)，拼接提示词模板...\n` +
                     `[INFO] qa: 调用 DeepSeek V4 Flash 进行事实约束答案生成...\n` +
-                    `[SUCCESS] qa: 最终答复生成完毕! 耗时: <span class="terminal-success">3.2s</span>\n\n` +
+                    `[SUCCESS] qa: 最终答复生成完毕! 耗时: <span class="terminal-success">2.3s</span>\n\n` +
                     `<span class="terminal-success">RAG 智能答复 (域内检索 - 降级回退保障):</span>\n` +
                     `根据2025年教务处的最新通知规划，系统重点做出了以下安排... <span class="terminal-comment">[1] [2]</span>。本学期的全部核心通知将会在每周一早上9:00准时通过教学平台发布... <span class="terminal-comment">[3]</span>。\n\n` +
                     `<span class="terminal-comment">可溯源事实参考来源:</span>\n` +
@@ -1816,24 +1843,24 @@
                         `}`,
                 embedding: `[INFO] embed_store: 本地加载 BAAI/bge-large-zh-v1.5 模型...\n` +
                            `[INFO] embed_store: 转换为 1024 维稠密实数张量: [0.0841, 0.1102, -0.0152, ...]\n` +
-                           `[SUCCESS] embed_store: 向量提取完毕，耗时: <span class="terminal-success">51.0ms</span>，API费用: <span class="terminal-success">元0.00 (完全免费)</span>`,
+                           `[SUCCESS] embed_store: 向量提取完毕，耗时: <span class="terminal-success">51.0ms</span>，API费用: <span class="terminal-success">0.00 元 (完全免费)</span>`,
                 retrieval: `[INFO] embed_store: 执行 HNSW 索引余弦距离搜索 (top_k=3)...\n` +
                            `[SUCCESS] embed_store: 召回成功! 匹配最近邻分块数据:\n` +
-                           `  - [分块 1] score: <span class="terminal-warning">0.448 (语义漂移)</span> | source: <span class="terminal-val">so_pandas_tips.md</span> | text: "...在for循环中遍历dataframe..."\n` +
-                           `  - [分块 2] score: <span class="terminal-warning">0.482 (语义漂移)</span> | source: <span class="terminal-val">csdn_python_basics.md</span> | text: "...通过列表推导式替代简单的for..."\n` +
-                           `  - [分块 3] score: <span class="terminal-warning">0.512 (语义漂移)</span> | source: <span class="terminal-val">wiki_rag_overview.md</span> | text: "...检索流水线中依次执行..."`,
+                           `  - [分块 1] score: <span class="terminal-warning">0.448 (语义漂移)</span> | source: <span class="terminal-val">so_etl_19189522.md</span> | text: "...在for循环中遍历dataframe..."\n` +
+                           `  - [分块 2] score: <span class="terminal-warning">0.484 (语义漂移)</span> | source: <span class="terminal-val">so_pandas_16476924.md</span> | text: "...通过列表推导式替代简单的for..."\n` +
+                           `  - [分块 3] score: <span class="terminal-warning">0.531 (语义漂移)</span> | source: <span class="terminal-val">so_pandas_16476924.md</span> | text: "...检索流水线中依次执行..."`,
                 qa: `[INFO] qa: 匹配到 <span class="terminal-warning">out-of-scope 超纲技术问题</span>。大模型内置先验知识激活...\n` +
                     `[WARNING] qa: 参考资料相关度不足 (余弦距离 > 0.40)，但LLM未触发硬阈值拦截!\n` +
                     `[INFO] qa: 调用 DeepSeek V4 Flash 拼装答案...\n` +
-                    `[SUCCESS] qa: 最终答复生成完毕! 耗时: <span class="terminal-success">2.9s</span>\n\n` +
+                    `[SUCCESS] qa: 最终答复生成完毕! 耗时: <span class="terminal-success">5.3s</span>\n\n` +
                     `<span class="terminal-warning">RAG 智能答复 (防御穿透 - 触发幻觉):</span>\n` +
                     `在 Python 中，for 循环的基本语法如下：\n` +
                     `<code>for i in range(5):\n` +
                     `    print(i)</code>\n` +
                     `此外，如果你需要遍历列表，可以直接使用... <span class="terminal-comment">[1]</span>。对于 pandas 的 DataFrame，可以使用 iterrows() 进行循环遍历... <span class="terminal-comment">[2]</span>。\n\n` +
                     `<span class="terminal-comment">可溯源事实参考来源:</span>\n` +
-                    `  <span class="terminal-comment">[1] csdn_python_basics.md (分块 #3)</span>\n` +
-                    `  <span class="terminal-comment">[2] so_pandas_tips.md (分块 #8)</span>\n` +
+                    `  <span class="terminal-comment">[1] so_etl_19189522.md (分块 #3)</span>\n` +
+                    `  <span class="terminal-comment">[2] so_pandas_16476924.md (分块 #8)</span>\n` +
                     `  <span class="terminal-warning">[!] 警告: 本回答中 80% 的基础语法内容来自于大模型通用先验知识，并非本域内知识库提供，存在安全注入和幻觉越权风险。</span>`
             },
             q_success: {
@@ -1846,7 +1873,7 @@
                         `}`,
                 embedding: `[INFO] embed_store: 本地加载 BAAI/bge-large-zh-v1.5 模型...\n` +
                            `[INFO] embed_store: 转换为 1024 维稠密实数张量: [-0.0912, 0.2415, 0.1189, ...]\n` +
-                           `[SUCCESS] embed_store: 向量提取完毕，耗时: <span class="terminal-success">45.0ms</span>，API费用: <span class="terminal-success">元0.00 (完全免费)</span>`,
+                           `[SUCCESS] embed_store: 向量提取完毕，耗时: <span class="terminal-success">45.0ms</span>，API费用: <span class="terminal-success">0.00 元 (完全免费)</span>`,
                 retrieval: `[INFO] embed_store: 执行 HNSW 索引检索 (top_k=3, 无 filters 约束)...\n` +
                            `[SUCCESS] embed_store: 召回成功! 匹配最近邻高相关分块:\n` +
                            `  - [分块 1] score: <span class="terminal-success">0.162 (极高相关)</span> | source: <span class="terminal-val">wiki_检索增强生成.md</span> | text: "检索增强生成 (RAG) 是一种结合了检索..."\n   - [分块 2] score: <span class="terminal-success">0.246 (高相关)</span> | source: <span class="terminal-val">rag_system_notes.md</span> | text: "RAG架构通常包含离线建库与在线检索..."\n   - [分块 3] score: <span class="terminal-success">0.312 (中相关)</span> | source: <span class="terminal-val">wiki_data_science.md</span> | text: "数据科学工程应用中，垂直知识构建..."`,
