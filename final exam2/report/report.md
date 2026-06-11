@@ -28,7 +28,7 @@
 
 核心交付：本项目实现了从海量杂乱文本文件（包括一个包含 100万行 (1 million lines) 大规模非结构化数据集的 `rag_documents_raw.jsonl` 语料，约 631MB）到可搜索向量索引、再到带来源追溯的智能问答的自动化全流水线。
 
-本项目的一大亮点是设计并实现了 **“GPU 算力卸载与远程嵌入服务架构”**。为了应对百万行级海量数据的密集向量编码挑战，我们利用 AutoDL 平台的 RTX 4090 GPU 云显卡搭建了基于 FastAPI 的 OpenAI 兼容远程 Embedding 服务（`scripts/embedding_server.py`），通过精心调优的批处理大小（`batch_size=256`）和网络传输优化，在 ~2 小时内成功完成了全量 1,215,021 个文本分块的向量数据库构建。随后，我们利用 ModelScope 本地模型下载与 ChromaDB 的便携性，将 5.8GB 压缩后的 HNSW 索引库（`vector_store.tar.gz`）部署回本地，实现了 100% 纯本地离线、CUDA GPU 加速、毫秒级响应（单次问答 < 1 秒）的企业级端到端 RAG 演示系统，测试用例由 54 个全量升级扩展至 82 个，全部通过。
+本项目的一大亮点是设计并实现了 **“GPU 算力卸载与远程嵌入服务架构”**。为了应对百万行级海量数据的密集向量编码挑战，我们利用 AutoDL 平台的 RTX 4090 GPU 云显卡搭建了基于 FastAPI 的 OpenAI 兼容远程 Embedding 服务（`scripts/embedding_server.py`），通过精心调优的批处理大小（`batch_size=256`）和网络传输优化，在 ~2 小时内成功完成了全量 1,215,021 个文本分块的向量数据库构建。随后，我们利用 ModelScope 本地模型下载与 ChromaDB 的便携性，将 5.8GB 压缩后的 HNSW 索引库（`vector_store.tar.gz`）部署回本地，实现了本地检索与远程生成结合的企业级端到端 RAG 演示系统，测试用例已扩展至 91 个，全部通过。
 
 ## 二、业务问题与价值
 
@@ -523,11 +523,11 @@ python src/main.py ask                    # 交互模式
 # Web 演示
 streamlit run app/streamlit_app.py
 
-# 运行测试 (82 个测试函数)
+# 运行测试 (91 个测试函数)
 python -m pytest tests/ -v
 ```
 
-### 测试覆盖 (82 个测试函数)
+### 测试覆盖 (91 个测试函数)
 
 | 测试模块 | 覆盖内容 |
 |----------|---------|
@@ -733,12 +733,14 @@ app/
 | 测试文件 | 测试类/函数 | 覆盖内容 |
 |----------|-------------|----------|
 | `test_preprocess.py` | 7 类 27 个测试 | clean_text / chunk_text / guess_category / merge_fm_meta / _safe_json_parse / extract_metadata / process_documents |
-| `test_ingest.py` | 2 类 12 个测试 | Front-Matter 解析 / 文件加载（含递归、PDF、异常情况） |
+| `test_preprocess.py` | 7 类 28 个测试 | 文本清洗 / 分块 / 元数据解析 / process_documents |
+| `test_ingest.py` | 5 类 27 个测试 | Front-Matter 解析 / 文件加载 / JSONL 加载 / 日期解析 |
+| `test_embed_store.py` | 4 类 15 个测试 | 初始化 / 搜索 / max_distance / where 回退 / 计数 / 来源 / 安全删除 |
+| `test_qa.py` | 2 类 9 个测试 | 空文档兜底 / 上下文生成 / 引用补全 / 年份显示 / 异常处理 |
 | `test_query_parser.py` | 1 类 5 个测试 | 正常解析 / 空过滤 / API 异常 / JSON 格式错误 / Markdown 剥离 |
-| `test_embed_store.py` | 4 类 10 个测试 | 初始化 / 搜索 / max_distance / where 回退 / 计数 / 来源 / 安全删除 |
-| `test_qa.py` | 2 类 10 个测试 | 空文档兜底 / 上下文生成 / 引用补全 / 年份显示 / 异常处理 |
 | `test_integration.py` | 3 类 4 个测试 | 全链路集成测试 / 嵌套 Front-Matter |
-| **总计** | **19 类 82 个测试** | **核心功能 100% 冒烟测试全通过** |
+| `test_rendering.py` | 1 类 2 个测试 | HTML 转义 / 换行保留 |
+| **总计** | **23 类 91 个测试** | **核心功能 100% 冒烟测试全通过** |
 
 ### 14.3 工程实践
 
@@ -800,7 +802,7 @@ app/
 1. **自动化数据流水线**：收集 → 清洗 → 分块 → 嵌入 → 存储 → 检索 → 生成，全链路一键执行
 2. **语义混合检索**：向量搜索 + 元数据过滤 + 查询意图解析 + max_distance 阈值裁剪 + 多层回退
 3. **有据可查防幻觉**：System Prompt 约束 + 来源强制标注 + 自动补全
-4. **工程化标准**：模块化、可测试（82 个测试函数）、环境变量管理、路径可移植、单例模式降本
+4. **工程化标准**：模块化、可测试（91 个测试函数）、环境变量管理、路径可移植、单例模式降本
 
 **项目亮点**：
 - 📊 云端处理百万级超大语料生成 121.5 万文本块，建库算力总成本仅 ¥5.58，本地 100% 离线检索成本为 ¥0
