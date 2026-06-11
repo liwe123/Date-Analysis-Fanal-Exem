@@ -7,6 +7,7 @@
 - `reporting/evaluation.py`：运行 50 题 RAG 评估，默认输出到 `report/evaluation_results.json`。
 - `reporting/latency_benchmark.py`：运行端到端延迟分解，默认输出到 `report/latency_results.json`。
 - `reporting/generate_pdf_ieee.py`：从内置排版内容生成 `report/report_ieee.pdf`。
+- `reporting/check_report_metrics.py`：检查报告指标、CLI 命令示例和 Notebook 乱码占位，防止交付材料漂移。
 
 ## demo
 

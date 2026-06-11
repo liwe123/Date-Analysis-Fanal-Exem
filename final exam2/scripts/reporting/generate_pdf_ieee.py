@@ -395,7 +395,7 @@ class IEEEPdf(FPDF):
         box(x0 + 125.8, y5, bw, bh, "qa.py\n(LLM 答案合成与事实来源引用追溯)", (252, 231, 243))
 
         # Row 6: 交互与服务入口
-        box(x0 + 30.0, y6, 46.0, bh, "命令行交互入口\n(CLI python main.py ask 命令行对话)", (245, 245, 245))
+        box(x0 + 30.0, y6, 46.0, bh, "命令行交互入口\n(CLI python -m src.main ask 命令行对话)", (245, 245, 245))
         box(x0 + 95.8, y6, 46.0, bh, "Streamlit Web 客户端\n(支持多轮对话 / 玻璃盒检索链路可视化)", (245, 245, 245))
 
         # --- Draw arrow connections ---
@@ -523,7 +523,7 @@ def build() -> None:
         "属性条件匹配，从数据库中召回与问题最相关的 Top-K 个高质量文本数据块。最后，`qa.py` "
         "作为答案生成的核心模块，将检索到的文本上下文结合高度结构化的 System Prompt 拼接后，"
         "送入 LLM 合成最终的生成结果，答案中严格强制标注了参考块的真实物理来源。最终，系统"
-        "提供了两份独立的交互入口：命令行界面（CLI，`python main.py ask`）与基于 Web UI 的 "
+        "提供了两份独立的交互入口：命令行界面（CLI，`python -m src.main ask`）与基于 Web UI 的 "
         "Streamlit 交互平台。此外，本系统还集成了安全渲染模块 `app/rendering.py`（对网页"
         "展示文本进行安全过滤）以及独立的性能评测脚本 `scripts/reporting/evaluation.py` 与 `scripts/reporting/latency_benchmark.py`，"
         "用于实现科学的指标量化监控。"
@@ -1014,8 +1014,8 @@ def build() -> None:
         "系统的物理部署极其顺畅，完全开箱即用。本地环境准备仅需以下五个步骤：(1) 复制项目源码"
         "并在根目录执行 `pip install -r requirements.txt` 安装所有大数据与深度学习依赖；"
         "(2) 复制 `.env.example` 并命名为 `.env`，填入您所持有的大模型 API KEY 与本地模型配置；"
-        "(3) 执行 `python src/main.py collect-all` 运行多源 API 采集器，抓取 Wikipedia、Stack "
-        "Overflow 与 CSDN 的多源数据；(4) 执行数据流流水线全量重跑命令 `python src/main.py "
+        "(3) 执行 `python -m src.main collect-all` 运行多源 API 采集器，抓取 Wikipedia、Stack "
+        "Overflow 与 CSDN 的多源数据；(4) 执行数据流流水线全量重跑命令 `python -m src.main "
         "build`，全自动完成清洗、分块、本地嵌入生成与 ChromaDB 持久化入库；(5) 启动本地 Web 前端"
         " `streamlit run app/streamlit_app.py`，即可在浏览器中开启可视化调试与智能助手面板。"
         "如需执行质量回归，可随时在终端敲入 `python -m pytest tests/ -v` 运行 91 项自动化测试。"
@@ -1075,7 +1075,7 @@ def build() -> None:
         "A：ChromaDB 在本地以高健壮性的 SQLite（用于结构化元数据）加 Parquet 文件（用于存储特征"
         "向量数组）进行物理持久化，直接备份系统的 `vector_store/` 物理目录即可。当遭遇灾难性的"
         "文件损毁时，我们的全自动数据清洗与重构流水线（ETL）支持“一键一命令”幂等重建。执行命令 "
-        "`python src/main.py build`，系统可在 5 分钟内完成全量重新清洗、切块、向量表征提取与"
+        "`python -m src.main build`，系统可在 5 分钟内完成全量重新清洗、切块、向量表征提取与"
         "持久化数据库入库。我们的分块写入函数具有幂等（Upsert）防御，保证了数据的安全性与一致性。"
     )
     pdf.body(

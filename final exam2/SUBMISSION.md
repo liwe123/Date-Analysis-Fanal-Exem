@@ -67,6 +67,12 @@ python -m pytest tests/ -v
 python -m pytest tests/ -q
 ```
 
+报告一致性检查：
+
+```bash
+python scripts/reporting/check_report_metrics.py
+```
+
 当前整理后已验证：`91 passed`。
 
 ## 评估与报告生成
@@ -97,6 +103,7 @@ python scripts/reporting/generate_pdf_ieee.py
 ## 提交前检查
 
 - `python -m pytest tests/ -q` 通过。
+- `python scripts/reporting/check_report_metrics.py` 通过。
 - `report/report_ieee.html` 可在浏览器打开。
 - `report/evaluation_results.json` 和 `report/latency_results.json` 与报告中的指标一致。
 - `.env` 未提交，`.env.example` 保留可复现配置说明。

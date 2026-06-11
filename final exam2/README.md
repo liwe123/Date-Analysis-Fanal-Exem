@@ -83,7 +83,7 @@ pip install -r requirements.txt
 
 ```bash
 # 语料抓取采集（Wikipedia、CSDN、SO三源自动采集）
-python src/main.py collect-all
+python -m src.main collect-all
 
 # 云端算力卸载批量向量建库
 python -m src.main build --metadata-strategy jsonl_only
@@ -93,7 +93,7 @@ python -m src.main build --metadata-strategy jsonl_only
 
 ```bash
 # 单次提问
-python src/main.py ask --question "大数据学期项目的截止日期和提交要求是什么？"
+python -m src.main ask --question "大数据学期项目的截止日期和提交要求是什么？"
 
 # 极速一键拉起 Streamlit Web 前台
 streamlit run app/streamlit_app.py

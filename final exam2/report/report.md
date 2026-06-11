@@ -95,7 +95,7 @@
      └─────┬──────┘
            │
      ┌─────▼──────┐
-     │  7. 服务    │  CLI: python src/main.py ask
+     │  7. 服务    │  CLI: python -m src.main ask
      │            │  Web: streamlit run app/streamlit_app.py
      └────────────┘
 ```
@@ -242,7 +242,7 @@ $$	ext{Payload Size} pprox 256 	imes 1024 	imes 10	ext{ bytes} pprox 2.62	ext{
 - **Front-Matter 优先**：若文档 YAML 头中已写明 `year: 2024`、`category: notice`，以人工标注为准覆盖 LLM 结果
 - **回退策略**：LLM JSON 解析失败 → 空元数据字典 → 文件名前缀猜测分类（如 `wiki_*` → wiki，`notice*` → notice）
 - **成本**：127 篇文档各调一次 deepseek-v4-flash，总成本不足 1 元人民币；离线一次性运行
-- **CLI 参数**：`python src/main.py build --max-workers 16` 可自定义并发数
+- **CLI 参数**：`python -m src.main build --max-workers 16` 可自定义并发数
 
 ## 五、检索与查询解析
 
@@ -445,7 +445,7 @@ $$	ext{Payload Size} pprox 256 	imes 1024 	imes 10	ext{ bytes} pprox 2.62	ext{
 2. **一键执行批量预处理与入库**：
    - 在本地终端激活虚拟环境，运行 build 指令：
      ```bash
-     python src/main.py build --chunk-size 700 --overlap 120
+     python -m src.main build --chunk-size 700 --overlap 120
      ```
    - **数据流自动化处理**：
      - 本地 CPU 快速读取 `rag_documents_raw.jsonl` 并清洗为 1,215,021 个文本分块。
@@ -470,7 +470,7 @@ $$	ext{Payload Size} pprox 256 	imes 1024 	imes 10	ext{ bytes} pprox 2.62	ext{
      ```
    - 在云端终端执行建库指令：
      ```bash
-     python src/main.py build
+     python -m src.main build
      ```
    - 没有任何网络传输耗时，RTX 4090 本地 GPU 读写在 **~1.8小时** 内直接生成 4.79 GB HNSW 向量库目录 `vector_store/`。
 
@@ -511,14 +511,14 @@ copy .env.example .env     # 填入 OPENAI_API_KEY 和 OPENAI_EMBEDDING_MODEL
 
 ```bash
 # 扩充公开语料（Wikipedia 58 个词条）
-python src/main.py collect
+python -m src.main collect
 
 # 建立/更新向量索引
-python src/main.py build [--chunk-size 700] [--overlap 120]
+python -m src.main build [--chunk-size 700] [--overlap 120]
 
 # 问答
-python src/main.py ask --question "课程项目最后提交要求是什么？" --top-k 3
-python src/main.py ask                    # 交互模式
+python -m src.main ask --question "课程项目最后提交要求是什么？" --top-k 3
+python -m src.main ask                    # 交互模式
 
 # Web 演示
 streamlit run app/streamlit_app.py
@@ -544,15 +544,15 @@ python -m pytest tests/ -v
 
 ```
 1. 知识库问答：
-   python src/main.py ask --question "课程项目最后提交截止日期是什么？"
+   python -m src.main ask --question "课程项目最后提交截止日期是什么？"
    → 展示答案 + [Source: xxx.md]
 
 2. 跨文档问答：
-   python src/main.py ask --question "RAG 架构中向量数据库的作用是什么？"
+   python -m src.main ask --question "RAG 架构中向量数据库的作用是什么？"
    → 展示来自 Wikipedia 词条 + 课程资料的联合答案
 
 3. 拒答演示：
-   python src/main.py ask --question "钢琴考级需要准备什么？"
+   python -m src.main ask --question "钢琴考级需要准备什么？"
    → "资料中没有相关信息"
 
 4. 查询解析演示（需代码演示）：
@@ -581,7 +581,7 @@ python -m pytest tests/ -v
 A：代码中每次写入批量 64 条，减少 API 调用次数；建库是一次性操作，偶尔限流重试即可（ChromaDB 有 upsert 幂等性）。在线查询时，查询解析失败有全文回退方案。
 
 **Q2：向量数据库崩溃怎么恢复？**
-A：ChromaDB 本地持久化在 `vector_store/` 目录，备份该目录即可。重建策略：`python src/main.py build` 全量重跑，5 分钟内恢复。
+A：ChromaDB 本地持久化在 `vector_store/` 目录，备份该目录即可。重建策略：`python -m src.main build` 全量重跑，5 分钟内恢复。
 
 **Q3：为什么选择 ChromaDB 而不是 Milvus？**
 A：课程场景对并发/分布式无要求。ChromaDB 零部署（pip install），Milvus 需 Docker + etcd + MinIO，部署复杂度高。我们已做数据库抽象层封装，生产环境切换只需修改 `embed_store.py` 一个文件。

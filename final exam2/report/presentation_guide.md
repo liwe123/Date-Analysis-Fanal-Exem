@@ -119,7 +119,7 @@ gantt
 * **完美应答**：
   > “ChromaDB 在我们当前的单机部署中是 SQLite 本地持久化，每天通过定时 cron 任务备份 `vector_store/` 目录。
   > 
-  > 此外，我们整个建库流水线已完全自动化。如果硬件损坏，我们只需在新节点上执行 `python src/main.py build`，即可在 5 分钟内拉取 raw 目录重构所有向量表（ChromaDB 写入采用 upsert，具有幂等性，绝不产生重复脏数据）。”
+  > 此外，我们整个建库流水线已完全自动化。如果硬件损坏，我们只需在新节点上执行 `python -m src.main build`，即可在 5 分钟内拉取 raw 目录重构所有向量表（ChromaDB 写入采用 upsert，具有幂等性，绝不产生重复脏数据）。”
 
 ### 3. ❓ 如果用户数据增多 100 倍，你的单机 ChromaDB 会先崩溃，你怎么扩容？
 * **完美应答**：
@@ -176,7 +176,7 @@ gantt
   > 
   > 我们全盘使用了 `pathlib.Path(__file__).resolve().parent` 动态定位项目根目录 `BASE_DIR`。ChromaDB 的持久化目录 `vector_store/`、数据 raw 目录全部基于相对路径动态计算。
   > 
-  > 您只需克隆项目，复制 `.env.example` 命名为 `.env` 并填入您的 API 密钥，直接运行 `pip install -r requirements.txt` 和 `python src/main.py build`，即可 100% 毫无障碍地一键跑通全流程。”
+  > 您只需克隆项目，复制 `.env.example` 命名为 `.env` 并填入您的 API 密钥，直接运行 `pip install -r requirements.txt` 和 `python -m src.main build`，即可 100% 毫无障碍地一键跑通全流程。”
 
 ### 10. ❓ 为什么必须要用大语言模型（LLM）？如果我用正则表达式加纯关键词检索，比你快 100 倍还免费，我为什么不选那个？
 * **完美应答**：
@@ -191,7 +191,7 @@ gantt
 ## ── 四、 演示前 1 小时紧急排查清单（黄金法则） ─────────────────────
 
 1. **ChromaDB 磁盘空间检查**：
-   * 运行 `python src/main.py ask --question "测试"` 确认向量库能正常召回。
+   * 运行 `python -m src.main ask --question "测试"` 确认向量库能正常召回。
 2. **API Key 连通性确认**：
    * 确保您的网络（尤其是梯子）访问 OpenAI 或者是 DeepSeek API 没有限流，可用 ping API 域名或运行单次问答测试。
 3. **关闭所有无关程序**：

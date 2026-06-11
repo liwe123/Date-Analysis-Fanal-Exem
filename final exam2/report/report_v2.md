@@ -327,11 +327,11 @@ pip install -r requirements.txt
 copy .env.example .env  # 填入 OPENAI_API_KEY
 
 # 采集语料 + 建库
-python src/main.py collect-all
-python src/main.py build
+python -m src.main collect-all
+python -m src.main build
 
 # 问答
-python src/main.py ask --question "课程项目提交要求是什么？"
+python -m src.main ask --question "课程项目提交要求是什么？"
 
 # Web 界面
 streamlit run app/streamlit_app.py
