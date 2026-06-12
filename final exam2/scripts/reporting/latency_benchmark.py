@@ -11,10 +11,10 @@ import sys
 import time
 from pathlib import Path
 
-BASE_DIR = Path(__file__).resolve().parent
+BASE_DIR = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(BASE_DIR))
 
-from src.utils import init_env, get_logger
+from src.utils import get_logger, init_env
 
 logger = get_logger("latency")
 
@@ -83,7 +83,8 @@ def benchmark_latency() -> None:
     }
 
     output = {"summary": summary, "results": results}
-    out_path = BASE_DIR / "latency_results.json"
+    out_path = BASE_DIR / "report" / "latency_results.json"
+    out_path.parent.mkdir(parents=True, exist_ok=True)
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(output, f, ensure_ascii=False, indent=2)
 

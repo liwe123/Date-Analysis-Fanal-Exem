@@ -8,3 +8,12 @@ vector_store/
 .vscode/
 .claude/
 models/
+scratch/
+
+# Generated report previews and local readability checks
+test_readability.pdf
+test_natural_readability.pdf
+report/report_ieee_v*.pdf
+/evaluation_results.json
+/latency_results.json
+/report_ieee_preview.pdf

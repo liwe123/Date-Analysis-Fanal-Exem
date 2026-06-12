@@ -36,7 +36,7 @@ graph TB
     end
 
     subgraph 服务层
-        F1[CLI<br/>python main.py ask]
+        F1[CLI<br/>python -m src.main ask]
         F2[Streamlit Web<br/>多轮对话/调试模式/数据管理]
     end
 

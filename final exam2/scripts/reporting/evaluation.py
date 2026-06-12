@@ -12,10 +12,10 @@ import time
 from pathlib import Path
 
 # 动态插入项目根路径
-BASE_DIR = Path(__file__).resolve().parent
+BASE_DIR = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(BASE_DIR))
 
-from src.utils import init_env, get_logger
+from src.utils import get_logger, init_env
 
 logger = get_logger("evaluation")
 
@@ -210,7 +210,8 @@ def run_evaluation() -> None:
         "results": results,
     }
 
-    output_path = BASE_DIR / "evaluation_results.json"
+    output_path = BASE_DIR / "report" / "evaluation_results.json"
+    output_path.parent.mkdir(parents=True, exist_ok=True)
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(output, f, ensure_ascii=False, indent=2)
 

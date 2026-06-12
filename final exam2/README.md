@@ -83,7 +83,7 @@ pip install -r requirements.txt
 
 ```bash
 # 语料抓取采集（Wikipedia、CSDN、SO三源自动采集）
-python src/main.py collect-all
+python -m src.main collect-all
 
 # 云端算力卸载批量向量建库
 python -m src.main build --metadata-strategy jsonl_only
@@ -93,7 +93,7 @@ python -m src.main build --metadata-strategy jsonl_only
 
 ```bash
 # 单次提问
-python src/main.py ask --question "大数据学期项目的截止日期和提交要求是什么？"
+python -m src.main ask --question "大数据学期项目的截止日期和提交要求是什么？"
 
 # 极速一键拉起 Streamlit Web 前台
 streamlit run app/streamlit_app.py
@@ -150,15 +150,26 @@ python -m pytest tests/ -v
 │   └── utils.py             # 公共工具（环境变量读取、日志规范、客户端单例）
 ├── tests/                   # 91 个离线 Mock 自动化测试用例
 ├── scripts/
+│   ├── README.md            # 辅助脚本目录说明
 │   ├── embedding_server.py  # AutoDL 远程 FastAPI 向量推理服务
 │   ├── setup_autodl.sh      # AutoDL 远程一键部署环境脚本
+│   ├── demo/
+│   │   └── demo_companion.py # 答辩现场辅助演示脚本
+│   ├── reporting/
+│   │   ├── evaluation.py    # 50 题 RAG 评估，输出 report/evaluation_results.json
+│   │   ├── latency_benchmark.py # 端到端延迟分解，输出 report/latency_results.json
+│   │   └── generate_pdf_ieee.py # 生成 report/report_ieee.pdf
 │   ├── generate_task_division_pdf.py # 团队任务分工 PDF 自动生成脚本
 │   ├── generate_defense_qa_pdf.py    # 答辩防守卡片盒 PDF 自动生成脚本
 │   └── generate_onboarding_pdf.py    # 零基础小白组员架构与操作 PDF 自动生成脚本
 ├── data/raw/                # 原始文档 + Wikipedia/CSDN/SO 自动采集语料 (176 篇)
 ├── vector_store/            # 本地 ChromaDB SQLite/Parquet 持久化物理目录
 ├── report/
+│   ├── README.md            # 报告目录索引：最终版、草稿、评估证据
 │   ├── report_ieee.html     # 精美 6 页 IEEETransactions 双栏双语论文报告
+│   ├── report_ieee.pdf      # HTML 对应的 PDF 快照
+│   ├── evaluation_results.json # 50 题评估结果证据
+│   ├── latency_results.json # 延迟分解结果证据
 │   ├── task_division.md     # 团队成员任务分工说明文档
 │   ├── task_division.pdf    # 自动编译的高清团队分工 PDF
 │   ├── defense_qa_guide.md  # 评委提问应对与完美解答求生指南
@@ -167,6 +178,7 @@ python -m pytest tests/ -v
 │   ├── member_onboarding_guide.pdf # 自动编译的 5 页小白操作 PDF 指南 (左右防溢出)
 │   └── presentation_guide.md # 15 分钟现场演示说服解说词及容灾备用方案
 ├── pipeline_demo.ipynb      # Jupyter Notebook 演示
+├── SUBMISSION.md            # 最终提交与验收清单
 └── requirements.txt
 ```
 
@@ -175,6 +187,8 @@ python -m pytest tests/ -v
 ## 📖 支撑文档链接
 
 - **双栏学术论文**：[report/report_ieee.html](./report/report_ieee.html) (IEEE 双栏紧凑，AutoDL 卸载架构)
+- **最终提交清单**：[SUBMISSION.md](./SUBMISSION.md) (运行、测试、报告与评估证据入口)
+- **报告目录索引**：[report/README.md](./report/README.md) (最终版、草稿和评估证据说明)
 - **小白求生指南**：[report/defense_qa_guide.md](./report/defense_qa_guide.md) (提问防守卡片盒) -> [高清 PDF](./report/defense_qa_guide.pdf)
 - **小白操作指南**：[report/member_onboarding_guide.md](./report/member_onboarding_guide.md) (目录/命令/演示) -> [高清 PDF](./report/member_onboarding_guide.pdf)
 - **团队任务分工**：[report/task_division.md](./report/task_division.md) (任务划分与单测映射) -> [高清 PDF](./report/task_division.pdf)
