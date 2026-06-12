@@ -77,6 +77,8 @@ with col_btn:
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
+if "store_stats" not in st.session_state:
+    st.session_state.store_stats = None
 
 
 def get_cached_client() -> OpenAI:
@@ -93,7 +95,7 @@ def get_cached_store() -> VectorStore:
     return st.session_state.vector_store
 
 
-@st.cache_data(ttl=30)
+@st.cache_data(ttl=3600, show_spinner=False)
 def get_store_stats() -> tuple[int, list[str]]:
     """缓存知识库统计数据以提升响应性能，在更新数据时会主动清除。"""
     store = get_cached_store()
@@ -115,35 +117,41 @@ with st.sidebar:
     st.markdown('<div class="sidebar-section-title">📊 系统状态</div>', unsafe_allow_html=True)
 
     try:
-        count, sources = get_store_stats()
+        if st.button("加载 / 刷新知识库状态", key="refresh_store_stats", use_container_width=True):
+            st.session_state.store_stats = get_store_stats()
 
-        # 处理超大数量时的显示逻辑
-        real_sources = [s for s in sources if not s.startswith("...")]
-        display_sources_count = len(real_sources)
-        sources_metric_val = f"{display_sources_count}+" if count > 10000 else str(display_sources_count)
-        expander_title = f"📋 文档来源列表（{sources_metric_val}）"
+        if st.session_state.store_stats is None:
+            st.caption("百万级向量库统计按需加载，避免打开页面或输入问题时卡顿闪烁。")
+        else:
+            count, sources = st.session_state.store_stats
 
-        col1, col2 = st.columns(2)
-        with col1:
-            st.metric("文档块数", count)
-        with col2:
-            st.metric("来源数", sources_metric_val)
+            # 处理超大数量时的显示逻辑
+            real_sources = [s for s in sources if not s.startswith("...")]
+            display_sources_count = len(real_sources)
+            sources_metric_val = f"{display_sources_count}+" if count > 10000 else str(display_sources_count)
+            expander_title = f"📋 文档来源列表（{sources_metric_val}）"
 
-        if sources:
-            with st.expander(expander_title):
-                search_src = st.text_input(
-                    "来源过滤",
-                    key="src_filter",
-                    placeholder="输入关键词过滤...",
-                    label_visibility="collapsed",
-                )
-                filtered = (
-                    [s for s in sources if search_src.lower() in s.lower()]
-                    if search_src
-                    else sources
-                )
-                for src in filtered:
-                    st.markdown(f"▪ {html.escape(src)}")
+            col1, col2 = st.columns(2)
+            with col1:
+                st.metric("文档块数", count)
+            with col2:
+                st.metric("来源数", sources_metric_val)
+
+            if sources:
+                with st.expander(expander_title):
+                    search_src = st.text_input(
+                        "来源过滤",
+                        key="src_filter",
+                        placeholder="输入关键词过滤...",
+                        label_visibility="collapsed",
+                    )
+                    filtered = (
+                        [s for s in sources if search_src.lower() in s.lower()]
+                        if search_src
+                        else sources
+                    )
+                    for src in filtered:
+                        st.markdown(f"▪ {html.escape(src)}")
 
     except Exception as exc:
         if isinstance(exc, (KeyboardInterrupt, SystemExit)):
@@ -181,6 +189,7 @@ with st.sidebar:
                 store.add_documents(processed)
                 st.success("添加成功！")
                 get_store_stats.clear()  # 清除缓存以便侧边栏立即更新状态
+                st.session_state.store_stats = None
                 time.sleep(1)
                 st.rerun()
 
@@ -196,6 +205,32 @@ with st.sidebar:
 
     st.divider()
     st.caption("💡 可直接在下方输入问题，或调整左侧检索参数优化结果。")
+
+# ── Chat input ────────────────────────────────────────────────────────────────
+
+pending_question = None
+input_error = None
+submitted_question = st.chat_input("在这里输入你的问题...", accept_file=False)
+
+if submitted_question:
+    candidate_question = submitted_question.strip()
+    image_suffixes = (".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp", ".svg", ".tiff")
+    lower_question = candidate_question.lower()
+
+    if not candidate_question:
+        input_error = "请输入文字问题。"
+    elif any(lower_question.endswith(ext) for ext in image_suffixes):
+        input_error = "❌ 不支持图片输入。请输入文字问题，或描述你想了解的图像内容。"
+    elif candidate_question.startswith("data:image") or "![image]" in lower_question:
+        input_error = "❌ 检测到图片内容。本助手仅支持文字提问，请用文字描述你的问题。"
+    elif "image.png" in lower_question or "image.jpg" in lower_question or "clipboard" in lower_question:
+        input_error = "❌ 检测到粘贴的图片。本助手仅支持文字提问，请用文字描述你的问题。"
+    else:
+        pending_question = candidate_question
+        st.session_state.messages.append({"role": "user", "content": pending_question})
+
+if input_error:
+    st.error(input_error)
 
 # ── Welcome ───────────────────────────────────────────────────────────────────
 
@@ -240,33 +275,8 @@ for msg in st.session_state.messages:
 
 st.markdown("</div>", unsafe_allow_html=True)
 
-# ── Chat input ────────────────────────────────────────────────────────────────
-
-question = st.chat_input("在这里输入你的问题...", accept_file=False)
-
-if question:
-    question = question.strip()
-    if not question:
-        st.stop()
-
-    image_suffixes = (".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp", ".svg", ".tiff")
-    if any(question.lower().endswith(ext) for ext in image_suffixes):
-        st.error("❌ 不支持图片输入。请输入文字问题，或描述你想了解的图像内容。")
-        st.stop()
-
-    if question.startswith("data:image") or "![image]" in question.lower():
-        st.error("❌ 检测到图片内容。本助手仅支持文字提问，请用文字描述你的问题。")
-        st.stop()
-
-    if "image.png" in question or "image.jpg" in question or "clipboard" in question.lower():
-        st.error("❌ 检测到粘贴的图片。本助手仅支持文字提问，请用文字描述你的问题。")
-        st.stop()
-
-    st.session_state.messages.append({"role": "user", "content": question})
-    st.markdown(
-        f'<div class="message-user"><div class="bubble">{html.escape(question)}</div></div>',
-        unsafe_allow_html=True,
-    )
+if pending_question:
+    question = pending_question
 
     # ── 使用 st.status 展示实时思考过程（原生组件，即刻渲染，不白屏） ──
     answer = None
