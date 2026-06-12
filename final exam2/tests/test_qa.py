@@ -90,6 +90,25 @@ class TestGenerateAnswer:
             result = generate_answer("question?", docs, client=mock_client)
             assert "2024" in result or "test.md" in result
 
+    def test_prompt_keeps_answers_strictly_grounded(self):
+        mock_client = MagicMock()
+        mock_resp = MagicMock()
+        mock_resp.choices = [MagicMock()]
+        mock_resp.choices[0].message.content = "Answer [来源: token.md]"
+        mock_client.chat.completions.create.return_value = mock_resp
+
+        with patch("src.qa.get_model_name", return_value="test-model"):
+            docs = [{
+                "text": "E1001 表示认证失败，通常与 token scope 不匹配。",
+                "source": "token.md",
+                "metadata": {"source": "token.md"},
+            }]
+            generate_answer("token用完怎么办", docs, client=mock_client)
+
+        messages = mock_client.chat.completions.create.call_args.kwargs["messages"]
+        assert "不要自行扩写、猜测或引入外部知识" in messages[0]["content"]
+        assert "未找到足够依据" in messages[0]["content"]
+
     def test_keyboard_interrupt_penetrates(self):
         mock_client = MagicMock()
         mock_client.chat.completions.create.side_effect = KeyboardInterrupt()
