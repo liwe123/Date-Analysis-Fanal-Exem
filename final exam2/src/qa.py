@@ -64,6 +64,8 @@ def generate_answer(
     system_prompt = (
         "你是一个专业的问答助手。\n"
         "仅基于提供的参考资料回答问题。\n"
+        "如果参考资料没有明确覆盖问题，不要自行扩写、猜测或引入外部知识；"
+        "应直接说明资料中未找到足够依据。\n"
         "在回答中引用来源，格式为 [来源: 名称]。"
     )
 
@@ -107,4 +109,3 @@ def generate_answer(
             raise
         logger.error("LLM 答案生成失败: %s", repr(exc))
         raise RuntimeError(f"答案生成失败: {exc}") from exc
-
