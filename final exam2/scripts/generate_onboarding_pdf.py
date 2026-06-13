@@ -377,7 +377,7 @@ def build_onboarding_pdf():
     # 绘制高质感的目录列表
     pdf.paragraph(" 网页前台展示层。精美对话界面与侧边栏调试开关的代码所在处。", "app/streamlit_app.py [前端]：")
     pdf.paragraph(" 核心大脑。包含 ingest 读取、preprocess 清洗、embed_store 向量入库、query_parser 意图解析和 qa 答案合成，职责非常清晰。", "src/ [核心后端]：")
-    pdf.paragraph(" 自动化测试实验室。内含 82 个离线 Mock 模拟测试用例，校验核心组件的鲁棒性。", "tests/ [测试代码]：")
+    pdf.paragraph(" 自动化测试实验室。内含 91 个离线 Mock 模拟测试用例，校验核心组件的鲁棒性。", "tests/ [测试代码]：")
     pdf.paragraph(" 辅助工具箱。包含 AutoDL 云端部署脚本 setup_autodl.sh 和 FastAPI 向量特征服务器脚本等。", "scripts/ [辅助脚本]：")
     pdf.paragraph(" 数据档案馆。存放维基百科语料采集 wiki.jsonl 以及清洗后的 markdown 原始文本数据。", "data/ [原始数据]：")
     pdf.paragraph(" 向量数据库物理存储目录。ChromaDB 数据存在这里，由元数据 SQLite 文件和向量 Parquet 组成。", "vector_store/ [向量数据库]：")
@@ -487,15 +487,15 @@ def build_onboarding_pdf():
     
     pdf.h2("测试与保障工程师：刘洋 — Pytest 自动化测试与物理容灾快照操作")
     p_ly_intro = (
-        "刘洋同学负责在发版前一键执行 82 个自动化测试，并负责数据库的物理快照压缩备份与故障秒级原地复活。"
+        "刘洋同学负责在发版前一键执行 91 个自动化测试，并负责数据库的物理快照压缩备份与故障秒级原地复活。"
     )
     pdf.paragraph(p_ly_intro)
     
-    pdf.paragraph(" 一键运行全量 Pytest 测试。在控制台展示 82 个测试用例 100% 通过的绿色画面。", "任务一：一键跑通 82 个断网高保真 Mock 自动化测试用例")
+    pdf.paragraph(" 一键运行全量 Pytest 测试。在控制台展示 91 个测试用例 100% 通过的绿色画面。", "任务一：一键跑通 91 个断网高保真 Mock 自动化测试用例")
     pdf.draw_cmd_box(
         "一键启动 Pytest 自动化校验实验室",
         "python -m pytest tests/ -v",
-        "运行 Pytest，利用 unittest.mock.patch 对所有 OpenAI 和 ChromaDB 接口进行高保真离线 Mock 模拟，拦截网络开销，在 2.5 秒内 100% 成功通过全套 82 个测试用例，证明代码拥有极高健壮性。"
+        "运行 Pytest，利用 unittest.mock.patch 对所有 OpenAI 和 ChromaDB 接口进行高保真离线 Mock 模拟，拦截网络开销，100% 成功通过全套 91 个测试用例，证明代码拥有极高健壮性。"
     )
     
     pdf.paragraph(" 运行打包压缩命令，把 5.8GB 的数据库物理实体瞬间归档备份，免去漫长的重复建库开销。", "任务二：将 ChromaDB 本地物理数据库打包为 5.8GB 容灾快照")

@@ -483,13 +483,13 @@ def build_defense_qa_pdf():
     
     pdf.paragraph("1. 极速代码文件导航：如果老师让你现场跑测试，请大方地展示这个文件夹：")
     pdf.bullet_list([
-        "tests/ 文件夹：里面包含 test_ingest.py、test_preprocess.py、test_embed_store.py、test_qa.py 等 6 个专业自动化测试用例，涵盖全套 82 个单测及集成测试用例。",
-        "运行命令：在终端运行 python -m pytest tests/ -v，即可瞬间看到 82 个用例全部 PASS 的高水平表现。"
+        "tests/ 文件夹：里面包含 test_ingest.py、test_preprocess.py、test_embed_store.py、test_qa.py 等 7 个专业自动化测试文件，涵盖全套 91 个单测及集成测试用例。",
+        "运行命令：在终端运行 python -m pytest tests/ -v，即可看到 91 个用例全部 PASS 的高水平表现。"
     ])
     
     pdf.paragraph("2. 必须记住的大白话专业名词生词本：")
     pdf.bullet_list([
-        "Pytest：主流的 Python 自动化测试框架。我编写的 82 个用例可以在 3 秒内自动校验全部模块输入输出，极大提升了项目的软件工程规范度。",
+        "Pytest：主流的 Python 自动化测试框架。我编写的 91 个用例可以自动校验全部模块输入输出，极大提升了项目的软件工程规范度。",
         "Mock (虚拟模拟桩)：离线测试大模型需消耗昂贵的 API 费用。我全面使用 unittest.mock.patch 对 OpenAI 客户端和 ChromaDB 进行了虚拟化高保真模拟，实现无网、零成本测试运行。",
         "物理快照备份：ChromaDB 底层是基于 SQLite 和 Parquet 物理文件的。我主导设计了自动压缩备份 vector_store 文件夹的方案，免去灾难发生时重复 2.5 小时建库的困局。"
     ])
@@ -501,9 +501,9 @@ def build_defense_qa_pdf():
     pdf.paragraph("3. 刘洋版块高频提问答辩防守卡片盒：")
     
     pdf.draw_qa_box(
-        "Q1：你们的测试套件有 82 个用例，但在没有网络和 API 密钥的测试环境下，如何保证测试顺利运行？",
+        "Q1：你们的测试套件有 91 个用例，但在没有网络和 API 密钥的测试环境下，如何保证测试顺利运行？",
         "全量 Mock 装饰器解耦外部 API 和数据库，无物理网络依赖，实现秒级高保真测试。",
-        "在持续集成（CI）或离线测试环境下，网络超时或缺少私钥是阻碍自动化测试的最大痛点。为了解决这一问题，我全面采用了 Python 标准库中的 unittest.mock.patch 装饰器对外部 OpenAI/DeepSeek 接口、ChromaDB 连接以及 Hugging Face Embedding 下载环境实施了高保真度无物理依赖的 Mock 模拟。我为测试设计了固定的黄金返回数据和预期的异常抛出路径，使得全套 82 个单测与集成测试用例可以在无网环境下一键在 3 秒内飞速跑完，并实现了 100% 成功通过，彻底证明了代码的高可靠性。"
+        "在持续集成（CI）或离线测试环境下，网络超时或缺少私钥是阻碍自动化测试的最大痛点。为了解决这一问题，我全面采用了 Python 标准库中的 unittest.mock.patch 装饰器对外部 OpenAI/DeepSeek 接口、ChromaDB 连接以及 Hugging Face Embedding 下载环境实施了高保真度无物理依赖的 Mock 模拟。我为测试设计了固定的黄金返回数据和预期的异常抛出路径，使得全套 91 个单测与集成测试用例可以在无网环境下一键稳定跑通，并实现了 100% 成功通过，彻底证明了代码的高可靠性。"
     )
     
     pdf.draw_qa_box(
