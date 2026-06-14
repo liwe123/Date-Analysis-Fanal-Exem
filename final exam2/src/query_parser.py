@@ -22,6 +22,14 @@ from src.utils import get_logger, get_model_name, get_openai_client
 
 logger = get_logger("query_parser")
 
+_EXPLICIT_LANGUAGE_RE = re.compile(
+    r"("
+    r"中文|英文|英语|汉语|用中文|用英文|中文文档|英文文档|"
+    r"语言\s*(?:为|是|=)|language\s*[:=]|\bzh\b|\ben\b"
+    r")",
+    re.IGNORECASE,
+)
+
 
 _PARSER_SYSTEM = """\
 你是一个智能搜索查询解析器。
@@ -45,6 +53,11 @@ _PARSER_SYSTEM = """\
 4. 若用户问题不含任何过滤条件，filters 所有字段填 null
 5. 只输出 JSON，不要任何解释文字
 """
+
+
+def _has_explicit_language_filter(question: str) -> bool:
+    """判断用户是否明确要求某种语言的资料。"""
+    return bool(_EXPLICIT_LANGUAGE_RE.search(question))
 
 
 def parse_query(question: str, client: OpenAI | None = None) -> dict:
@@ -98,7 +111,7 @@ def parse_query(question: str, client: OpenAI | None = None) -> dict:
             where["category"] = str(raw_filters["category"])
         if raw_filters.get("author"):
             where["author"] = str(raw_filters["author"])
-        if raw_filters.get("language"):
+        if raw_filters.get("language") and _has_explicit_language_filter(question):
             where["language"] = str(raw_filters["language"])
 
         return {

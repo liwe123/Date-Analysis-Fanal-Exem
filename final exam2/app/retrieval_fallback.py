@@ -24,8 +24,79 @@ ASCII_TOKEN_RE = re.compile(r"[a-zA-Z0-9_+-]+")
 ASCII_TERM_RE = re.compile(r"^[a-zA-Z0-9_+-]+$")
 GUIDANCE_QUERY_MARKERS = ("怎么办", "怎么", "如何", "处理", "解决", "失败", "错误", "异常")
 GUIDANCE_DOC_MARKERS = ("faq", "workaround", "解决", "处理", "步骤", "检查", "验证", "refresh", "retry", "active")
+GUIDANCE_CANDIDATE_TERMS = (
+    "workaround",
+    "refresh token",
+    "retry",
+    "support",
+    "解决",
+    "处理",
+    "步骤",
+    "检查",
+    "验证",
+)
+GENERIC_GUIDANCE_TERMS = (
+    "怎么",
+    "么办",
+    "么处",
+    "完怎",
+    "处理",
+    "怎么处",
+    "么处理",
+    "怎么处理",
+    "如何",
+    "办法",
+    "解决",
+    "失败",
+    "错误",
+    "异常",
+)
+TOKEN_EXHAUSTION_MARKERS = (
+    "token用完",
+    "token用尽",
+    "token耗尽",
+    "token过期",
+    "token失效",
+    "tokenexpired",
+    "expiredtoken",
+)
+TOKEN_EXHAUSTION_TERMS = (
+    "token过期",
+    "token失效",
+    "过期",
+    "失效",
+    "认证失败",
+    "鉴权失败",
+    "refresh token",
+    "refresh",
+    "retry",
+    "scope",
+    "expired",
+    "session expired",
+    "workaround",
+)
+TOKEN_EXHAUSTION_BODY_MARKERS = (
+    "token过期",
+    "token失效",
+    "sessionexpired",
+    "refreshtoken",
+)
 
 logger = get_logger(__name__)
+
+
+def _is_guidance_query(query: str) -> bool:
+    """判断查询是否在询问处理方法或故障解决步骤。"""
+    compact_query = _compact_text(query)
+    return any(marker in compact_query for marker in GUIDANCE_QUERY_MARKERS)
+
+
+def _is_token_exhaustion_query(query: str) -> bool:
+    """判断查询是否在询问 token 用完、过期或失效。"""
+    compact_query = _compact_text(query)
+    return "token" in compact_query and any(
+        marker in compact_query for marker in TOKEN_EXHAUSTION_MARKERS
+    )
 
 
 def _extract_query_terms(query: str) -> list[str]:
@@ -42,6 +113,10 @@ def _extract_query_terms(query: str) -> list[str]:
             for size in (2, 3, 4):
                 for idx in range(0, len(token) - size + 1):
                     terms.add(token[idx : idx + size])
+
+    compact_query = _compact_text(query)
+    if _is_token_exhaustion_query(query):
+        terms.update(TOKEN_EXHAUSTION_TERMS)
 
     return sorted(terms, key=lambda item: (-len(item), item))
 
@@ -65,6 +140,12 @@ def _score_chunk(query: str, terms: list[str], text: str, source: str) -> float:
         body_score += len(compact_query) * 4
 
     for term in terms:
+        compact_term = _compact_text(term)
+        if compact_term in GENERIC_GUIDANCE_TERMS:
+            continue
+        if any(marker in compact_term for marker in GUIDANCE_QUERY_MARKERS):
+            continue
+
         term_score = max(len(term), 2)
         if ASCII_TERM_RE.fullmatch(term):
             body_count = body_ascii_tokens.count(term)
@@ -78,10 +159,22 @@ def _score_chunk(query: str, terms: list[str], text: str, source: str) -> float:
         if has_source_match:
             source_score += term_score * 0.5
 
-    if any(marker in compact_query for marker in GUIDANCE_QUERY_MARKERS):
+    has_topic_match = body_score > 0
+    if _is_guidance_query(query) and has_topic_match:
         for marker in GUIDANCE_DOC_MARKERS:
             if marker in compact_body:
-                body_score += 5
+                body_score += 30
+
+    if _is_token_exhaustion_query(query) and has_topic_match:
+        for marker in TOKEN_EXHAUSTION_BODY_MARKERS:
+            if marker in compact_body:
+                body_score += 80
+
+    has_guidance_marker = any(marker in compact_body for marker in GUIDANCE_DOC_MARKERS)
+    if "http429" in compact_query and "http429" in compact_body:
+        body_score += 180 if has_guidance_marker else 20
+    if "toomanyrequests" in compact_query and "toomanyrequests" in compact_body:
+        body_score += 120 if has_guidance_marker else 10
 
     if body_score <= 0:
         return 0.0
@@ -220,6 +313,56 @@ def _query_like_candidate_ids(
     return [int(row["id"]) for row in rows]
 
 
+def _select_guidance_topic_terms(terms: list[str]) -> list[str]:
+    """为处理类问题挑选主题词，过滤掉“怎么/处理”等泛化问法词。"""
+    topic_terms: list[str] = []
+    for term in terms:
+        compact_term = _compact_text(term)
+        if compact_term in GENERIC_GUIDANCE_TERMS:
+            continue
+        if any(marker in compact_term for marker in GUIDANCE_QUERY_MARKERS):
+            continue
+        topic_terms.append(term)
+    return _select_like_terms(topic_terms, include_english=True)[:6]
+
+
+def _query_guidance_candidate_ids(
+    conn: sqlite3.Connection,
+    terms: list[str],
+    limit: int,
+) -> list[int]:
+    """召回同时包含主题词和处理建议标记的候选文档。"""
+    topic_terms = _select_guidance_topic_terms(terms)
+    if not topic_terms:
+        return []
+
+    topic_conditions = " OR ".join(["string_value LIKE ? ESCAPE '\\'"] * len(topic_terms))
+    guidance_conditions = " OR ".join(
+        ["string_value LIKE ? ESCAPE '\\'"] * len(GUIDANCE_CANDIDATE_TERMS)
+    )
+    topic_params = [f"%{_escape_like_term(term)}%" for term in topic_terms]
+    guidance_params = [f"%{_escape_like_term(term)}%" for term in GUIDANCE_CANDIDATE_TERMS]
+
+    try:
+        rows = conn.execute(
+            f"""
+            SELECT id
+            FROM embedding_metadata
+            WHERE key = ?
+              AND string_value IS NOT NULL
+              AND ({topic_conditions})
+              AND ({guidance_conditions})
+            LIMIT ?
+            """,
+            [CHROMA_DOCUMENT_KEY, *topic_params, *guidance_params, limit],
+        ).fetchall()
+    except sqlite3.Error as exc:
+        logger.warning("Chroma 处理建议兜底检索失败: %s", exc)
+        return []
+
+    return [int(row["id"]) for row in rows]
+
+
 def _metadata_value(row: sqlite3.Row) -> str | int | float | bool | None:
     """按 Chroma 元数据列类型取出实际值。"""
     if row["string_value"] is not None:
@@ -326,6 +469,14 @@ def search_chroma_sqlite(
                 include_english=not bool(fts_query),
             )
             _append_candidate_ids(candidate_ids, seen_ids, like_ids)
+
+        if _is_guidance_query(query):
+            guidance_ids = _query_guidance_candidate_ids(
+                conn,
+                terms=terms,
+                limit=candidate_limit,
+            )
+            _append_candidate_ids(candidate_ids, seen_ids, guidance_ids)
 
         records = _load_chroma_records(conn, candidate_ids)
     except sqlite3.Error as exc:

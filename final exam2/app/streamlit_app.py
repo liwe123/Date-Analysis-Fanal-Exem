@@ -126,6 +126,17 @@ def _validate_question(raw_question: str) -> tuple[str | None, str | None]:
     return candidate_question, None
 
 
+def _render_example_questions() -> str | None:
+    """渲染推荐问题按钮，返回被点击的问题。"""
+    selected_question = None
+    example_cols = st.columns(len(EXAMPLE_QUESTIONS))
+    for idx, example_question in enumerate(EXAMPLE_QUESTIONS):
+        with example_cols[idx]:
+            if st.button(example_question, key=f"example_question_{idx}", use_container_width=True):
+                selected_question = example_question
+    return selected_question
+
+
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 
 with st.sidebar:
@@ -258,12 +269,11 @@ if not st.session_state.messages:
         "</div>",
         unsafe_allow_html=True,
     )
-    example_cols = st.columns(len(EXAMPLE_QUESTIONS))
-    for idx, example_question in enumerate(EXAMPLE_QUESTIONS):
-        with example_cols[idx]:
-            if st.button(example_question, key=f"example_question_{idx}", use_container_width=True):
-                pending_question = example_question
-                st.session_state.messages.append({"role": "user", "content": pending_question})
+
+selected_example_question = _render_example_questions()
+if selected_example_question:
+    pending_question = selected_example_question
+    st.session_state.messages.append({"role": "user", "content": pending_question})
 
 # ── Chat history ──────────────────────────────────────────────────────────────
 
@@ -307,6 +317,11 @@ if pending_question:
             parsed = parse_query(question, client=client)
             search_query = parsed.get("search_query", question)
             filters = parsed.get("filters")
+            fallback_query = (
+                search_query
+                if search_query == question
+                else f"{search_query} {question}"
+            )
 
             st.write(f"核心搜索词：`{search_query}`")
             if filters:
@@ -334,20 +349,25 @@ if pending_question:
                         raise
                     logger.warning("向量检索失败，切换 Chroma SQLite 检索: %s", search_exc)
                     st.write("向量索引暂不可用，已切换到百万行 Chroma SQLite 正文索引。")
-                    results = search_chroma_sqlite(search_query, top_k=top_k)
+                    results = search_chroma_sqlite(fallback_query, top_k=top_k)
                     active_retrieval_mode = "sqlite_primary"
             else:
                 st.write(
                     "当前为 local embedding，云显卡不可用时不加载本地大模型，"
                     "直接使用百万行 Chroma SQLite 正文索引。"
                 )
-                results = search_chroma_sqlite(search_query, top_k=top_k)
+                results = search_chroma_sqlite(fallback_query, top_k=top_k)
+
+            if not results and active_retrieval_mode == "vector":
+                st.write("向量检索未召回内容，继续使用百万行 Chroma SQLite 正文索引。")
+                results = search_chroma_sqlite(fallback_query, top_k=top_k)
+                active_retrieval_mode = "sqlite_primary"
 
             if not results:
                 st.write("Chroma SQLite 未召回内容，继续使用原始语料关键词检索。")
                 fallback_chunks = get_raw_fallback_chunks()
                 results = search_raw_corpus(
-                    search_query,
+                    fallback_query,
                     top_k=top_k,
                     chunks=fallback_chunks,
                 )
@@ -355,23 +375,9 @@ if pending_question:
 
             if not results:
                 raise RuntimeError(
-                    "Chroma SQLite 与原始语料兜底均未召回内容。"
+                    "未检索到相关内容：Chroma SQLite 与原始语料兜底均未召回内容。"
                     "请检查 vector_store/chroma.sqlite3 或 data/raw。"
                 )
-
-            if not results:
-                thinking.update(label="未检索到相关内容", state="error", expanded=True)
-                st.write("未召回任何匹配片段，请尝试换个问法或放宽 max_distance。")
-                warning_msg = (
-                    "**未检索到相关内容**\n\n"
-                    "**可能的原因：**\n"
-                    "- 知识库中暂无相关文档资料\n"
-                    "- 搜索关键词与文档内容不匹配\n"
-                    "- 距离过滤条件过严（可在侧边栏放宽 `max_distance`）\n\n"
-                    "请尝试换个问法，或使用更通用的关键词。"
-                )
-                st.session_state.messages.append({"role": "assistant", "content": warning_msg})
-                st.stop()
 
             st.write(f"成功召回 **{len(results)}** 个相关文档片段")
             if show_debug:
@@ -400,6 +406,15 @@ if pending_question:
         err_str = str(exc)
         if "image" in err_str.lower() or "image_url" in err_str.lower():
             error_msg = "**图片不被支持**\n\n当前模型仅接受文字输入，请勿在问题中包含图片或文件路径。"
+        elif "未检索到相关内容" in err_str or "未召回" in err_str:
+            error_msg = (
+                "**未检索到相关内容**\n\n"
+                "**可能的原因：**\n"
+                "- 知识库中暂无相关文档资料\n"
+                "- 搜索关键词与文档内容不匹配\n"
+                "- 距离过滤条件过严（可在侧边栏放宽 `max_distance`）\n\n"
+                "请尝试换个问法，或使用更通用的关键词。"
+            )
         elif "api" in err_str.lower() or "key" in err_str.lower():
             error_msg = "**API 配置问题**\n\n请检查 `.env` 文件中的 `OPENAI_API_KEY` 和 `OPENAI_BASE_URL` 是否正确。"
         elif "rate" in err_str.lower() or "limit" in err_str.lower():

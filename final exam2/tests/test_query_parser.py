@@ -52,6 +52,24 @@ class TestParseQuery:
 
     @patch("src.query_parser.get_openai_client")
     @patch("src.query_parser.get_model_name")
+    def test_ignores_inferred_language_filter(self, mock_model, mock_client):
+        mock_model.return_value = "test-model"
+        mock_resp = MagicMock()
+        mock_resp.choices = [MagicMock()]
+        mock_resp.choices[0].message.content = json.dumps({
+            "search_query": "token用尽处理方法",
+            "filters": {"year": None, "category": None, "author": None, "language": "zh"}
+        })
+        mock_client.return_value.chat.completions.create.return_value = mock_resp
+
+        result = parse_query("token用完之后怎么办", client=mock_client.return_value)
+
+        assert result["search_query"] == "token用尽处理方法"
+        assert result["filters"] is None
+        assert result["raw_filters"]["language"] == "zh"
+
+    @patch("src.query_parser.get_openai_client")
+    @patch("src.query_parser.get_model_name")
     def test_api_failure_fallback(self, mock_model, mock_client):
         mock_model.return_value = "test-model"
         mock_client.return_value.chat.completions.create.side_effect = Exception("API Error")

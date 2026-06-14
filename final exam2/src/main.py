@@ -127,24 +127,52 @@ def ask_once(question: str, top_k: int = 3) -> None:
       question : 用户的问答输入
       top_k    : 检索返回的文档分块数
     """
-    from src.embed_store import VectorStore
+    from app.retrieval_fallback import search_chroma_sqlite, search_raw_corpus
     from src.qa import generate_answer
     from src.query_parser import parse_query
-    from src.utils import get_logger
+    from src.utils import get_embedding_model_name, get_logger
 
     logger = get_logger("main")
-    store = VectorStore()
 
     logger.info("正在解析查询意图...")
     parsed = parse_query(question)
     search_query = parsed["search_query"]
     filters = parsed["filters"]
+    fallback_query = (
+        search_query
+        if search_query == question
+        else f"{search_query} {question}"
+    )
 
     if filters:
         logger.info("提取到元数据过滤条件: %s", filters)
     logger.info("提取核心语义词: \"%s\"", search_query)
 
-    retrieved_docs = store.search(search_query, top_k=top_k, where=filters)
+    retrieved_docs: list[dict] = []
+    embedding_mode = get_embedding_model_name().lower()
+    if embedding_mode == "remote":
+        from src.embed_store import VectorStore
+
+        try:
+            store = VectorStore()
+            retrieved_docs = store.search(search_query, top_k=top_k, where=filters)
+            logger.info("已使用百万行 ChromaDB HNSW 向量索引召回 %d 条。", len(retrieved_docs))
+        except Exception as exc:
+            if isinstance(exc, (KeyboardInterrupt, SystemExit)):
+                raise
+            logger.warning("向量检索失败，切换 Chroma SQLite 正文索引: %s", exc)
+    else:
+        logger.info("当前为 %s embedding，直接使用 Chroma SQLite 正文索引。", embedding_mode)
+
+    if not retrieved_docs:
+        retrieved_docs = search_chroma_sqlite(fallback_query, top_k=top_k)
+        logger.info("Chroma SQLite 正文索引召回 %d 条。", len(retrieved_docs))
+
+    if not retrieved_docs:
+        logger.info("Chroma SQLite 未召回内容，继续使用原始语料关键词检索。")
+        retrieved_docs = search_raw_corpus(fallback_query, top_k=top_k)
+        logger.info("原始语料关键词兜底召回 %d 条。", len(retrieved_docs))
+
     if not retrieved_docs:
         logger.warning("没有检索到相关内容。")
         return

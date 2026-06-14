@@ -108,6 +108,48 @@ class TestSearchChromaSqlite:
         assert results[0]["source"] == "rag_documents_raw_doc_000001"
         assert results[0]["metadata"]["retrieval"] == "chroma_sqlite_keyword_fallback"
 
+    def test_expands_token_exhaustion_to_workaround_terms(self, tmp_path):
+        db_path = tmp_path / "chroma.sqlite3"
+        _create_chroma_sqlite_fixture(db_path)
+        _insert_chroma_doc(
+            db_path,
+            1,
+            "token_scope_note",
+            "FAQ: E1001 表示认证失败，通常与 token scope 不匹配。",
+        )
+        _insert_chroma_doc(
+            db_path,
+            2,
+            "token_refresh_workaround",
+            "用户反馈 token 过期，Support 建议 Temporary workaround: refresh token and retry。",
+        )
+
+        results = search_chroma_sqlite("token用完怎么办", top_k=1, db_path=db_path)
+
+        assert len(results) == 1
+        assert results[0]["source"] == "token_refresh_workaround"
+
+    def test_guidance_query_prefers_actionable_workaround(self, tmp_path):
+        db_path = tmp_path / "chroma.sqlite3"
+        _create_chroma_sqlite_fixture(db_path)
+        _insert_chroma_doc(
+            db_path,
+            1,
+            "http_429_log",
+            "HTTP 429 too many requests HTTP 429 too many requests HTTP 429 too many requests",
+        )
+        _insert_chroma_doc(
+            db_path,
+            2,
+            "http_429_workaround",
+            "用户反馈 HTTP 429，Support 建议 Temporary workaround: refresh token and retry。",
+        )
+
+        results = search_chroma_sqlite("HTTP 429 怎么处理", top_k=1, db_path=db_path)
+
+        assert len(results) == 1
+        assert results[0]["source"] == "http_429_workaround"
+
     def test_returns_matching_chinese_like_document(self, tmp_path):
         db_path = tmp_path / "chroma.sqlite3"
         _create_chroma_sqlite_fixture(db_path)
