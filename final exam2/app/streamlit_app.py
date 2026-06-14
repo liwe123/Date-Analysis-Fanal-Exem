@@ -36,6 +36,7 @@ EXAMPLE_QUESTIONS = (
 )
 IMAGE_SUFFIXES = (".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp", ".svg", ".tiff")
 STYLE_PATH = Path(__file__).parent / "style.css"
+MAX_SIDEBAR_SOURCE_ITEMS = 80
 
 # 防止在每次 Streamlit 重载时重复加载环境变量
 if "env_initialized" not in st.session_state:
@@ -137,6 +138,21 @@ def _render_example_questions() -> str | None:
     return selected_question
 
 
+def _get_visible_sources(sources: list[str], keyword: str) -> tuple[list[str], int]:
+    """返回侧边栏要渲染的来源预览，避免重跑页面时创建过多组件。"""
+    normalized_keyword = keyword.strip().lower()
+    if normalized_keyword:
+        filtered_sources = [
+            source
+            for source in sources
+            if normalized_keyword in source.lower()
+        ]
+    else:
+        filtered_sources = sources
+
+    return filtered_sources[:MAX_SIDEBAR_SOURCE_ITEMS], len(filtered_sources)
+
+
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 
 with st.sidebar:
@@ -172,7 +188,7 @@ with st.sidebar:
             with col2:
                 st.metric("来源数", sources_metric_val)
 
-            if sources:
+            if real_sources:
                 with st.expander(expander_title):
                     search_src = st.text_input(
                         "来源过滤",
@@ -180,12 +196,15 @@ with st.sidebar:
                         placeholder="输入关键词过滤...",
                         label_visibility="collapsed",
                     )
-                    filtered = (
-                        [s for s in sources if search_src.lower() in s.lower()]
-                        if search_src
-                        else sources
+                    visible_sources, matched_sources_count = _get_visible_sources(
+                        real_sources,
+                        search_src,
                     )
-                    for src in filtered:
+                    st.caption(
+                        f"当前显示 {len(visible_sources)} / {matched_sources_count} 个来源；"
+                        "输入关键词可继续缩小范围。"
+                    )
+                    for src in visible_sources:
                         st.markdown(f"· {html.escape(src)}")
 
     except Exception as exc:
