@@ -216,37 +216,47 @@ with st.sidebar:
         logger.warning("向量库初始化失败: %s", exc)
 
     st.markdown('<div class="sidebar-section-title">数据写入</div>', unsafe_allow_html=True)
-    
-    custom_data_title = st.text_input("数据标题", placeholder="例如：最新课程通知", key="custom_title")
-    custom_data_text = st.text_area("数据内容", height=150, placeholder="粘贴文本内容...", key="custom_text")
-    if st.button("添加到知识库", use_container_width=True):
-        if not custom_data_text.strip():
-            st.error("内容不能为空")
-        else:
-            with st.spinner("正在处理并加入向量库..."):
-                source_name = f"custom_{int(time.time())}.txt"
-                if custom_data_title.strip():
-                    # 过滤非法文件名字符
-                    safe_title = "".join(
-                        c for c in custom_data_title.strip()
-                        if c.isalnum() or c in (" ", "_", "-")
-                    ).replace(" ", "_")
-                    source_name = f"{safe_title}_{int(time.time())}.txt"
-                    
-                doc = {
-                    "source": source_name,
-                    "path": "custom_input",
-                    "text": custom_data_text,
-                    "fm_meta": {},
-                }
-                processed = process_documents([doc])
-                store = get_cached_store()
-                store.add_documents(processed)
-                st.success("添加成功！")
-                get_store_stats.clear()  # 清除缓存以便侧边栏立即更新状态
-                st.session_state.store_stats = None
-                time.sleep(1)
-                st.rerun()
+    embedding_mode_for_write = get_embedding_model_name().lower()
+    if embedding_mode_for_write == "local":
+        st.caption(
+            "当前为 local embedding 模式，网页端在线写入已关闭，避免加载本地嵌入大模型导致页面卡顿。"
+            "如需新增语料，请使用离线入库流程，或切换到 remote/openai embedding 后再启用在线写入。"
+        )
+    else:
+        custom_data_title = st.text_input("数据标题", placeholder="例如：最新课程通知", key="custom_title")
+        custom_data_text = st.text_area("数据内容", height=150, placeholder="粘贴文本内容...", key="custom_text")
+        if st.button("添加到知识库", use_container_width=True):
+            if not custom_data_text.strip():
+                st.error("内容不能为空")
+            else:
+                with st.spinner("正在处理并加入向量库..."):
+                    source_name = f"custom_{int(time.time())}.txt"
+                    if custom_data_title.strip():
+                        # 过滤非法文件名字符
+                        safe_title = "".join(
+                            c for c in custom_data_title.strip()
+                            if c.isalnum() or c in (" ", "_", "-")
+                        ).replace(" ", "_")
+                        source_name = f"{safe_title}_{int(time.time())}.txt"
+
+                    doc = {
+                        "source": source_name,
+                        "path": "custom_input",
+                        "text": custom_data_text,
+                        "fm_meta": {},
+                    }
+                    processed = process_documents(
+                        [doc],
+                        is_extract_meta=False,
+                        metadata_strategy="jsonl_only",
+                    )
+                    store = get_cached_store()
+                    store.add_documents(processed)
+                    st.success("添加成功！")
+                    get_store_stats.clear()  # 清除缓存以便侧边栏立即更新状态
+                    st.session_state.store_stats = None
+                    time.sleep(1)
+                    st.rerun()
 
     st.markdown('<div class="sidebar-section-title">检索设置</div>', unsafe_allow_html=True)
 
