@@ -909,7 +909,7 @@
                     <text x="260" y="259" font-family="Outfit" font-size="7" fill="#171717" text-anchor="middle">命令行界面入口 (CLI ask 交互)</text>
 
                     <rect x="430" y="245" width="220" height="22" rx="2" fill="#fafafa" stroke="#737373" stroke-width="0.6"/>
-                    <text x="540" y="259" font-family="Outfit" font-size="7" fill="#171717" text-anchor="middle">Streamlit Web 客户端 (玻璃盒展示)</text>
+                    <text x="540" y="259" font-family="Outfit" font-size="7" fill="#171717" text-anchor="middle">Streamlit Web + Cloudflare Tunnel 公网演示</text>
 
                     <!-- Flow lines & Arrows with zero gaps -->
                     <g stroke="#94a3b8" stroke-width="0.6" fill="none">
@@ -1578,7 +1578,7 @@
                 <div class="left-col">
                     <h1 class="ieee-sec" style="margin-top: 2px;">6. 附录</h1>
                     <h2 class="ieee-subsec">6.1 运行方式</h2>
-                    <p class="no-indent">系统的物理部署极其顺畅，完全开箱即用。本地环境准备仅需以下五个步骤：(1) 复制项目源码并在根目录执行 <code>pip install -r requirements.txt</code> 安装依赖；(2) 复制 <code>.env.example</code> 并命名为 <code>.env</code>，填入 API KEY 与本地模型配置；(3) 执行 <code>python src/main.py collect-all</code> 抓取 Wikipedia、Stack Overflow 与 CSDN 的多源数据；(4) 执行数据流流水线全量重跑命令 <code>python src/main.py build</code>，全自动完成清洗、分块、本地嵌入生成与 ChromaDB 持久化入库；(5) 启动本地 Web 前端 <code>streamlit run app/streamlit_app.py</code> 开启可视化面板。如需执行质量回归，可随时在终端输入 <code>python -m pytest tests/ -v</code> 运行 91 项测试。</p>
+                    <p class="no-indent">系统的物理部署极其顺畅，完全开箱即用。本地环境准备仅需以下六个步骤：(1) 复制项目源码并在根目录执行 <code>pip install -r requirements.txt</code> 安装依赖；(2) 复制 <code>.env.example</code> 并命名为 <code>.env</code>，填入 API KEY 与本地模型配置；(3) 执行 <code>python src/main.py collect-all</code> 抓取 Wikipedia、Stack Overflow 与 CSDN 的多源数据；(4) 执行数据流流水线全量重跑命令 <code>python src/main.py build</code>，完成清洗、分块、本地嵌入生成与 ChromaDB 持久化入库；(5) 启动本地 Web 前端 <code>streamlit run app/streamlit_app.py</code> 开启可视化面板；(6) 若需公网演示，运行 <code>scripts/start_public_streamlit.ps1</code>，由 Cloudflare Quick Tunnel 将本机 <code>8502</code> 端口映射为临时 HTTPS 地址，停止时执行 <code>scripts/stop_public_streamlit.ps1</code>。Vercel Hobby 仅作为静态项目入口页，完整问答仍由本机 Streamlit、ChromaDB 与本地/远程 Embedding 服务承载。如需执行质量回归，可随时输入 <code>python -m pytest tests/ -v</code> 运行 91 项测试。</p>
 
                     <h2 class="ieee-subsec">6.2 演示方案（15 分钟）</h2>
                     <div class="table-wrapper" style="margin: 2px 0;">
@@ -1620,13 +1620,13 @@
                             </tbody>
                         </table>
                     </div>
-                    <p class="no-indent" style="font-size: 8.5px; margin-top: 2px;">为保障现场演示的绝对可靠，我们制定了严密的“高可用备用演示方案”：如果在汇报现场公有云 API 发生意外限流或网络超时，演示人员将在 3 秒内平滑切换至本地预先录制的“黄金路径 4K 演示视频”并进行现场配音旁白。若 API 抛出 429 具体异常，演示人员应顺势打开终端日志展示详细的异常捕获栈，向答辩评委深度解释国内免费 API 在校园网特定网段的频限触发逻辑，以展现出从容的工程排查素养，随后展示系统降级为纯本地运行模式的最终防御效果，保证整个演示流程顺畅无阻。</p>
+                    <p class="no-indent" style="font-size: 8.5px; margin-top: 2px;">为保障现场演示的绝对可靠，我们制定了严密的“高可用备用演示方案”：首选本机 Streamlit 稳态运行，并通过 Cloudflare Tunnel 生成临时公网 HTTPS 链接供评委远程访问；若 Tunnel 随机域名失效或校园网阻断外连，则立即回退到本地 <code>localhost:8502</code> 页面；如果公有云 API 发生限流或网络超时，演示人员将在 3 秒内切换至本地预先录制的“黄金路径 4K 演示视频”并现场配音旁白。若 API 抛出 429 具体异常，演示人员应顺势打开终端日志展示详细捕获栈，解释国内免费 API 在校园网特定网段的频限触发逻辑，随后展示系统降级为纯本地运行模式的最终防御效果。</p>
 
                     <h2 class="ieee-subsec">6.3 Q&A 预备问答</h2>
                     <p class="no-indent"><strong>Q1: 系统在稳态下的检索响应耗时约 6 秒，这符合工业界标准吗？瓶颈在哪？如何优化？</strong> <br>
                     <strong>A</strong>: 6 秒的端到端延迟对于包含两重 LLM 推理（查询解析 2.7s 以及答案合成 3.2s）的复杂 RAG 架构而言是完全符合预期的，系统的瓶颈 96% 以上都消耗在大模型 API 调用的网络延迟上，本地 GPU 向量计算和检索仅 250ms。优化路径包括：(1) 引入高频查询解析缓存，相同语义意图在 10 毫秒内直接读取缓存；(2) 在线端换用更轻量的本地小尺寸模型（如 Qwen1.5B-Instruct）；(3) 启用 Streamlit 前端流式字元输出，以大幅缓解用户的等待延迟。</p>
                     <p class="no-indent"><strong>Q2: 如果第三方用户恶意修改 Wikipedia 的公开词条，注入破坏指令，系统会执行吗？</strong> <br>
-                    <strong>A</strong>: 系统不会把检索文本当作可执行指令直接处理。回答生成阶段仍由 System Prompt 约束“仅根据参考资料回答”，同时前端已经将 LLM 输出、历史 assistant 消息和错误文本统一走 HTML 转义，防止脚本注入在浏览器端执行。对于远程向量服务，公网 AutoDL 地址也通过 <code>EMBEDDING_SERVER_TOKEN</code> 建立 Bearer Token 边界；未携带 token 的请求会被拒绝。后续仍可继续增加上下文块的指令模式检测，但当前版本已经完成了“公网接口鉴权 + 前端安全渲染”的基础安全闭环。</p>
+                    <strong>A</strong>: 系统不会把检索文本当作可执行指令直接处理。回答生成阶段仍由 System Prompt 约束“仅根据参考资料回答”，同时前端已经将 LLM 输出、历史 assistant 消息和错误文本统一走 HTML 转义，防止脚本注入在浏览器端执行。对于远程向量服务，公网 AutoDL 地址通过 <code>EMBEDDING_SERVER_TOKEN</code> 建立 Bearer Token 边界；Cloudflare Tunnel 只把本机 Streamlit 页面映射为 HTTPS 入口，不上传向量库、模型权重或 <code>.env</code> 密钥。后续仍可继续增加 Zero Trust 访问策略和上下文块指令模式检测，但当前版本已经完成了“公网接口鉴权 + 前端安全渲染 + 本地资产不出机”的基础安全闭环。</p>
                 </div>
 
                 <div class="right-col">
@@ -1690,7 +1690,7 @@
 
                     <div class="alert-box important" style="font-size: 8.5px; border-left-color: var(--primary); margin: 5px 0 0 0;">
                         <div class="alert-title">💡 数据工程总结</div>
-                        本系统论文已基于当前可直接打开和打印的 <code>report_ieee.html</code> 版本完成同步更新；内容已覆盖 AutoDL RTX 4090 远程向量化、<code>EMBEDDING_SERVER_TOKEN</code> 鉴权、Streamlit 安全渲染、JSONL 摄取隔离、双路检索降级与 91 项自动化测试。该 HTML 可作为无需本地 LaTeX 构建的 IEEE 风格论文交付稿。
+                        本系统论文已基于当前可直接打开和打印的 <code>report_ieee.html</code> 版本完成同步更新；内容已覆盖 AutoDL RTX 4090 远程向量化、<code>EMBEDDING_SERVER_TOKEN</code> 鉴权、Streamlit 安全渲染、Cloudflare Tunnel 公网演示脚本、Vercel Hobby 静态入口、JSONL 摄取隔离、双路检索降级与 91 项自动化测试。该 HTML 可作为无需本地 LaTeX 构建的 IEEE 风格论文交付稿。
                     </div>
                 </div>
             </div>

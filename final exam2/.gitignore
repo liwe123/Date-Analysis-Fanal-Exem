@@ -9,3 +9,5 @@ vector_store/
 .claude/
 models/
 .vercel
+logs/
+*.log
