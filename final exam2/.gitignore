@@ -8,3 +8,4 @@ vector_store/
 .vscode/
 .claude/
 models/
+.vercel

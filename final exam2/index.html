@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="课程知识库 RAG 助手：文档摄取、清洗分块、混合检索与答案生成的大数据课程项目。"
+    />
+    <title>课程知识库 RAG 助手</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #071716;
+        --panel: #102322;
+        --panel-soft: #142c2a;
+        --text: #eef7f4;
+        --muted: #a9bdb8;
+        --line: #27433f;
+        --accent: #4bc2af;
+        --gold: #d8b45c;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        background:
+          radial-gradient(circle at 80% 10%, rgba(75, 194, 175, 0.22), transparent 28rem),
+          linear-gradient(135deg, #071716 0%, #0b1d1b 55%, #102322 100%);
+        color: var(--text);
+        font-family:
+          "Noto Sans SC", "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
+        margin: 0;
+        min-height: 100vh;
+      }
+
+      main {
+        margin: 0 auto;
+        max-width: 1120px;
+        padding: 64px 24px;
+      }
+
+      .hero {
+        display: grid;
+        gap: 28px;
+        grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
+        min-height: calc(100vh - 128px);
+        place-items: center;
+      }
+
+      .kicker {
+        color: var(--accent);
+        font-size: 13px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        font-size: clamp(40px, 7vw, 78px);
+        letter-spacing: 0;
+        line-height: 1.05;
+        margin: 16px 0 22px;
+      }
+
+      p {
+        color: var(--muted);
+        font-size: 17px;
+        line-height: 1.8;
+        margin: 0;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 30px;
+      }
+
+      a {
+        color: inherit;
+      }
+
+      .button {
+        align-items: center;
+        background: var(--accent);
+        border: 1px solid transparent;
+        border-radius: 8px;
+        color: #04201c;
+        display: inline-flex;
+        font-weight: 800;
+        min-height: 44px;
+        padding: 0 18px;
+        text-decoration: none;
+      }
+
+      .button.secondary {
+        background: transparent;
+        border-color: var(--line);
+        color: var(--text);
+      }
+
+      .console {
+        background: rgba(16, 35, 34, 0.84);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
+        overflow: hidden;
+        width: 100%;
+      }
+
+      .console-head {
+        align-items: center;
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        gap: 8px;
+        padding: 14px 16px;
+      }
+
+      .dot {
+        background: var(--gold);
+        border-radius: 999px;
+        height: 10px;
+        width: 10px;
+      }
+
+      .console-body {
+        display: grid;
+        gap: 16px;
+        padding: 22px;
+      }
+
+      .row {
+        background: var(--panel-soft);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 16px;
+      }
+
+      .row strong {
+        color: var(--text);
+        display: block;
+        margin-bottom: 6px;
+      }
+
+      .row span {
+        color: var(--muted);
+        line-height: 1.65;
+      }
+
+      code {
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 5px;
+        color: var(--accent);
+        padding: 2px 6px;
+      }
+
+      @media (max-width: 840px) {
+        main {
+          padding: 40px 18px;
+        }
+
+        .hero {
+          grid-template-columns: 1fr;
+          min-height: auto;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section class="hero">
+        <div>
+          <div class="kicker">Big Data Course Project</div>
+          <h1>课程知识库 RAG 助手</h1>
+          <p>
+            一个面向课程资料的大数据检索增强生成项目，覆盖文档摄取、文本清洗、
+            分块、ChromaDB 持久化索引、SQLite 兜底检索、意图解析与答案生成。
+            当前 Vercel 部署提供项目线上入口；完整 Streamlit 交互服务建议在本地或云主机运行。
+          </p>
+          <div class="actions">
+            <a
+              class="button"
+              href="https://github.com/liwe123/Date-Analysis-Fanal-Exem"
+              rel="noreferrer"
+            >
+              查看 GitHub 项目
+            </a>
+            <a class="button secondary" href="#run">查看运行方式</a>
+          </div>
+        </div>
+
+        <div class="console" id="run">
+          <div class="console-head">
+            <span class="dot"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+          </div>
+          <div class="console-body">
+            <div class="row">
+              <strong>本地 Web 启动</strong>
+              <span><code>streamlit run app/streamlit_app.py</code></span>
+            </div>
+            <div class="row">
+              <strong>命令行问答</strong>
+              <span><code>python src/main.py ask --question "课程项目提交要求是什么？"</code></span>
+            </div>
+            <div class="row">
+              <strong>部署说明</strong>
+              <span>
+                Streamlit 需要常驻进程和会话连接，Vercel 更适合静态页面与 Serverless
+                Functions；因此这里部署为稳定的线上项目入口，避免上传本地模型和 9GB
+                向量库。
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
