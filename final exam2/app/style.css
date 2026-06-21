@@ -400,6 +400,84 @@ textarea:focus {
   margin-bottom: 0;
 }
 
+.message-assistant .bubble h1,
+.message-assistant .bubble h2,
+.message-assistant .bubble h3,
+.message-assistant .bubble h4 {
+  color: var(--text-strong);
+  font-family: "Noto Serif SC", "Source Han Serif SC", Georgia, serif;
+  font-size: var(--text-lg);
+  letter-spacing: 0;
+  line-height: 1.45;
+  margin: var(--space-md) 0 var(--space-sm);
+}
+
+.message-assistant .bubble h1:first-child,
+.message-assistant .bubble h2:first-child,
+.message-assistant .bubble h3:first-child,
+.message-assistant .bubble h4:first-child {
+  margin-top: 0;
+}
+
+.message-assistant .bubble ul,
+.message-assistant .bubble ol {
+  margin: 0 0 var(--space-md);
+  padding-left: 1.4rem;
+}
+
+.message-assistant .bubble li {
+  margin-bottom: var(--space-xs);
+}
+
+.message-assistant .bubble .markdown-table {
+  margin: var(--space-md) 0;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.message-assistant .bubble table {
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+  margin: 0;
+  min-width: 100%;
+  table-layout: fixed;
+  width: 100%;
+}
+
+.message-assistant .bubble th,
+.message-assistant .bubble td {
+  border: 1px solid var(--border);
+  padding: var(--space-xs) var(--space-sm);
+  text-align: left;
+  vertical-align: top;
+}
+
+.message-assistant .bubble th:first-child,
+.message-assistant .bubble td:first-child {
+  width: 22%;
+}
+
+.message-assistant .bubble th:nth-child(2),
+.message-assistant .bubble td:nth-child(2) {
+  width: 28%;
+}
+
+.message-assistant .bubble th:nth-child(3),
+.message-assistant .bubble td:nth-child(3) {
+  width: 18%;
+}
+
+.message-assistant .bubble th:last-child,
+.message-assistant .bubble td:last-child {
+  width: 32%;
+}
+
+.message-assistant .bubble th {
+  background: var(--surface-muted);
+  color: var(--text-strong);
+  font-weight: 700;
+}
+
 .message-assistant .bubble pre {
   background: var(--surface-inset) !important;
   border: 1px solid var(--border) !important;
@@ -683,5 +761,9 @@ details {
 
   .message-assistant .bubble {
     padding: var(--space-md);
+  }
+
+  .message-assistant .bubble table {
+    min-width: 48rem;
   }
 }

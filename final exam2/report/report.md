@@ -28,7 +28,7 @@
 
 核心交付：本项目实现了从海量杂乱文本文件（包括一个包含 100万行 (1 million lines) 大规模非结构化数据集的 `rag_documents_raw.jsonl` 语料，约 631MB）到可搜索向量索引、再到带来源追溯的智能问答的自动化全流水线。
 
-本项目的一大亮点是设计并实现了 **“GPU 算力卸载与远程嵌入服务架构”**。为了应对百万行级海量数据的密集向量编码挑战，我们利用 AutoDL 平台的 RTX 4090 GPU 云显卡搭建了基于 FastAPI 的 OpenAI 兼容远程 Embedding 服务（`scripts/embedding_server.py`），通过精心调优的批处理大小（`batch_size=256`）和网络传输优化，在 ~2 小时内成功完成了全量 1,215,021 个文本分块的向量数据库构建。随后，我们利用 ModelScope 本地模型下载与 ChromaDB 的便携性，将 5.8GB 压缩后的 HNSW 索引库（`vector_store.tar.gz`）部署回本地，实现了 100% 纯本地离线、CUDA GPU 加速、稳态向量检索约 0.25s、评测平均单次问答 5.637s 的企业级端到端 RAG 演示系统，测试用例由 54 个全量升级扩展至 91 个，全部通过。
+本项目的一大亮点是设计并实现了 **“GPU 算力卸载与远程嵌入服务架构”**。为了应对百万行级海量数据的密集向量编码挑战，我们利用 AutoDL 平台的 RTX 4090 GPU 云显卡搭建了基于 FastAPI 的 OpenAI 兼容远程 Embedding 服务（`scripts/embedding_server.py`），通过批处理和网络传输优化完成全量建库。最终本地持久化索引包含 1,215,442 个文档块；检索可在本地运行，答案生成通过 `.env` 配置的 OpenAI 兼容 LLM 服务完成。最终自动化测试扩展至 108 项并全部通过，同时完成真实 CLI、Web、桌面和窄屏验收。
 
 ## 二、业务问题与价值
 
@@ -65,7 +65,7 @@
      └─────┬──────┘
            │
      ┌─────▼──────┐
-      │  3. 嵌入    │  Qwen/Qwen3-Embedding-0.6B (本地) (1024维, 余弦距离, CUDA GPU)
+      │  3. 嵌入    │  BAAI/bge-large-zh-v1.5 (本地/远程) (1024维, 余弦距离, CUDA GPU)
      │            │  embed_store.py → ChromaDB 批量写入 (batch=64)
      └─────┬──────┘
            │
@@ -154,7 +154,7 @@ $$2048 	imes 16 	imes 512^2 	imes 2	ext{ bytes} = 17,179,869,184	ext{ bytes} pp
 再加上模型参数显存（约 1.34 GB）、KV Cache、优化器状态等，直接击穿了 RTX 4090 显存硬上限。
 当我们将批量调整为 **$B=256$** 时，自注意力激活张量显存开销降为：
 $$256 	imes 16 	imes 512^2 	imes 2	ext{ bytes} = 2,147,483,648	ext{ bytes} pprox 2.14	ext{ GB}$$
-配合 PyTorch 的显存动态释放，模型可以在 RTX 4090 上稳健运行，实现 **100% 绝对稳定性**。
+配合 PyTorch 的显存动态释放，模型在本项目验证过的批量规模下能够稳定运行。
 
 ##### B. 网络序列化瓶颈与 JSON 数据量公式
 在远程 API 传输中，我们发现如果批处理过大，Python 单线程的 JSON 序列化与反序列化会成为致命瓶颈，导致 HTTP 客户端频繁产生 `ReadTimeoutError` 超时崩溃。
@@ -352,7 +352,7 @@ $$	ext{Payload Size} pprox 256 	imes 1024 	imes 10	ext{ bytes} pprox 2.62	ext{
 | **合计** | **60,000 - 160,000** | |
 
 **成本优化方向**：
-1. Embedding 已切换为本地 Qwen3-Embedding-0.6B（免费），LLM 已切换为 deepseek-v4-flash（API 调用）
+1. Embedding 使用本地 BAAI/bge-large-zh-v1.5（免费），LLM 使用 deepseek-v4-flash（API 调用）
 2. 对高频 FAQ 做答案缓存（语义去重），减少重复 LLM 调用
 3. 向量索引做分层存储：热数据 ChromaDB 内存索引、冷数据对象存储
 
@@ -523,11 +523,11 @@ python src/main.py ask                    # 交互模式
 # Web 演示
 streamlit run app/streamlit_app.py
 
-# 运行测试 (91 个测试函数)
+# 运行测试 (108 个测试函数)
 python -m pytest tests/ -v
 ```
 
-### 测试覆盖 (91 个测试函数)
+### 测试覆盖 (108 个测试函数)
 
 | 测试模块 | 覆盖内容 |
 |----------|---------|
@@ -537,6 +537,8 @@ python -m pytest tests/ -v
 | `test_embed_store` | 初始化、搜索、max_distance 过滤、where 回退、计数/来源、安全删除 |
 | `test_qa` | 空文档兜底、上下文生成、引用缺失补全、年份显示 |
 | `test_integration` | 全链路：摄取 → 处理 → 搜索 → 问答 端到端 |
+| `test_rendering` | 安全 Markdown、表格、HTML 转义与受控换行 |
+| `test_retrieval_fallback` | SQLite/原始语料回退、Token 配额分流、领域词排序与快速统计 |
 
 ## 十二、演示方案（10 分钟）
 
@@ -564,14 +566,17 @@ python -m pytest tests/ -v
 
 ```
 1. 浏览器打开 Streamlit 界面
-2. 展示侧边栏：文档块数、来源数、来源文件列表，以及新增的"➕ 数据管理"（自定义数据上传）
-3. 演示上传自定义数据：粘贴文本并自动入库
-4. 连续提问 2 个问题（含追问新上传的数据），展示对话历史
-5. 开启调试模式：展示查询解析的中间结果（搜索词 + 过滤条件）
-6. 调节 Top-K 滑块（3→10），查看检索结果数量变化
-7. 展开"📎 检索来源"，展示距离分数和文本片段
-8. 调节 max_distance 阈值，展示精度/召回权衡
+2. 点击知识库状态刷新，展示 1,215,442 个文档块和抽样来源数
+3. 连续点击 RAG 与向量数据库两个推荐问题，展示连续交互稳定性
+4. 输入 Token 配额耗尽问题，展示配额、429、上下文超限和认证过期的分流处理
+5. 展开检索来源，展示检索路径和文本片段
+6. 调节 Top-K 与 max_distance，说明精度/召回权衡
+7. 使用手机或 390×844 视口展示响应式页面
+8. 通过 Cloudflare Tunnel 打开 `trycloudflare.com` 公网地址
 ```
+
+当前 local embedding 模式会主动关闭 Web 在线写入，避免前端进程加载大型本地模型造成卡顿。
+现场新增语料使用离线入库流程，不演示已关闭的在线上传入口。
 
 ### Q&A 准备（5 分钟）
 
@@ -645,7 +650,7 @@ A：当前重新 `build` 全量处理并 upsert 写入（id 基于文件名+块�
 | **建库总成本** | - | - | **< ¥1.0** |
 | **单次查询成本** | - | - | **~ ¥0.02** |
 
-> 注：Embedding 采用本地模型 Qwen3-Embedding-0.6B，免费；LLM 基于 deepseek-v4-flash 定价。
+> 注：Embedding 采用本地模型 BAAI/bge-large-zh-v1.5，免费；LLM 基于 deepseek-v4-flash 定价。
 
 ## 十四、项目创新亮点与技术特色
 
@@ -734,12 +739,13 @@ app/
 |----------|-------------|----------|
 | `test_preprocess.py` | 7 类 28 个测试 | clean_text / chunk_text / guess_category / merge_fm_meta / _safe_json_parse / extract_metadata / process_documents |
 | `test_ingest.py` | 5 类 27 个测试 | Front-Matter 解析 / 文件加载（含递归、PDF、JSONL、异常情况） |
-| `test_query_parser.py` | 1 类 5 个测试 | 正常解析 / 空过滤 / API 异常 / JSON 格式错误 / Markdown 剥离 |
+| `test_query_parser.py` | 6 个测试 | 正常解析 / 空过滤 / API 异常 / JSON 格式错误 / Markdown 剥离 |
 | `test_embed_store.py` | 4 类 15 个测试 | 初始化 / 搜索 / max_distance / where 回退 / 双路检索 / 计数 / 来源 / 安全删除 |
-| `test_qa.py` | 2 类 10 个测试 | 空文档兜底 / 上下文生成 / 引用补全 / 年份显示 / 异常处理 |
+| `test_qa.py` | 11 个测试 | 空文档兜底 / 上下文生成 / 引用补全 / 故障类型区分 / 异常处理 |
 | `test_integration.py` | 3 类 4 个测试 | 全链路集成测试 / 嵌套 Front-Matter |
-| `test_rendering.py` | 1 类 2 个测试 | 前端文本安全转义 / 换行保持 |
-| **总计** | **23 类 91 个测试** | **核心功能 100% 冒烟测试全通过** |
+| `test_rendering.py` | 5 个测试 | 安全 Markdown / 表格 / HTML 转义 / 受控换行 |
+| `test_retrieval_fallback.py` | 12 个测试 | 多层回退 / Token 配额分流 / 领域词排序 / 快速统计 |
+| **总计** | **108 个测试** | **全部通过，并完成真实 CLI/Web 验收** |
 
 ### 14.3 工程实践
 
@@ -801,7 +807,7 @@ app/
 1. **自动化数据流水线**：收集 → 清洗 → 分块 → 嵌入 → 存储 → 检索 → 生成，全链路一键执行
 2. **语义混合检索**：向量搜索 + 元数据过滤 + 查询意图解析 + max_distance 阈值裁剪 + 多层回退
 3. **有据可查防幻觉**：System Prompt 约束 + 来源强制标注 + 自动补全
-4. **工程化标准**：模块化、可测试（91 个测试函数）、环境变量管理、路径可移植、单例模式降本
+4. **工程化标准**：模块化、可测试（108 个测试函数）、环境变量管理、路径可移植、单例模式降本
 
 **项目亮点**：
 - 📊 云端处理百万级超大语料生成 121.5 万文本块，建库算力总成本仅 ¥5.58，本地 100% 离线检索成本为 ¥0

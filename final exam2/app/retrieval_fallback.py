@@ -81,8 +81,103 @@ TOKEN_EXHAUSTION_BODY_MARKERS = (
     "sessionexpired",
     "refreshtoken",
 )
+TOKEN_QUOTA_MARKERS = (
+    "token额度耗尽",
+    "token额度用完",
+    "token配额耗尽",
+    "token配额用完",
+    "api额度耗尽",
+    "api额度用完",
+    "api配额耗尽",
+    "api配额用完",
+    "额度耗尽",
+    "额度用完",
+    "配额耗尽",
+    "配额用完",
+    "余额不足",
+    "insufficientquota",
+    "quotaexceeded",
+    "creditsexhausted",
+)
+TOKEN_QUOTA_TERMS = (
+    "API 配额耗尽",
+    "API 额度耗尽",
+    "余额不足",
+    "insufficient quota",
+    "quota exceeded",
+    "充值",
+    "更换 API Key",
+    "备用模型",
+    "限流",
+    "上下文超限",
+    "缩短提示词",
+)
+TOKEN_QUOTA_BODY_MARKERS = (
+    "api配额耗尽",
+    "api额度耗尽",
+    "余额不足",
+    "insufficientquota",
+    "quotaexceeded",
+    "充值",
+    "备用模型",
+    "上下文超限",
+)
+DOMAIN_TOPIC_EXPANSIONS = {
+    "向量数据库": ("向量数据库", "vector database", "vector_db"),
+}
 
 logger = get_logger(__name__)
+
+
+def get_chroma_sqlite_stats(
+    db_path: Path | str = CHROMA_SQLITE_PATH,
+    source_scan_limit: int = 10000,
+    source_return_limit: int = 500,
+) -> tuple[int, list[str], int]:
+    """通过只读 SQLite 主键上界快速返回文档块数、来源列表和抽样来源数。"""
+    sqlite_path = Path(db_path)
+    if not sqlite_path.exists() or source_scan_limit <= 0 or source_return_limit <= 0:
+        return 0, [], 0
+
+    conn = _connect_readonly_sqlite(sqlite_path)
+    try:
+        total_row = conn.execute("SELECT COALESCE(MAX(id), 0) FROM embeddings").fetchone()
+        total = int(total_row[0]) if total_row else 0
+        source_count_row = conn.execute(
+            """
+            SELECT COUNT(DISTINCT string_value)
+            FROM (
+                SELECT string_value
+                FROM embedding_metadata
+                WHERE key = 'source' AND string_value IS NOT NULL
+                LIMIT ?
+            )
+            """,
+            (source_scan_limit,),
+        ).fetchone()
+        source_count = int(source_count_row[0]) if source_count_row else 0
+        source_rows = conn.execute(
+            """
+            SELECT DISTINCT string_value
+            FROM (
+                SELECT string_value
+                FROM embedding_metadata
+                WHERE key = 'source' AND string_value IS NOT NULL
+                LIMIT ?
+            )
+            ORDER BY string_value
+            LIMIT ?
+            """,
+            (source_scan_limit, source_return_limit),
+        ).fetchall()
+    except sqlite3.Error as exc:
+        logger.warning("读取 Chroma SQLite 统计失败: %s", exc)
+        return 0, [], 0
+    finally:
+        conn.close()
+
+    sources = [str(row[0]) for row in source_rows if row[0]]
+    return total, sources, source_count
 
 
 def _is_guidance_query(query: str) -> bool:
@@ -94,9 +189,17 @@ def _is_guidance_query(query: str) -> bool:
 def _is_token_exhaustion_query(query: str) -> bool:
     """判断查询是否在询问 token 用完、过期或失效。"""
     compact_query = _compact_text(query)
+    if _is_token_quota_query(query):
+        return False
     return "token" in compact_query and any(
         marker in compact_query for marker in TOKEN_EXHAUSTION_MARKERS
     )
+
+
+def _is_token_quota_query(query: str) -> bool:
+    """判断查询是否在询问 API Token 配额、额度或余额耗尽。"""
+    compact_query = _compact_text(query)
+    return any(marker in compact_query for marker in TOKEN_QUOTA_MARKERS)
 
 
 def _extract_query_terms(query: str) -> list[str]:
@@ -117,6 +220,11 @@ def _extract_query_terms(query: str) -> list[str]:
     compact_query = _compact_text(query)
     if _is_token_exhaustion_query(query):
         terms.update(TOKEN_EXHAUSTION_TERMS)
+    if _is_token_quota_query(query):
+        terms.update(TOKEN_QUOTA_TERMS)
+    for marker, expanded_terms in DOMAIN_TOPIC_EXPANSIONS.items():
+        if marker in compact_query:
+            terms.update(expanded_terms)
 
     return sorted(terms, key=lambda item: (-len(item), item))
 
@@ -135,6 +243,13 @@ def _score_chunk(query: str, terms: list[str], text: str, source: str) -> float:
     source_text = _compact_text(source)
     body_score = 0.0
     source_score = 0.0
+
+    is_token_quota_query = _is_token_quota_query(query)
+    has_token_quota_guidance = any(
+        marker in compact_body for marker in TOKEN_QUOTA_BODY_MARKERS
+    )
+    if is_token_quota_query and not has_token_quota_guidance:
+        return 0.0
 
     if compact_query and len(compact_query) >= 2 and compact_query in compact_body:
         body_score += len(compact_query) * 4
@@ -169,6 +284,15 @@ def _score_chunk(query: str, terms: list[str], text: str, source: str) -> float:
         for marker in TOKEN_EXHAUSTION_BODY_MARKERS:
             if marker in compact_body:
                 body_score += 80
+
+    if is_token_quota_query and has_topic_match:
+        for marker in TOKEN_QUOTA_BODY_MARKERS:
+            if marker in compact_body:
+                body_score += 100
+
+    for marker in DOMAIN_TOPIC_EXPANSIONS:
+        if marker in compact_query and (marker in compact_body or marker in source_text):
+            body_score += len(marker) * 40
 
     has_guidance_marker = any(marker in compact_body for marker in GUIDANCE_DOC_MARKERS)
     if "http429" in compact_query and "http429" in compact_body:

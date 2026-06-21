@@ -108,6 +108,7 @@ class TestGenerateAnswer:
         messages = mock_client.chat.completions.create.call_args.kwargs["messages"]
         assert "不要自行扩写、猜测或引入外部知识" in messages[0]["content"]
         assert "未找到足够依据" in messages[0]["content"]
+        assert "不要把这些不同故障简单归并" in messages[0]["content"]
 
     def test_keyboard_interrupt_penetrates(self):
         mock_client = MagicMock()

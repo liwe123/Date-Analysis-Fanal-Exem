@@ -17,8 +17,9 @@ from openai import OpenAI
 # 动态添加路径以防导入失败
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from app.rendering import safe_text_to_html
+from app.rendering import safe_markdown_to_html, safe_text_to_html
 from app.retrieval_fallback import (
+    get_chroma_sqlite_stats,
     load_raw_corpus_chunks,
     search_chroma_sqlite,
     search_raw_corpus,
@@ -67,7 +68,11 @@ st.markdown(f"<style>{load_css(STYLE_PATH.stat().st_mtime)}</style>", unsafe_all
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
-if "store_stats" not in st.session_state:
+if (
+    "store_stats" not in st.session_state
+    or not isinstance(st.session_state.store_stats, (tuple, list))
+    or len(st.session_state.store_stats) != 3
+):
     st.session_state.store_stats = None
 
 # ── Top actions ───────────────────────────────────────────────────────────────
@@ -95,10 +100,9 @@ def get_cached_store() -> VectorStore:
 
 
 @st.cache_data(ttl=3600, show_spinner=False)
-def get_store_stats() -> tuple[int, list[str]]:
+def get_store_stats() -> tuple[int, list[str], int]:
     """缓存知识库统计数据以提升响应性能，在更新数据时会主动清除。"""
-    store = get_cached_store()
-    return store.count(), store.list_sources()
+    return get_chroma_sqlite_stats()
 
 
 @st.cache_data(ttl=3600, show_spinner=False)
@@ -174,12 +178,14 @@ with st.sidebar:
         if st.session_state.store_stats is None:
             st.caption("百万级向量库统计按需加载，避免打开页面或输入问题时卡顿闪烁。")
         else:
-            count, sources = st.session_state.store_stats
+            count, sources, sampled_sources_count = st.session_state.store_stats
 
-            # 处理超大数量时的显示逻辑
-            real_sources = [s for s in sources if not s.startswith("...")]
-            display_sources_count = len(real_sources)
-            sources_metric_val = f"{display_sources_count}+" if count > 10000 else str(display_sources_count)
+            real_sources = sources
+            sources_metric_val = (
+                f"{sampled_sources_count}+"
+                if count > 10000
+                else str(sampled_sources_count)
+            )
             expander_title = f"文档来源列表（{sources_metric_val}）"
 
             col1, col2 = st.columns(2)
@@ -202,7 +208,7 @@ with st.sidebar:
                     )
                     st.caption(
                         f"当前显示 {len(visible_sources)} / {matched_sources_count} 个来源；"
-                        "输入关键词可继续缩小范围。"
+                        "来源名称最多加载 500 个，输入关键词可继续缩小范围。"
                     )
                     for src in visible_sources:
                         st.markdown(f"· {html.escape(src)}")
@@ -315,7 +321,7 @@ for msg in st.session_state.messages:
             unsafe_allow_html=True,
         )
     else:
-        safe_content = safe_text_to_html(msg["content"])
+        safe_content = safe_markdown_to_html(msg["content"])
         st.markdown(
             '<div class="message-assistant">'
             '<div class="avatar-wrapper"><div class="avatar">AI</div></div>'
@@ -509,7 +515,7 @@ if pending_question:
                 "</div>"
             )
 
-        safe_answer = safe_text_to_html(answer)
+        safe_answer = safe_markdown_to_html(answer)
         full_answer = (
             safe_answer
             + '<div class="source-section">'

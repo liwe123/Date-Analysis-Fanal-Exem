@@ -3,7 +3,7 @@
 > 基于检索增强生成（RAG）的智能问答系统 | 大数据学期项目 — 方向 B
 
 [![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/)
-[![Tests](https://img.shields.io/badge/tests-91%20passed-green.svg)](https://github.com/liwe123/Date-Analysis-Fanal-Exem)
+[![Tests](https://img.shields.io/badge/tests-108%20passed-green.svg)](https://github.com/liwe123/Date-Analysis-Fanal-Exem)
 [![License](https://img.shields.io/badge/license-MIT-orange.svg)](LICENSE)
 [![GPU](https://img.shields.io/badge/GPU-CUDA%2012.4-brightgreen.svg)](https://pytorch.org/)
 
@@ -16,9 +16,9 @@
 - **混合检索**：向量语义搜索 + 显式多键复合过滤器（ChromaDB 复合 where 兼容格式自动转换）。
 - **AI 查询解析**：大模型自然语言自动分类并提取语义搜索词与 filters 元数据过滤条件（年份/分类/作者/语言）。
 - **高鲁棒性预处理**：32 线程并发调用 LLM 提取元数据，遇到 API 高频 429 限流时自动进行带随机抖动的指数退避重试，极短有效文本自动兜底。
-- **双端入口**：现代化 Streamlit Web 界面（高级护眼视觉，内置开发者调试“玻璃盒看板”与数据增量写入安全网关） + CLI 命令行。
+- **双端入口**：现代化 Streamlit Web 界面（来源追溯、响应式布局、安全 Markdown 渲染与按模式控制的写入网关） + CLI 命令行。
 - **自动采集**：Wikipedia + Stack Overflow + CSDN 三源自动采集，BeautifulSoup 抓取 + html2text 极致过滤 90% 以上网页噪声，仅保留纯净 Markdown 语法。
-- **自动化测试**：**91 个自动化测试用例**，全量 Mock 装饰器解耦，无物理网络与 API 密钥依赖，离线一键跑通，用例通过率 100%。
+- **自动化测试**：**108 个自动化测试用例**，覆盖检索回退、安全渲染和前端关键路径；离线测试无需真实 API 密钥，用例通过率 100%。
 - **答辩保姆级支撑礼包**：附带团队 4 人任务分工报告 PDF、面向小白组员的项目架构与傻瓜式操作指南 PDF、评委高频提问防守卡片盒 PDF 以及 15 分钟现场演示逐字解说词。
 
 ---
@@ -97,7 +97,13 @@ python src/main.py ask --question "大数据学期项目的截止日期和提交
 
 # 极速一键拉起 Streamlit Web 前台
 streamlit run app/streamlit_app.py
+
+# 生成临时的 trycloudflare.com 公网演示地址
+powershell -ExecutionPolicy Bypass -File scripts/start_public_streamlit.ps1
 ```
+
+Cloudflare Quick Tunnel 地址会在每次启动时变化，且依赖本机 Streamlit、网络和
+`cloudflared` 进程持续运行。固定域名需要配置 Named Tunnel 与 Cloudflare DNS。
 
 ---
 
@@ -112,10 +118,11 @@ python -m pytest tests/ -v
 | `preprocess` | 28 | 数据清洗标签去除、语义分块、Front-Matter 合并、JSON 安全解析、策略校验与元数据提取 |
 | `embed_store` | 15 | 数据库初始化、双路检索融合、max_distance 距离过滤、远程 Token、ChromaDB upsert 幂等写入 |
 | `ingest` | 27 | YAML 嵌套解析、多源文本递归加载、PDF 解析、JSONL 专用摄取与异常数据跳过 |
-| `qa` | 9 | 上下文生成、引用去重补全、年份格式化头部应用、异常链抛出与 KeyboardInterrupt 保护 |
-| `query_parser` | 5 | 正常意图解析、空过滤降级、Markdown 过滤、API 异常与 JSON 格式错误兜底 |
+| `qa` | 11 | 上下文生成、引用补全、故障类型区分、异常链抛出与 KeyboardInterrupt 保护 |
+| `query_parser` | 6 | 正常意图解析、空过滤降级、Markdown 过滤、API 异常与 JSON 格式错误兜底 |
 | `integration` | 4 | 摄取→清洗预处理集成、语义搜索→大模型问答全链路端到端集成测试 |
-| `app.rendering` | 2 | Streamlit 气泡文本 HTML 转义与换行保留 |
+| `app.rendering` | 5 | 安全 Markdown、表格渲染、HTML 转义与受控换行 |
+| `retrieval_fallback` | 12 | SQLite/原始语料回退、Token 配额分流、领域词排序与快速统计 |
 
 ---
 
@@ -128,7 +135,7 @@ python -m pytest tests/ -v
 | 向量数据库 | ChromaDB (HNSW 索引，upsert 幂等去重，SQLite 元数据存储) |
 | 文本流处理 | PyMuPDF (PDF 解析) + BeautifulSoup (HTML标签剥离) + html2text (Markdown转换) |
 | 前端交互 | Streamlit (高级视觉， session_state 记忆，开发者调试看板，安全转义网关) |
-| 单元测试 | Pytest (91 个用例，100% Mock 离线化) |
+| 单元测试 | Pytest (108 个用例，100% 通过) |
 
 ---
 
@@ -148,7 +155,7 @@ python -m pytest tests/ -v
 │   ├── qa.py                # LLM 问答生成 (带上下文截断与Facts引用)
 │   ├── query_parser.py      # 查询意图解析 (Markdown 剥离)
 │   └── utils.py             # 公共工具（环境变量读取、日志规范、客户端单例）
-├── tests/                   # 91 个离线 Mock 自动化测试用例
+├── tests/                   # 108 个自动化测试用例
 ├── scripts/
 │   ├── embedding_server.py  # AutoDL 远程 FastAPI 向量推理服务
 │   ├── setup_autodl.sh      # AutoDL 远程一键部署环境脚本
